@@ -1,0 +1,302 @@
+package dev.mwhitney.main;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.concurrent.CompletableFuture;
+
+import javax.swing.JOptionPane;
+
+import com.sun.jna.NativeLibrary;
+
+import dev.mwhitney.exceptions.ExtractionException;
+import dev.mwhitney.gui.PiPWindowManager;
+import dev.mwhitney.gui.TopDialog;
+import dev.mwhitney.listeners.BinRunnable;
+import dev.mwhitney.listeners.PiPTrayAdapter;
+import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.main.Binaries.Bin;
+import dev.mwhitney.main.PiPProperty.FREQUENCY_OPTION;
+import dev.mwhitney.main.PiPProperty.PropDefault;
+import net.codejava.utility.UnzipUtility;
+import uk.co.caprica.vlcj.binding.support.runtime.RuntimeUtil;
+import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
+
+/**
+ * Initializes the PiP Anything Anywhere application.
+ * 
+ * @author mwhitney57
+ */
+public class Initializer {
+
+    // Public Static Final Application Variables
+    /** The current version of the application. */
+    public static final float APP_VERSION = 1.0f;
+    /** The application name, but shortened to an acronym. */
+    public static final String APP_NAME_SHORT = "PiPAA";
+    /** The application name. */
+    public static final String APP_NAME = "PiP Anything Anywhere";
+    /** The application name, but in full. */
+    public static final String APP_NAME_FULL = "Picture-in-Picture Anything Anywhere";
+    /** A <tt>String</tt> with the application folder location. */
+    public static final String APP_FOLDER = System.getProperty("user.home") + "/AppData/Roaming/PiPAA";
+    /** A <tt>String</tt> with the application's bin folder location. */
+    public static final String APP_BIN_FOLDER = APP_FOLDER + "/bin";
+    /** A <tt>String</tt> with the application's cache folder location. */
+    public static final String APP_CACHE_FOLDER = APP_FOLDER + "/cache";
+    /** A <tt>String</tt> with the application's GIF folder location in the cache. */
+    public static final String APP_GIF_FOLDER = APP_CACHE_FOLDER + "/gif";
+    /** A <tt>String</tt> with the application's clipboard folder location in the cache. */
+    public static final String APP_CLIPBOARD_FOLDER = APP_CACHE_FOLDER + "/clipboard";
+    /** A <tt>String</tt> with the application's trimmed folder location in the cache. */
+    public static final String APP_TRIMMED_FOLDER = APP_CACHE_FOLDER + "/trimmed";
+    /** A <tt>String</tt> with the LibVlc version shipped with the application. */
+    public static final String VLC_VERSION = "3.0.21 Vetinari";
+    /** A <tt>String</tt> with the LibVlc plugins folder. */
+    public static final String VLC_PLUGINS_FOLDER = APP_BIN_FOLDER + "/plugins";
+    /** A <tt>String</tt> with the VLC artwork cache folder. */
+    public static final String VLC_ART_CACHE_FOLDER = System.getProperty("user.home") + "/AppData/Roaming/vlc/art";
+    /** The keyboard and mouse shortcuts guide for PiPAA. */
+    public static final String SHORTCUTS = """
+                                                       PiPAA Keyboard and Mouse Controls
+                                     _____________________________________________________________________
+                                              LMB / MMB / RMB = Left, Middle, Right Mouse Button
+                                                *Controls that respect the following modifiers:
+                                         (Hold CTRL = More; Hold SHIFT = Less; Hold BOTH = Max Amount)
+    
+    Keyboard (Video/Audio/Adv. GIF):                                   | Mouse (Video/Audio/Adv. GIF):
+    -------------------------------------------------------------------|-------------------------------------------------------------------
+    Spacebar         -> Play/Pause                                     | LMB Click                       -> Play/Pause
+    L-Arrow        * -> Back                                           | MMB (Hold) then LMB Click       -> Back
+    R-Arrow        * -> Forward                                        | MMB (Hold) then RMB Click       -> Forward
+    Up-Arrow       * -> Volume Up                                      | Scroll Up/Down                  -> Volume Adjust
+    Down-Arrow     * -> Volume Down                                    |
+    Minus (-)      * -> Slower Playback Rate                           |
+    Plus (+)       * -> Faster Playback Rate                           |
+    Period (.)       -> Frame-by-Frame Forward                         |
+    M                -> Mute/Unmute                                    |
+    CTRL + SHIFT + M -> Global Mute/Unmute                             | Mouse (Image/GIF):
+    0-9              -> Seek to 0%, 10%, ... 90% Through Video         |-------------------------------------------------------------------
+    CTRL + S         -> Save Current Media to Cache                    | Scroll Up/Down                  -> Zoom
+    CTRL + ALT + S   -> Quick-Save Current Media to Cache (Inaccurate) | Scroll Up/Down                  -> Zoom
+                                                                       | LMB (Hold)                      -> Pan (while zoomed)
+                                                                       |
+    Keyboard (Audio):                                                  |
+    -------------------------------------------------------------------|
+    A                -> Add Artwork to Audio File                      |
+                                                                       |
+                                                                       |
+    Keyboard (All):                                                    | Mouse (All):
+    -------------------------------------------------------------------|-------------------------------------------------------------------
+    B                -> Flash Borders of Window                        | Right Click on Window & Drag    -> Move Window
+    F                -> Fullscreen ON/OFF                              | Double-Click LMB                -> Fullscreen ON/OFF
+    I                -> Show Window/Media Information                  | Double-Click LMB (Empty Window) -> Paste Shortcut
+    L                -> Relocate Window In-Screen (if off-screen)      | Double-Click MMB                -> Add a Window
+    Escape           -> Close Window                                   | Triple-Click RMB                -> Close Media in Window
+    SHIFT + Escape   -> Close All Windows                              | Triple-Click RMB (Empty Window) -> Close Window
+    SHIFT + A        -> Add a Window                                   | 
+    SHIFT + D        -> Duplicate Window                               |
+    CTRL + C         -> Close Media in Window                          |
+    CTRL + SHIFT + D -> Close then Delete Media from Cache (if cached) |
+    CTRL + H         -> Hide Window                                    |
+    CTRL + SHIFT + H -> Hide All Windows                               |
+    CTRL + SHIFT + M -> Global Mute ON/OFF                             |
+    CTRL + O         -> Open Cache Folder or Media's Folder Location   |
+    CTRL + R         -> Reload Media                                   |
+    """;
+    
+    /** A boolean for whether or not the backup LibVlc solution should be used. */
+    public static boolean USING_BACKUP_LIBVLC = false;
+    
+    public static void main(String[] args) {
+        final PropertiesManager propsManager = new PropertiesManager();
+
+        // Extract Resources if Necessary
+        try {
+            extractLibResources(propsManager);
+        } catch (ExtractionException ee) {
+            TopDialog.showMsg("Failed to start PiPAA!\n" + ee.getMessage(), "Initialization Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+            return;
+        }
+        
+        // Shared PropertyListener Methods
+        final PropertyListener propListener = new PropertyListener() {
+            @Override
+            public void propertyChanged(PiPProperty prop, String value) {}
+            @SuppressWarnings("unchecked")
+            @Override
+            public <T> T propertyState(PiPProperty prop, Class<T> rtnType) {
+                // Ensure the property has a value. If it doesn't, reset it to the default.
+                final boolean hasValue = propsManager.get(prop) != null;
+                if (!hasValue) {
+                    propsManager.setDefault(prop);
+                }
+                
+                // Return a different type depending on the state request.
+                if (rtnType == Boolean.class) {
+                    return (T) Boolean.valueOf(propsManager.get(prop));
+                } else if (rtnType == Float.class) {
+                    return (T) Float.valueOf(propsManager.get(prop));
+                } else if (rtnType == Integer.class) {
+                    return (T) Integer.valueOf(propsManager.get(prop));
+                } else {
+                    return (T) propsManager.get(prop);
+                }
+            }
+        };
+        
+        // Share PropertyListener with Binaries
+        Binaries.setPropertyListener(propListener);
+        
+        // Create PiPWindowManager, which then opens one window by default.
+        final PiPWindowManager windowManager = new PiPWindowManager() {
+            @Override
+            public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return propListener.propertyState(prop, rtnType); }
+        };
+
+        // Create the Tray object.
+        final Tray tray = new Tray() {
+            @Override
+            public void propertyChanged(PiPProperty prop, String value) {
+                System.out.println(prop.toString());
+                // Only Set Prop Values for Certain PiPProperty Values
+                switch(prop) {
+                case SET_ALL_PAUSED, SET_ALL_MUTED, SET_ALL_PLAYBACK_RATE, SET_ALL_VOLUME -> {}
+                case USE_SYS_BINARIES -> {
+                    if (Boolean.valueOf(value)) 
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                Binaries.refreshOnSys();
+                            } catch (InterruptedException e) { e.printStackTrace(); }
+                        });
+                    propsManager.set(prop.toString(), value);
+                }
+                default -> propsManager.set(prop.toString(), value);
+                }
+                windowManager.propertyChanged(prop, value);
+            }
+            @Override
+            public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return propListener.propertyState(prop, rtnType); }
+        };
+        
+        // Set Listeners
+        windowManager.setWindowCountListener(() ->
+            // Updates tray's status with window count.
+            tray.updateStatus(windowManager.liveWindowCount() == 0 ? "No Windows Running..." : "Running Windows: " + windowManager.liveWindowCount())
+        );
+        tray.setTrayListener(new PiPTrayAdapter() {
+            @Override
+            public PiPWindowManager get() { return windowManager; }
+        });
+        
+        PropertiesManager.MEDIATOR = new PropertyListener() {
+            @Override
+            public void propertyChanged(PiPProperty prop, String value) { tray.forwardPropertyChange(prop, value); }
+            @Override
+            public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return propListener.propertyState(prop, rtnType); }
+        };
+    }
+    
+    /**
+     * Prepares the library/binary resources and extracts the necessary ones from
+     * the JAR. This method will also create the bin and plugins directories if they
+     * do not exist. The resources will not be extracted if the application is set
+     * to use the system binaries, and they exist. If the application is set to use
+     * the system binaries, they will be used in preference. If only some of the
+     * binaries exist on the system, it will still prefer to use those, and PiPAA
+     * will extract and use the missing, necessary binaries.
+     * 
+     * @param propsManager - the PropertiesManager used to check if the use system binaries property is set.
+     * @throws IOException if there are issues reading or writing files.
+     * @throws ExtractionException if another exception occurs during the extraction process.
+     */
+    private static void extractLibResources(PropertiesManager propsManager) throws ExtractionException {
+        // Ensure bin folder exists.
+        new File(APP_BIN_FOLDER).mkdirs();
+        // Ensure plugins folder exists.
+        new File(Binaries.YTDLP_PLUGINS_FOLDER).mkdirs();
+        
+        // Check if each binary exists within the application bin folder.
+        final String useSysBinaries = propsManager.get(PiPProperty.USE_SYS_BINARIES);
+        final boolean LOCAL_YTDLP   = Binaries.exists(Bin.YT_DLP);
+        final boolean LOCAL_GALDL   = Binaries.exists(Bin.GALLERY_DL);
+        final boolean LOCAL_FFMPEG  = Binaries.exists(Bin.FFMPEG);
+        final boolean LOCAL_IMGMAG  = Binaries.exists(Bin.IMGMAGICK);
+        // If the application should use system binaries, refresh their existence status.
+        if (useSysBinaries == null || Boolean.valueOf(useSysBinaries)) try {
+            Binaries.refreshOnSys();
+        } catch (InterruptedException ie) {
+            throw new ExtractionException("Unexpected exception occurred while extracting binaries.");
+        }
+        
+        // Extract any missing binaries to the application bin folder.
+        CFExec.run((BinRunnable) () -> { if (!Binaries.HAS_YTDLP     && !LOCAL_YTDLP)  Binaries.extract(Bin.YT_DLP);     },
+                   (BinRunnable) () -> { if (!Binaries.HAS_GALLERYDL && !LOCAL_GALDL)  Binaries.extract(Bin.GALLERY_DL); },
+                   (BinRunnable) () -> { if (!Binaries.HAS_FFMPEG    && !LOCAL_FFMPEG) Binaries.extract(Bin.FFMPEG);     },
+                   (BinRunnable) () -> { if (!Binaries.HAS_IMGMAGICK && !LOCAL_IMGMAG) Binaries.extract(Bin.IMGMAGICK);  })
+              .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting binaries."));
+        
+        // Automatically update binaries during startup depending on user configuration and date/time.
+        final String frequency  = propsManager.get(PiPProperty.BIN_UPDATE_FREQUENCY);
+        final String lastUpdate = propsManager.get(PiPProperty.BIN_LAST_UPDATE_CHECK);
+        boolean checkForUpdate = true;
+        if (frequency != null && lastUpdate != null) {
+            final FREQUENCY_OPTION updateFreq = PropDefault.FREQUENCY.matchAny(frequency);
+            final LocalDateTime now  = LocalDateTime.now();
+            LocalDateTime last = null;
+            try {
+                last = LocalDateTime.parse(lastUpdate);
+            } catch (DateTimeParseException dtpe) { dtpe.printStackTrace(); }
+            
+            checkForUpdate = switch (updateFreq) {
+            case NEVER    -> false;
+            case ALWAYS   -> true;
+            case DAILY    -> (last == null || now.isAfter(last.plusDays(1))   ? true : false);
+            case WEEKLY   -> (last == null || now.isAfter(last.plusWeeks(1))  ? true : false);
+            case MONTHLY  -> (last == null || now.isAfter(last.plusMonths(1)) ? true : false);
+            };
+        }
+        if (checkForUpdate) {
+            final String res = Binaries.updateAll();
+            
+            // Update last update check time.
+            propsManager.set(PiPProperty.BIN_LAST_UPDATE_CHECK.toString(), LocalDateTime.now().toString());
+            
+            // Print Result
+            System.out.println("Automatic binary update check results: \n" + res.toString());
+        }
+        
+        // Check if VLC is installed.
+        boolean vlcReady = new NativeDiscovery().discover();
+        final String vlcVersion = propsManager.get("LibVlc_BIN");
+        // Normal VLC installation doesn't exist, OS is Windows and either DLLs aren't set or they are on the wrong version.
+        if (!vlcReady && System.getProperty("os.name").startsWith("Windows")) {
+            // Ensure that files are present as well.
+            final boolean vlcFilesPresent = (new File(APP_BIN_FOLDER + "/libvlc.dll").exists()
+                             && new File(APP_BIN_FOLDER + "/libvlccore.dll").exists()
+                             && new File(VLC_PLUGINS_FOLDER).exists());
+            if (vlcVersion == null || !vlcVersion.equals(VLC_VERSION) || !vlcFilesPresent) {
+                // Extract Windows LibVlc DLLs to Bin Folder
+                System.out.println("<!> Extracting VLC libraries...");
+                CFExec.run((BinRunnable) () -> Files.copy(Initializer.class.getResourceAsStream("/dev/mwhitney/resources/bin/libvlc.dll"),
+                                   Paths.get(APP_BIN_FOLDER + "/libvlc.dll"), StandardCopyOption.REPLACE_EXISTING),
+                           (BinRunnable) () -> Files.copy(Initializer.class.getResourceAsStream("/dev/mwhitney/resources/bin/libvlccore.dll"),
+                                   Paths.get(APP_BIN_FOLDER + "/libvlccore.dll"), StandardCopyOption.REPLACE_EXISTING),
+                           (BinRunnable) () -> UnzipUtility.unzip(Initializer.class.getResourceAsStream("/dev/mwhitney/resources/bin/plugins.zip"), VLC_PLUGINS_FOLDER))
+                      .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting LibVlc libraries."));
+                propsManager.set("LibVlc_BIN", VLC_VERSION);
+            }
+            // Change NativeLibrary search path to app bin folder, check if extracted already.
+            NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), APP_BIN_FOLDER.replace('/', '\\'));
+            vlcReady = true;
+            USING_BACKUP_LIBVLC = true;
+        }
+        // VLC Installation Doesn't Exist and Windows LibVlc DLLs Cannot Be Used
+        if (!vlcReady) throw new ExtractionException("Could not find or extract a LibVlc installation.");
+    }
+}

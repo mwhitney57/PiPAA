@@ -1,0 +1,16 @@
+PiPAA JVM Arguments -- Last Updated: 2024-07-08
+
+-Dsun.java2d.noddraw=true
+Disables DirectDraw, which is a part of the default Java rendering pipeline on Windows systems. DirectDraw can provide issues with painting, as was the case with PiPAA.
+In the test scenario, three windows were open, all with the same Basic GIF playing. Eclipse was focused, then another application, an exclusive-fullscreen one, was focused.
+After alt-tabbing out back to Eclipse then resizing one of the three PiPWindows, the other two would show white-painted borders and sometimes their GIFs would freeze.
+Further investigation revealed that these windows were simply not being painted anymore when their borders were white. As soon as they started getting painted again,
+they "unfroze." In this same example, if the GIFs froze as well, they would only resume when they were similarly resized, zoom adjusted, or another action which
+would typically prompt a repaint.
+Disabling DirectDraw fixed this issue immediately in this test scenario. Initial, basic testing seems to indicate that there is no performance regression in doing so.
+The same testing indicates that it may have, in fact, improved performance.
+On one hand, disabling it should not *necessarily* impact performance for better or worse. It just switches all rendering operations to the GDI half of the rendering pipeline,
+which may do just as well (?). Perhaps OpenGL would provide a best-of-both-worlds solution (?), which can be enabled via: -Dsun.java2d.opengl=true
+
+Useful Resources:
+> https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/java2dpipeline002.html

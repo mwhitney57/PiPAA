@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>dev.mwhitney</groupId>
+  <artifactId>PiPAA</artifactId>
+  <version>beta20</version>
+  <packaging>jar</packaging>
+
+  <name>Picture-in-Picture Anything Anywhere</name>
+
+  <developers>
+    <developer>
+      <name>Matt Whitney</name>
+      <id>mwhitney57</id>
+      <url>https://github.com/mwhitney57</url>
+    </developer>
+  </developers>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+  </properties>
+
+  <dependencies>
+    <!-- GitHub: https://github.com/caprica/vlcj -->
+    <dependency>
+        <groupId>uk.co.caprica</groupId>
+        <artifactId>vlcj</artifactId>
+        <version>4.8.3</version>
+	</dependency>
+	<!-- https://www.slf4j.org/download.html -->
+	<dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>2.0.13</version>
+    </dependency>
+	<!-- This library is for having a modern tray look and feel, compared to the default Java SystemTray which looks a bit dated. -->
+	<!-- GitHub: https://github.com/dorkbox/SystemTray -->
+	<dependency>
+        <groupId>com.dorkbox</groupId>
+        <artifactId>SystemTray</artifactId>
+        <version>4.4</version>
+    </dependency>
+    <!-- A solid layout library compatible with Swing. Documentation: http://www.miglayout.com/QuickStart.pdf -->
+    <!-- GitHub: https://github.com/mikaelgrev/miglayout -->
+    <dependency>
+        <groupId>com.miglayout</groupId>
+        <artifactId>miglayout-swing</artifactId>
+        <version>11.4</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+    <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.16.1</version>
+    </dependency>
+    <!-- GitHub: https://github.com/whois-server-list/public-suffix-list -->
+    <dependency>
+        <groupId>de.malkusch.whois-server-list</groupId>
+        <artifactId>public-suffix-list</artifactId>
+        <version>2.2.0</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <shadedArtifactAttached>true</shadedArtifactAttached>
+          <shadedClassifierName>shaded</shadedClassifierName>
+          <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <manifestEntries>
+                <Main-Class>dev.mwhitney.main.Initializer</Main-Class>
+              </manifestEntries>
+            </transformer>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+          </transformers>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,10 @@
+# Folders
+/target/
+/bin/
+.settings/
+
+# Misc. Files
+.classpath
+.project
+CHANGELOG.txt
+dependency-reduced-pom.xml
