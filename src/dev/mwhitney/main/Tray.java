@@ -2,15 +2,12 @@ package dev.mwhitney.main;
 
 import java.awt.Color;
 import java.awt.Image;
-import java.awt.Insets;
 import java.awt.Toolkit;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
@@ -19,7 +16,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ColorUIResource;
@@ -29,6 +25,7 @@ import javax.swing.plaf.SeparatorUI;
 
 import dev.mwhitney.gui.InvertibleIcon;
 import dev.mwhitney.gui.InvertibleImage;
+import dev.mwhitney.gui.PiPWindowManager;
 import dev.mwhitney.gui.TopDialog;
 import dev.mwhitney.listeners.PiPTrayAdapter;
 import dev.mwhitney.listeners.PropertyListener;
@@ -82,40 +79,10 @@ public class Tray implements PropertyListener {
     /** The tray image in 32x32 resolution. */
     private Image trayImage32;
 
-//    private long lastIconClickTime = -1;
-
     /** The listener for the tray which communicates back up and to other objects, primarily a {@link PiPWindowManager}. */
     private PiPTrayAdapter listener;
 
     public Tray() {
-        // Utilize L&F Library for slightly better system tray context menu.
-        try {
-            SwingUtilities.invokeAndWait(() -> {
-                // Set L&F to Match System
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-                        | UnsupportedLookAndFeelException e) {
-                    // Error setting look and feel.
-                    e.printStackTrace();
-                }
-                
-                // Debug
-//                UIManager.getLookAndFeelDefaults().forEach((e, e2) -> {
-//                    System.out.println(e + ": " + e2);
-//                });
-                
-                // Common Theme Defaults
-                UIManager.getLookAndFeelDefaults().put("Menu.opaque", true);
-                UIManager.getLookAndFeelDefaults().put("MenuItem.opaque", true);
-                UIManager.getLookAndFeelDefaults().put("Menu.arrowIcon", new InvertibleIcon(((Icon) UIManager.getLookAndFeelDefaults().get("Menu.arrowIcon"))));
-                UIManager.getLookAndFeelDefaults().put("TabbedPane.contentOpaque", false);
-                UIManager.getLookAndFeelDefaults().put("TabbedPane.tabInsets", new Insets(2, 10, 0, 10));
-            });
-        } catch (InvocationTargetException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        
         // UI Theme Properties Setup and Refresh
         setupUIThemeProperties();
         SwingUtilities.invokeLater(() -> refreshUIThemeProperties());
@@ -214,7 +181,7 @@ public class Tray implements PropertyListener {
     private void setupTrayMenuItems() {
         final MenuItem aboutItem = new MenuItem("About", ((evt) -> {
             System.out.println("EDT? " + SwingUtilities.isEventDispatchThread());
-            TopDialog.showMsg(Initializer.APP_NAME + "\nVersion: " + Initializer.APP_VERSION + "\n\n" + String.format("""
+            TopDialog.showMsg(Initializer.APP_NAME + "\nVersion: " + Initializer.APP_BUILD + "\n\n" + String.format("""
                     Packaged with:
                     - LibVlc      [%s] (video/advanced GIF playback)
                     - yt-dlp      [%s] (media downloads)
@@ -259,6 +226,13 @@ public class Tray implements PropertyListener {
             listener.applicationClosing();
             tray.shutdown();
             System.exit(0);
+            /* 
+             * TODO Rework threading throughout app, implement exit call in a listener that certain classes implement.
+             * Bad practice to call System.exit(...) on normal shutdowns. This is why tray icon lingers until hovered over afterwards.
+             * Commenting it out works, UNLESS an async thread is executing (non-daemon), such as downloading media. In that case the app
+             * stays running completely in the background, with no tray icon or windows, which is obviously terrible. All async thread
+             * calls must be interruptible at user-called application exit.
+             */
         }));
         
         // Context Menu Item Configuration

@@ -1,27 +1,37 @@
 package dev.mwhitney.main;
 
+import java.awt.Insets;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.concurrent.CompletableFuture;
 
+import javax.swing.Icon;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import com.sun.jna.NativeLibrary;
 
 import dev.mwhitney.exceptions.ExtractionException;
+import dev.mwhitney.gui.InvertibleIcon;
 import dev.mwhitney.gui.PiPWindowManager;
 import dev.mwhitney.gui.TopDialog;
 import dev.mwhitney.listeners.BinRunnable;
 import dev.mwhitney.listeners.PiPTrayAdapter;
 import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries.Bin;
-import dev.mwhitney.main.PiPProperty.FREQUENCY_OPTION;
 import dev.mwhitney.main.PiPProperty.PropDefault;
+import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.update.PiPUpdater;
+import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
+import dev.mwhitney.update.api.Build;
+import dev.mwhitney.update.api.Version;
 import net.codejava.utility.UnzipUtility;
 import uk.co.caprica.vlcj.binding.support.runtime.RuntimeUtil;
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
@@ -35,7 +45,7 @@ public class Initializer {
 
     // Public Static Final Application Variables
     /** The current version of the application. */
-    public static final float APP_VERSION = 1.0f;
+    public static final Build APP_BUILD = new Build(new Version(0,9,3), TYPE_OPTION.SNAPSHOT);
     /** The application name, but shortened to an acronym. */
     public static final String APP_NAME_SHORT = "PiPAA";
     /** The application name. */
@@ -114,7 +124,12 @@ public class Initializer {
     
     public static void main(String[] args) {
         final PropertiesManager propsManager = new PropertiesManager();
-
+        
+        // L&F
+        setLookAndFeel();
+        // Initialization Checks
+        initChecks(propsManager, args);
+        
         // Extract Resources if Necessary
         try {
             extractLibResources(propsManager);
@@ -202,6 +217,77 @@ public class Initializer {
         };
     }
     
+    private static void initChecks(final PropertiesManager propsManager, String[] args) {
+        // Handle Any Command-Line Arguments
+        if (args.length > 0) handleArgs(args);
+        
+        // Check if Application Was Performing an Update
+        if (propsManager.has(PiPProperty.APP_UPDATING_FROM)) {
+            final String updatingFrom = propsManager.get(PiPProperty.APP_UPDATING_FROM);
+            try {
+                final String[] parts = updatingFrom.split("-");
+                if (parts.length == 2) {
+                    final Build fromBuild = new Build(Version.form(parts[0]), TYPE_OPTION.parseSafe(parts[1]));
+                    if (APP_BUILD.equals(fromBuild))
+                        CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, "PiPAA failed to update.", "Update Error", JOptionPane.INFORMATION_MESSAGE));
+                    else
+                        CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, "PiPAA has been updated from " + fromBuild + " to " + APP_BUILD + ".", "Update Complete", JOptionPane.INFORMATION_MESSAGE));
+                }
+            } catch (Exception e) { /* Do Nothing -- Assume User Manual Configuration Error, Ultimately Deletes Invalid Properties */ }
+            propsManager.getProperties().remove(PiPProperty.APP_UPDATING_FROM.toString());
+        }
+    }
+    
+    /**
+     * Handles application command-line arguments.
+     * 
+     * @param args - a String[] of command-line arguments to handle.
+     */
+    private static void handleArgs(String[] args) {
+        for (String arg : args) {
+            if (arg == null || arg.isBlank()) continue;
+            else arg = arg.trim().toLowerCase();
+            
+            // Do Nothing -- No Argument Handling Features Yet
+//            switch (arg) {
+//            case "-updated" -> JOptionPane.showMessageDialog(null, "PiPAA has been updated to " + APP_BUILD + ".", "Update Complete", JOptionPane.INFORMATION_MESSAGE);
+//            }
+        }
+    }
+    
+    /**
+     * Sets the application's Look and Feel to match the system.
+     */
+    private static void setLookAndFeel() {
+        // Utilize L&F Library for slightly better system tray context menu.
+        try {
+            SwingUtilities.invokeAndWait(() -> {
+                // Set L&F to Match System
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+                        | UnsupportedLookAndFeelException e) {
+                    // Error setting look and feel.
+                    e.printStackTrace();
+                }
+                
+                // Debug
+//                UIManager.getLookAndFeelDefaults().forEach((e, e2) -> {
+//                    System.out.println(e + ": " + e2);
+//                });
+                
+                // Common Theme Defaults
+                UIManager.getLookAndFeelDefaults().put("Menu.opaque", true);
+                UIManager.getLookAndFeelDefaults().put("MenuItem.opaque", true);
+                UIManager.getLookAndFeelDefaults().put("Menu.arrowIcon", new InvertibleIcon(((Icon) UIManager.getLookAndFeelDefaults().get("Menu.arrowIcon"))));
+                UIManager.getLookAndFeelDefaults().put("TabbedPane.contentOpaque", false);
+                UIManager.getLookAndFeelDefaults().put("TabbedPane.tabInsets", new Insets(2, 10, 0, 10));
+            });
+        } catch (InvocationTargetException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    
     /**
      * Prepares the library/binary resources and extracts the necessary ones from
      * the JAR. This method will also create the bin and plugins directories if they
@@ -241,35 +327,23 @@ public class Initializer {
                    (BinRunnable) () -> { if (!Binaries.HAS_IMGMAGICK && !LOCAL_IMGMAG) Binaries.extract(Bin.IMGMAGICK);  })
               .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting binaries."));
         
+        // Automatically update application during startup depending on user configuration and date/time.
+        final String frequencyApp  = propsManager.get(PiPProperty.APP_UPDATE_FREQUENCY);
+        final String lastCheckApp  = propsManager.get(PiPProperty.APP_LAST_UPDATE_CHECK);
+        final String appUpdateType = propsManager.get(PiPProperty.APP_UPDATE_TYPE);
+        final PiPUpdateResult result = PiPUpdater.updateApp(frequencyApp, lastCheckApp, PropDefault.TYPE.matchAny(appUpdateType));
+        if (result.checked()) propsManager.set(PiPProperty.APP_LAST_UPDATE_CHECK.toString(), LocalDateTime.now().toString());
+        if (result.updated()) {
+            propsManager.set(PiPProperty.APP_UPDATING_FROM.toString(), Initializer.APP_BUILD.toString());
+            System.exit(0);
+        }
+        if (result.hasException()) System.err.println("Warning, app update process failed: " + result.exception().getTotalMessage());
+        
         // Automatically update binaries during startup depending on user configuration and date/time.
-        final String frequency  = propsManager.get(PiPProperty.BIN_UPDATE_FREQUENCY);
-        final String lastUpdate = propsManager.get(PiPProperty.BIN_LAST_UPDATE_CHECK);
-        boolean checkForUpdate = true;
-        if (frequency != null && lastUpdate != null) {
-            final FREQUENCY_OPTION updateFreq = PropDefault.FREQUENCY.matchAny(frequency);
-            final LocalDateTime now  = LocalDateTime.now();
-            LocalDateTime last = null;
-            try {
-                last = LocalDateTime.parse(lastUpdate);
-            } catch (DateTimeParseException dtpe) { dtpe.printStackTrace(); }
-            
-            checkForUpdate = switch (updateFreq) {
-            case NEVER    -> false;
-            case ALWAYS   -> true;
-            case DAILY    -> (last == null || now.isAfter(last.plusDays(1))   ? true : false);
-            case WEEKLY   -> (last == null || now.isAfter(last.plusWeeks(1))  ? true : false);
-            case MONTHLY  -> (last == null || now.isAfter(last.plusMonths(1)) ? true : false);
-            };
-        }
-        if (checkForUpdate) {
-            final String res = Binaries.updateAll();
-            
-            // Update last update check time.
+        final String frequencyBin = propsManager.get(PiPProperty.BIN_UPDATE_FREQUENCY);
+        final String lastCheckBin = propsManager.get(PiPProperty.BIN_LAST_UPDATE_CHECK);
+        if (PiPUpdater.updateBin(frequencyBin, lastCheckBin)) // Update last update check time.
             propsManager.set(PiPProperty.BIN_LAST_UPDATE_CHECK.toString(), LocalDateTime.now().toString());
-            
-            // Print Result
-            System.out.println("Automatic binary update check results: \n" + res.toString());
-        }
         
         // Check if VLC is installed.
         boolean vlcReady = new NativeDiscovery().discover();

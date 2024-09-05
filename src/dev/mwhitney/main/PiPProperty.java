@@ -34,6 +34,14 @@ public enum PiPProperty {
     TRIM_TRANSPARENCY,
     /** The option selection for how {@link TRIM_TRANSPARENCY} should operate. */
     TRIM_TRANSPARENCY_OPTION,
+    /** How frequently the application should check for updates. */
+    APP_UPDATE_FREQUENCY,
+    /** What type of updates should be checked for? Regular releases, beta versions, etc. */
+    APP_UPDATE_TYPE,
+    /** The last time an application update check was performed, automatically or manually. */
+    APP_LAST_UPDATE_CHECK,
+    /** The build that the application was last updating from. Only present during an update cycle restart. */
+    APP_UPDATING_FROM,
     /** How frequently the application should check for binary updates. */
     BIN_UPDATE_FREQUENCY,
     /** The last time a binary update check was performed, automatically or manually. */
@@ -62,7 +70,9 @@ public enum PiPProperty {
         case TRIM_TRANSPARENCY_OPTION -> PropDefault.TRIM.toString();
         case GIF_PLAYBACK_MODE        -> PropDefault.PLAYBACK.toString();
         case OVERWRITE_CACHE          -> PropDefault.OVERWRITE.toString();
-        case BIN_UPDATE_FREQUENCY     -> PropDefault.FREQUENCY.toString();
+        case APP_UPDATE_TYPE          -> PropDefault.TYPE.toString();
+        case APP_UPDATE_FREQUENCY     -> PropDefault.FREQUENCY_APP.toString();
+        case BIN_UPDATE_FREQUENCY     -> PropDefault.FREQUENCY_BIN.toString();
         case DND_PREFER_LINK,
              CONVERT_WEB_INDIRECT     -> "true";
         case TRIM_TRANSPARENCY,
@@ -73,7 +83,7 @@ public enum PiPProperty {
         case DEFAULT_PLAYBACK_RATE    -> "1";
         // Do Not Have Stored Properties
         case SET_ALL_MUTED, SET_ALL_PAUSED, SET_ALL_PLAYBACK_RATE,
-            SET_ALL_VOLUME, BIN_LAST_UPDATE_CHECK -> null;
+            SET_ALL_VOLUME, APP_LAST_UPDATE_CHECK, APP_UPDATING_FROM, BIN_LAST_UPDATE_CHECK -> null;
         };
     }
     
@@ -93,8 +103,12 @@ public enum PiPProperty {
         public static final PLAYBACK_OPTION  PLAYBACK  = PLAYBACK_OPTION.BASIC;
         /** The default value for the {@link PiPProperty#OVERWRITE_CACHE} property: {@link OVERWRITE_OPTION#NO} */
         public static final OVERWRITE_OPTION OVERWRITE = OVERWRITE_OPTION.NO;
-        /** The default value for the {@link PiPProperty#BIN_UPDATE_FREQUENCY} property: {@link FREQUENCY_OPTION#WEEKLY} */
-        public static final FREQUENCY_OPTION FREQUENCY = FREQUENCY_OPTION.WEEKLY;
+        /** The default value for the {@link PiPProperty#APP_UPDATE_FREQUENCY} property: {@link FREQUENCY_OPTION#DAILY} */
+        public static final FREQUENCY_OPTION FREQUENCY_APP = FREQUENCY_OPTION.DAILY;
+        /** The default value for the {@link PiPProperty#BIN_UPDATE_FREQUENCY} property: {@link FREQUENCY_OPTION#DAILY} */
+        public static final FREQUENCY_OPTION FREQUENCY_BIN = FREQUENCY_OPTION.DAILY;
+        /** The default value for the {@link PiPProperty#APP_UPDATE_TYPE} property: {@link TYPE_OPTION#RELEASE} */
+        public static final TYPE_OPTION TYPE = TYPE_OPTION.RELEASE;
     }
     
     /**
@@ -109,14 +123,6 @@ public enum PiPProperty {
         PINK,
         /** A theme with colors based on the "Subnautica" video game, developed and published by Unknown Worlds Entertainment. */
         SUBNAUTICA;
-        
-        /**
-         * Provides the stock, or default, enum property value.
-         * 
-         * @return the default PiPPropertyEnum value for this enum.
-         */
-        @Deprecated(since = "beta20", forRemoval = true)
-        public static PiPPropertyEnum<THEME_OPTION> stock() { return LIGHT; }
         
         /**
          * Options within the {@link THEME_OPTION} sub-property which reference specific colors
@@ -263,13 +269,6 @@ public enum PiPProperty {
         /** Force the transparency trimming operation, skipping the pixels check entirely. */
         FORCE;
         
-        /**
-         * Provides the stock, or default, enum property value.
-         * 
-         * @return the default PiPPropertyEnum value for this enum.
-         */
-        @Deprecated(since = "beta20", forRemoval = true)
-        public static PiPPropertyEnum<TRIM_OPTION> stock() { return NORMAL; }
         @Override
         public String description() {
             return switch (this) {
@@ -288,13 +287,6 @@ public enum PiPProperty {
         /** The Advanced GIF Playback mode which downloads and converts GIFs to videos. */
         ADVANCED;
         
-        /**
-         * Provides the stock, or default, enum property value.
-         * 
-         * @return the default PiPPropertyEnum value for this enum.
-         */
-        @Deprecated(since = "beta20", forRemoval = true)
-        public static PiPPropertyEnum<PLAYBACK_OPTION> stock() { return BASIC; }
         @Override
         public String description() {
             return switch (this) {
@@ -314,13 +306,6 @@ public enum PiPProperty {
         /** The No option for if to overwrite the cache when there's a conflict. */
         NO;
         
-        /**
-         * Provides the stock, or default, enum property value.
-         * 
-         * @return the default PiPPropertyEnum value for this enum.
-         */
-        @Deprecated(since = "beta20", forRemoval = true)
-        public static PiPPropertyEnum<OVERWRITE_OPTION> stock() { return NO; }
         @Override
         public String description() {
             return switch (this) {
@@ -331,7 +316,7 @@ public enum PiPProperty {
         }
     }
     /**
-     * Options within the {@link PiPProperty#BIN_UPDATE_FREQUENCY} property.
+     * Options within the {@link PiPProperty#APP_UPDATE_FREQUENCY} and {@link PiPProperty#BIN_UPDATE_FREQUENCY} properties.
      */
     public enum FREQUENCY_OPTION implements PiPPropertyEnum<FREQUENCY_OPTION> {
         /** Always attempt to automatically update the binaries during application launch. */
@@ -345,21 +330,101 @@ public enum PiPProperty {
         /** Never attempt automatic updates of the binaries. Not recommended for most users. */
         NEVER;
 
-        /**
-         * Provides the stock, or default, enum property value.
-         * 
-         * @return the default PiPPropertyEnum value for this enum.
-         */
-        @Deprecated(since = "beta20", forRemoval = true)
-        public static PiPPropertyEnum<FREQUENCY_OPTION> stock() { return WEEKLY; }
         @Override
         public String description() {
             return switch (this) {
-            case NEVER   -> "Never attempt automatic updates of the binaries. Not recommended for most users.";
-            case ALWAYS  -> "Always attempt to automatically update the binaries during application launch.";
-            case DAILY   -> "Only attempt to automatically update the binaries once per day.";
-            case WEEKLY  -> "Only attempt to automatically update the binaries once per week.";
-            case MONTHLY -> "Only attempt to automatically update the binaries once per month.";
+            case NEVER   -> "Never attempt automatic updates. Not recommended for most users.";
+            case ALWAYS  -> "Always attempt to automatically update during application launch.";
+            case DAILY   -> "Only attempt to automatically update once per day.";
+            case WEEKLY  -> "Only attempt to automatically update once per week.";
+            case MONTHLY -> "Only attempt to automatically update once per month.";
+            };
+        }
+    }
+    /**
+     * Options within the {@link PiPProperty#APP_UPDATE_TYPE} property.
+     */
+    public enum TYPE_OPTION implements PiPPropertyEnum<TYPE_OPTION> {
+        /** Standard releases. */
+        RELEASE(0),
+        /** Beta versions, which may contain glaring bugs. */
+        BETA(1),
+        /** Snapshot versions, which are undergoing testing. May contain bugs, crashes, and incomplete features. */
+        SNAPSHOT(2);
+        
+        private int stability;
+        
+        TYPE_OPTION(int stability) {
+            this.stability = stability;
+        }
+        
+        public int stability() {
+            return this.stability;
+        }
+        
+        /**
+         * Checks if this TYPE_OPTION is considered more stable than the passed
+         * instance.
+         * 
+         * @param type - another TYPE_OPTION to compare stability against.
+         * @return <code>true</code> if this TYPE_OPTION is more stable than the passed
+         *         TYPE_OPTION; <code>false</code> otherwise.
+         */
+        public boolean stablerThan(TYPE_OPTION type) {
+            if (type == null) return true;
+            
+            return (this.stability < type.stability());
+        }
+        
+        /**
+         * Checks if this type "covers" the passed type. A type covers another if it is
+         * less than or equal to the other's stability. For example, {@link #SNAPSHOT}
+         * covers both {@link #BETA} and {@link #RELEASE}, since it is less stable than
+         * both.
+         * <p>
+         * The term <b>covers</b> defines what types are subject to inclusion during the
+         * update process. If the user, say, configures the application to check for
+         * {@link SNAPSHOT} updates, that setting includes, <b>covers</b>, or spans
+         * across the aforementioned types. Those other types would then be considered
+         * for possible updates under configuration.
+         * <p>
+         * Inversely, if the configuration is set to {@link #RELEASE}, then only
+         * {@link #RELEASE} updates will be offered to the user, as that type only
+         * covers itself, given its stability value.
+         * 
+         * @param type - the {@link TYPE_OPTION} to check for coverage on.
+         * @return <code>true</code> if this type covers the passed type;
+         *         <code>false</code> otherwise.
+         */
+        public boolean covers(TYPE_OPTION type) {
+            if (type == null) return false;
+            
+            // i.e. RELEASE (0) is covered by BETA (1)
+            return (type.stability <= this.stability);
+        }
+        
+        /**
+         * Attempts to safely parse the passed String and match it to a valid
+         * TYPE_OPTION value.
+         * 
+         * @param str - a String with the TYPE_OPTION value.
+         * @return the TYPE_OPTION that matches the passed String value, or
+         *         <code>null</code> if no match exists.
+         */
+        public static TYPE_OPTION parseSafe(String str) {
+            TYPE_OPTION ext = null;
+            try {
+                ext = TYPE_OPTION.valueOf(str);
+            } catch(IllegalArgumentException e) {}
+            return ext;
+        }
+        
+        @Override
+        public String description() {
+            return switch (this) {
+            case RELEASE  -> "Standard application releases.";
+            case BETA     -> "Beta versions are more recent, but may contain bugs.";
+            case SNAPSHOT -> "Snapshot versions are the most recent, but may contain major bugs or incomplete features.";
             };
         }
     }

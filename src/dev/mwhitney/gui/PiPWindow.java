@@ -118,13 +118,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     public static final Color BORDER_ERROR    = new Color(247, 64,  66,  200);
     
     /** The normal icon for each PiPWindow. */
-    private static final Image ICON_NORMAL   = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney57/images/icon32.png")).getImage();
+    private static final Image ICON_NORMAL   = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney/images/icon32.png")).getImage();
     /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_WORK     = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney57/images/icon32Working.png")).getImage();
+    private static final Image ICON_WORK     = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney/images/icon32Working.png")).getImage();
     /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_DOWNLOAD = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney57/images/icon32Downloading.png")).getImage();
+    private static final Image ICON_DOWNLOAD = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney/images/icon32Downloading.png")).getImage();
     /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_TRIM     = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney57/images/icon32Trimming.png")).getImage();
+    private static final Image ICON_TRIM     = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney/images/icon32Trimming.png")).getImage();
 
     /** Manages user resizing of this window, despite its undecorated state. */
     private ComponentResizer cr;
@@ -404,7 +404,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                                 file = new File(new URL(mediaPlayer.media().meta().get(Meta.ARTWORK_URL)).toURI());
                         } catch (Exception e) { System.err.println("Warning: Couldn't load media artwork, it may not exist. Using default..."); }
                         try {
-                            setImgViewerSrc((file != null ? file.getPath() : null), PiPWindow.class.getResource("/dev/mwhitney57/resources/audio128.png"));
+                            setImgViewerSrc((file != null ? file.getPath() : null), PiPWindow.class.getResource("/dev/mwhitney/resources/audio128.png"));
                             if (file == null) PiPWindow.this.cr.setMaximumSize(MAXIMUM_AUDIO_SIZE);
                         } catch (InvalidMediaException e) { e.printStackTrace(); }
                         

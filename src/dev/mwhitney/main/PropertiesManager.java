@@ -121,24 +121,47 @@ public class PropertiesManager {
     }
     
     /**
+     * Checks if the property under the passed String key exists in the properties.
+     * 
+     * @param propKey - a String with the property key.
+     * @return <code>true</code> if a property under the passed property key exists;
+     *         <code>false</code> otherwise.
+     */
+    public boolean has(final String propKey) {
+        return this.props == null ? false : this.props.containsKey(propKey);
+    }
+    
+    /**
+     * Checks if the passed {@link PiPProperty} exists in the properties.
+     * 
+     * @param propKey - a {@link PiPProperty} key.
+     * @return <code>true</code> if the passed property exists; <code>false</code>
+     *         otherwise.
+     */
+    public boolean has(final PiPProperty prop) {
+        return prop == null ? false : has(prop.toString());
+    }
+    
+    /**
      * Gets the property under the passed String key. This method returns
      * <code>null</code> if the properties are not set up or if there is no property
      * under the passed key.
      * 
      * @param propKey - a String with the property key.
-     * @return a String with the value corresponding to the passed property key.
+     * @return a String with the value corresponding to the passed property key;
+     *         <code>null</code> if the property is not found.
      */
     public String get(final String propKey) {
         return this.props == null ? null : this.props.getProperty(propKey);
     }
     
     /**
-     * Gets the value for the passed property. This method returns
-     * <code>null</code> if the properties are not set up or if the passed
-     * property is null.
+     * Gets the value for the passed property. This method returns <code>null</code>
+     * if the properties are not set up or if the passed property is null.
      * 
      * @param prop - the PiPProperty to get.
-     * @return a String with the value corresponding to the passed property.
+     * @return a String with the value corresponding to the passed property;
+     *         <code>null</code> if the property is not found.
      */
     public String get(final PiPProperty prop) {
         return prop == null ? null : get(prop.toString());

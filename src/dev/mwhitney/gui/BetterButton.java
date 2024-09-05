@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
@@ -48,6 +49,19 @@ public class BetterButton extends JButton {
         colorBG = Color.LIGHT_GRAY;
         colorBGPressed = colorBG.darker();
         colorBorder = Color.GRAY;
+    }
+    
+    /**
+     * Creates a BetterButton with the passed label and font, then adds the passed
+     * listener.
+     * 
+     * @param label - a String with the label text.
+     * @param f     - the Font to use for the label text.
+     * @param al    - the {@link ActionListener} to add after construction.
+     */
+    public BetterButton(String label, Font f, ActionListener al) {
+        this(label, f);
+        this.addActionListener(al);
     }
     
     @Override

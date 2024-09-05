@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
@@ -72,6 +73,19 @@ public class BetterComboBox extends JComboBox<String> {
         };
         customRenderer.setBorder(new LineBorder(Color.RED, 4));
         setRenderer(customRenderer);
+    }
+
+    /**
+     * Creates a BetterComboBox with the passed options and text font, then adds the
+     * passed listener.
+     * 
+     * @param options - a String[] with the item options.
+     * @param f       - the Font of the combo box's label.
+     * @param al      - the {@link ActionListener} to add after construction.
+     */
+    public BetterComboBox(String[] options, final Font f, ActionListener al) {
+        this(options, f);
+        this.addActionListener(al);
     }
     
     @Override

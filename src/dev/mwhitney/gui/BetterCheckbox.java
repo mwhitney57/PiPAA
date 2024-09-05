@@ -25,8 +25,8 @@ public class BetterCheckbox extends JCheckBox {
     public BetterCheckbox(String label, boolean checked, Font f) {
         super(label, checked);
         
-        setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(BetterCheckbox.class.getResource("/dev/mwhitney57/images/iconUICheck.png"))));
-        setSelectedIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(BetterCheckbox.class.getResource("/dev/mwhitney57/images/iconUICheckFill.png"))));
+        setIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(BetterCheckbox.class.getResource("/dev/mwhitney/images/iconUICheck.png"))));
+        setSelectedIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(BetterCheckbox.class.getResource("/dev/mwhitney/images/iconUICheckFill.png"))));
         setFocusPainted(false);
         if (f != null)
             setFont(f);

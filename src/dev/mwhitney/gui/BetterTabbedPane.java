@@ -40,7 +40,7 @@ public class BetterTabbedPane extends JTabbedPane {
                     protected void calculateTabRects(int tabPlacement, int tabCount) {
                         super.calculateTabRects(tabPlacement, tabCount);
                         
-                        final int space = 10;
+                        final int space = 6;
                         final int indent = 4;
                         for (int i = 0; i < rects.length; i++) {
                             rects[i].x += i * space + indent;
