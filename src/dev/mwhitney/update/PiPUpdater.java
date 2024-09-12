@@ -179,7 +179,7 @@ public class PiPUpdater {
             
             // Compare Current Version to Version from API -- Get User Confirmation Before Proceeding
             final Version currVersion = Initializer.APP_BUILD.version();
-            final StringBuilder prompt = new StringBuilder(); /* TODO Continue fixing up this logic -- it is confusing. */
+            final StringBuilder prompt = new StringBuilder();
             final boolean updVerNewer =  update.build().version().newerThan(currVersion),
                     updVerSameOrNewer = !update.build().version().olderThan(currVersion);
             

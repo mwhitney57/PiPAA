@@ -45,7 +45,7 @@ public class Initializer {
 
     // Public Static Final Application Variables
     /** The current version of the application. */
-    public static final Build APP_BUILD = new Build(new Version(0,9,3), TYPE_OPTION.SNAPSHOT);
+    public static final Build APP_BUILD = new Build(new Version(0,9,4), TYPE_OPTION.SNAPSHOT);
     /** The application name, but shortened to an acronym. */
     public static final String APP_NAME_SHORT = "PiPAA";
     /** The application name. */
@@ -93,7 +93,7 @@ public class Initializer {
     0-9              -> Seek to 0%, 10%, ... 90% Through Video         |-------------------------------------------------------------------
     CTRL + S         -> Save Current Media to Cache                    | Scroll Up/Down                  -> Zoom
     CTRL + ALT + S   -> Quick-Save Current Media to Cache (Inaccurate) | Scroll Up/Down                  -> Zoom
-                                                                       | LMB (Hold)                      -> Pan (while zoomed)
+    T                -> Cycle Audio Track                              | LMB (Hold)                      -> Pan (while zoomed)
                                                                        |
     Keyboard (Audio):                                                  |
     -------------------------------------------------------------------|
@@ -217,9 +217,22 @@ public class Initializer {
         };
     }
     
+    /**
+     * Performs initialization checks, including the handling of command-line
+     * arguments. Since many initialization checks require a non-<code>null</code>
+     * {@link PropertiesManager}, this method will <b>only</b> handle command-line
+     * arguments if the passed {@link PropertiesManager} is <code>null</code>.
+     * 
+     * @param propsManager - the application PropertiesManager.,
+     * @param args         - any and all command-line arguments provided to the
+     *                     application.
+     */
     private static void initChecks(final PropertiesManager propsManager, String[] args) {
         // Handle Any Command-Line Arguments
         if (args.length > 0) handleArgs(args);
+        
+        // Only Handle Command-Line Arguments -- Return Early on Null PropertiesManager
+        if (propsManager == null) return;
         
         // Check if Application Was Performing an Update
         if (propsManager.has(PiPProperty.APP_UPDATING_FROM)) {

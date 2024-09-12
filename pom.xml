@@ -6,7 +6,7 @@
 
   <groupId>dev.mwhitney</groupId>
   <artifactId>PiPAA</artifactId>
-  <version>0.9.3-SNAPSHOT</version>
+  <version>0.9.4-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Picture-in-Picture Anything Anywhere</name>
@@ -50,7 +50,7 @@
     <dependency>
         <groupId>com.miglayout</groupId>
         <artifactId>miglayout-swing</artifactId>
-        <version>11.4</version>
+        <version>11.4.2</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
     <dependency>

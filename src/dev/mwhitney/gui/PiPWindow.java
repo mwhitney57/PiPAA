@@ -60,22 +60,23 @@ import dev.mwhitney.exceptions.MediaModificationException;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries;
-import dev.mwhitney.main.Initializer;
-import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.Binaries.Bin;
+import dev.mwhitney.main.Initializer;
+import dev.mwhitney.main.Loop;
+import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.PiPProperty.DOWNLOAD_OPTION;
 import dev.mwhitney.main.PiPProperty.OVERWRITE_OPTION;
 import dev.mwhitney.main.PiPProperty.PLAYBACK_OPTION;
 import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
-import dev.mwhitney.main.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.main.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.media.MediaExt;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
+import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
 import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.media.WebMediaFormat;
-import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
 import uk.co.caprica.vlcj.media.AudioTrackInfo;
@@ -84,6 +85,7 @@ import uk.co.caprica.vlcj.media.MetaApi;
 import uk.co.caprica.vlcj.media.VideoTrackInfo;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
+import uk.co.caprica.vlcj.player.base.TrackDescription;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.embedded.fullscreen.windows.Win32FullScreenStrategy;
 
@@ -98,9 +100,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     private static final long serialVersionUID = 6508277241367437180L;
     
     /** The default size (x and/or y) of media (at maximum) when first set. */
-    public static final int DEFAULT_MEDIA_SIZE = 480;
+    public  static final int DEFAULT_MEDIA_SIZE = 480;
     /** The width (in px) of each side of the window's border. */
-    public static final int BORDER_SIZE = 20;
+    public  static final int BORDER_SIZE = 20;
     /** The window insets where the user can drag and resize the window. */
     private static final Insets BORDER_RESIZE_INSETS  = new Insets(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE);
     /** The minimum size of PiPWindows. */
@@ -109,6 +111,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     public  static final Dimension DEFAULT_SIZE       = new Dimension(320, 200);
     /** The maximum size of audio-only PiPWindows. */
     private static final Dimension MAXIMUM_AUDIO_SIZE = new Dimension(128 + (BORDER_SIZE*2), 128 + (BORDER_SIZE*2));
+    
     /* Colors */
     public static final Color TRANSPARENT_BG  = new Color(0,   0,   0,   0.002f);
     public static final Color BORDER_NORMAL   = new Color(0,   69,  107, 200);
@@ -132,8 +135,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     /** The vlcj Media Player Component object. */
     private EmbeddedMediaPlayerComponent mediaPlayer;
     /**
-     * The media currently being displayed in this window. Can be null, in which
-     * case no media is currently displayed.
+     * The media currently being displayed in this window. Can be <code>null</code>,
+     * in which case no media is currently displayed.
      */
     private volatile PiPMedia media;
     /** A boolean which is true when the current media is being saved. */
@@ -158,8 +161,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     /** An object for retrieving presets of various listeners used by PiPWindows. */
     private PiPWindowListeners listeners;
     /**
-     * A PiPAdapter intended to be set by the manager of this PiPWindow for
-     * communication back to the manager.
+     * A {@link PiPWindowManagerAdapter}, set by the manager of this PiPWindow for
+     * receiving communication from this instance.
      */
     private PiPWindowManagerAdapter managerListener;
 
@@ -644,6 +647,26 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     mediaCommand(PiPMediaCMD.MUTEUNMUTE);
                 }
                 break;
+            // CYCLE AUDIO TRACKS
+            case KeyEvent.VK_T:
+                final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().audio().trackDescriptions();
+                if (tracks.size() > 1) {
+                    // Determine starting index for loop, then find next track in cycle.
+                    final List<Integer> trackIDs = tracks.stream().map(t -> t.id()).toList();
+                    final int index = trackIDs.indexOf(mediaPlayer.mediaPlayer().audio().track());
+                    final Loop<TrackDescription> trackLoop = new Loop<>(tracks.toArray(TrackDescription[]::new), index);
+                    
+                    // Skip disabled audio track -- duplicate functionality to muting
+                    if (trackLoop.next().id() == -1 && trackLoop.current().description().equalsIgnoreCase("Disable"))
+                        trackLoop.next();
+                    
+                    // Set new audio track selection and notify user.
+                    mediaPlayer.mediaPlayer().audio().setTrack(trackLoop.current().id());
+                    EasyTopDialog.showMsg(this, "Audio Track: " + trackLoop.current().description(), PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
+                } else {
+                    EasyTopDialog.showMsg(this, "No audio tracks.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
+                }
+                break;
             // SAVE TO CACHE
             case KeyEvent.VK_S:
                 if (ctrlDown && state.not(SAVING_MEDIA) && hasAttributedMedia() && !media.getAttributes().isLocal()) {
@@ -654,10 +677,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         break;
                     }
                     
-                    SwingUtilities.invokeLater(() -> setIconImage(ICON_WORK));
-                    state.on(SAVING_MEDIA).hook(SAVING_MEDIA, false, () -> SwingUtilities.invokeLater(() -> {
-                        setIconImage(ICON_NORMAL);
-                    }));
+                    iconUpdate(ICON_WORK);
+                    state.on(SAVING_MEDIA).hook(SAVING_MEDIA, false, () -> iconUpdate(ICON_NORMAL));
                     flashBorderEDT(BORDER_PROGRESS);
                     titleStatusUpdate("[Attempting to Cache...]");
                     
@@ -685,11 +706,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     if (!media.isCached()) EasyTopDialog.showMsg(this, "Could not save media to the cache.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)));
                     titleStatusUpdate(null);
                     state.off(SAVING_MEDIA);
-                    /* 
-                     * TODO Consider whether or not media with a direct link that has now been changed to type WEB_DIRECT should just ALWAYS load the link
-                     * directly, OR have what WOULD be it's original source's filename checked to see if it is already cached then use that.
-                     * Basically, should Cached Media still load the Converted Direct Link, even though it is Cached and identifiable via the original source?
-                     */
                 }
                 break;
             // ADD ARTWORK
@@ -806,7 +822,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 // Trim Transparent Edges if Set and Applicable
                 if (propertyState(PiPProperty.TRIM_TRANSPARENCY, Boolean.class) && (media.getAttributes().isImage() || media.getAttributes().isGIF())) {
                     titleStatusUpdate("[Trimming...]");
-                    SwingUtilities.invokeLater(() -> setIconImage(ICON_TRIM));
+                    iconUpdate(ICON_TRIM);
                     try {
                         final String croppedSrc = media.trimTransparency(args[0], TRIM_OPTION.NORMAL.matchAny(propertyState(PiPProperty.TRIM_TRANSPARENCY_OPTION, String.class)));
                         if (!croppedSrc.equals(args[0])) {
@@ -824,7 +840,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 // Advanced GIF Playback Conversion
                 if (media.getAttributes().isGIF() && media.getAttributes().usesAdvancedGIFPlayback()) {
                     titleStatusUpdate("[Converting...]");
-                    SwingUtilities.invokeLater(() -> setIconImage(ICON_WORK));
+                    iconUpdate(ICON_WORK);
                     final String mediaNameID = media.getAttributes().getFileTitleID();
                     final String result = convertGIFToVideo(args[0], Initializer.APP_CACHE_FOLDER + "/gif/" + mediaNameID + ".mp4");
                     if (result == null) {
@@ -1406,7 +1422,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         
         // Download the Remote Media and Update Source Information
         titleStatusUpdate("[Downloading...]");
-        SwingUtilities.invokeLater(() -> setIconImage(ICON_DOWNLOAD));
+        iconUpdate(ICON_DOWNLOAD);
         String dlResult  = downloadMedia(media, cacheFolder.toString(), platformArgs.toArray(new String[0]));
         if (dlResult == null) {
             platformArgs = getRemoteArgs(src,   cacheFolder.toString(), media, (triedDLPFirst ? Bin.GALLERY_DL : Bin.YT_DLP));
@@ -1606,6 +1622,19 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             PiPWindow.this.textField.setText((txt == null) ? "" : txt.trim());
             PiPWindow.this.textResetTimer.restart();
         });
+    }
+    
+    /**
+     * Updates the window's icon to be the passed {@link Image}.
+     * This method is shorthand for calling:
+     * <pre>
+     *   SwingUtilities.invokeLater(() -> setIconImage(img));
+     * </pre>
+     * 
+     * @param img - the {@link Image} to use for this window's icon.
+     */
+    public void iconUpdate(final Image img) {
+        SwingUtilities.invokeLater(() -> setIconImage(img));
     }
     
     /**
