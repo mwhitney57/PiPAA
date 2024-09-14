@@ -188,8 +188,8 @@ public class PiPWindowManager implements PropertyListener {
         if (index < 0 || index >= windows.size() || windows.get(index) == null) return false;
         windows.get(index).closeWindow();
         
-        // Update Live Window Count
-        liveWindowCountDec();
+        liveWindowCountDec(); // Update Live Window Count
+        gcIfZeroCount();      // GC If Cleared Last Window -- See Method's Doc. As To Why
         return true;
     }
     
@@ -271,16 +271,9 @@ public class PiPWindowManager implements PropertyListener {
     
     /**
      * Clears (removes) all windows managed by this window manager.
-     * Runs <b>synchronously</b>. Call <code>clearWindows()</code> to run it asynchronously.
-     * <p>
-     * <b>Note:</b> This method also calls the garbage collector. Though often bad
-     * practice, this GC call is ideal in this circumstance. After clearing windows,
-     * especially ones with images, the garbage collector has proven to be lazy in
-     * testing. Even after flushing the images, it waits for a long time before
-     * freeing up that memory (if ever.) This could lead to memory issues for the
-     * user if more and more windows with images are added and removed, assuming
-     * that Java does not catch on before that happens. The benefit is worth the
-     * cost.
+     * Runs <b>synchronously</b>.
+     * 
+     * @see {@link #clearWindows()} to run this code asynchronously.
      */
     private void clearWindowsInSync() {
         // Iterate. Don't need Iterator -- not removing from List during loop.
@@ -291,9 +284,6 @@ public class PiPWindowManager implements PropertyListener {
             }
         }
         this.windows.clear();
-        
-        // Call GC -- See Method Doc. as to Why
-        System.gc();
     }
     
     /**
@@ -302,6 +292,27 @@ public class PiPWindowManager implements PropertyListener {
      */
     public void exit() {
         clearWindowsInSync();
+    }
+    
+    /**
+     * Calls {@link System#gc()} if the {@link #windowCount()} proves there are no
+     * open windows.
+     * <p>
+     * Though often bad practice, this call is ideal in this circumstance. After
+     * clearing windows, especially ones with images, the garbage collector has
+     * proven to be lazy in testing. Even after flushing the images, it waits for a
+     * long time before freeing up that memory (if ever.) This could lead to memory
+     * issues for the user if more and more windows with images are added and
+     * removed, assuming that Java does not catch on before that happens. The
+     * benefit is worth the cost.
+     * <p>
+     * Calling the garbage collector once the window count hits zero is ideal. This
+     * is helpful when the user wants to not use the application, but leaves it
+     * running. Idle background applications should take up as little memory as
+     * possible.
+     */
+    private void gcIfZeroCount() {
+        if (windowCount() <= 0) System.gc();
     }
     
     /**

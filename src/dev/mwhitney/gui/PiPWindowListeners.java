@@ -739,12 +739,6 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     }
     
     // Listener Methods
-    // TODO: Deprecated, remove after next commit.
-//    @Override
-//    public void setWindowLocation(int x, int y) {
-//        if (SwingUtilities.isEventDispatchThread()) get().setLocation(x, y);
-//        else SwingUtilities.invokeLater(() -> get().setLocation(x, y));
-//    }
     @Override
     public void setWindowMedia(PiPMedia media)  {
         if (SwingUtilities.isEventDispatchThread()) CompletableFuture.runAsync(() -> get().setMedia(media));

@@ -38,6 +38,8 @@ public enum PiPProperty {
     APP_UPDATE_FREQUENCY,
     /** What type of updates should be checked for? Regular releases, beta versions, etc. */
     APP_UPDATE_TYPE,
+    /** Should the application "force" an update prompt on the user, even if the latest version is the same? */
+    APP_UPDATE_FORCE,
     /** The last time an application update check was performed, automatically or manually. */
     APP_LAST_UPDATE_CHECK,
     /** The build that the application was last updating from. Only present during an update cycle restart. */
@@ -78,6 +80,7 @@ public enum PiPProperty {
         case TRIM_TRANSPARENCY,
              GLOBAL_MUTED,
              DISABLE_CACHE,
+             APP_UPDATE_FORCE,
              USE_SYS_BINARIES         -> "false";
         case DEFAULT_VOLUME           -> "50";
         case DEFAULT_PLAYBACK_RATE    -> "1";

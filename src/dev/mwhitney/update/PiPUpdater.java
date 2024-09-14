@@ -160,9 +160,11 @@ public class PiPUpdater {
      *                  default to checking for an update.
      * @param type      - a {@link TYPE_OPTION} for the update release type to check
      *                  for.
+     * @param force     - a boolean for if the update prompt should forced to be shown.
      * @return a {@link PiPUpdateResult} with the update process results.
+     * @see {@link #updateApp(TYPE_OPTION, boolean)} to assume the app should check for an update.
      */
-    public static PiPUpdateResult updateApp(@NotNull String frequency, @NotNull String lastCheck, @NotNull TYPE_OPTION type) {
+    public static PiPUpdateResult updateApp(@NotNull String frequency, @NotNull String lastCheck, @NotNull TYPE_OPTION type, boolean force) {
         // Setup Result
         final PiPUpdateResult result = new PiPUpdateResult(
             shouldUpdate(PropDefault.FREQUENCY_APP.matchAny(frequency), lastCheck), false, false, false
@@ -192,6 +194,9 @@ public class PiPUpdater {
             // Only update when the version is newer and the type is the same.
             else if (update.build().type() == Initializer.APP_BUILD.type() && updVerNewer)
                 prompt.append("A new update is available!");
+            // Prompt anyway if forced by passed boolean.
+            else if (force)
+                prompt.append("App update prompt forced.");
             
             // Set user prompted and prompt user.
             final BooleanSupplier userConfirm = () -> {
@@ -215,6 +220,42 @@ public class PiPUpdater {
             }
         } catch (Exception e) { result.setException(new PiPUpdateException("Update process failed unexpectedly.", e)); }
         return result;
+    }
+    
+    /**
+     * Updates the entire application, depending on the passed parameters.
+     * <p>
+     * This method automatically assumes an update should be checked for. An API
+     * request will be made using the {@link APICommunicator} using the passed
+     * {@link TYPE_OPTION}. A {@link Build} will be retrieved and used for
+     * comparison. If one of the following conditions are met, the user will be
+     * asked if they would like to update:
+     * <pre>
+     * - The update build is of the same type and the version is newer.
+     * - The update build is NOT more stable, older, and of the same type as the least stable-allowed build AND...
+     *      - The update build is less stable, but the version is newer.
+     *      - The update build is more stable, but the version is older.
+     * </pre>
+     * If the update's version is newer than the current version, the user will be
+     * prompted if they would like to update.
+     * <p>
+     * If all of the above conditions have been met and the user confirmed, the
+     * {@link PiPUpdateResult#updated()} method will be return <code>true</code>.
+     * The application will attempt to update itself automatically in this case, but
+     * it must be closed in order to do so. <b>It is up to the caller of this method
+     * to exit the application in a reasonable amount of time after the
+     * {@link PiPUpdateResult} is returned.</b> If the application remains open, the
+     * update attempt will eventually timeout.
+     * 
+     * @param type  - a {@link TYPE_OPTION} for the update release type to check
+     *              for.
+     * @param force - a boolean for if the update prompt should forced to be shown.
+     * @return a {@link PiPUpdateResult} with the update process results.
+     * @see {@link #updateApp(String, String, TYPE_OPTION, boolean)} to have the
+     *      method also calculate if the app should check for an update.
+     */
+    public static PiPUpdateResult updateApp(@NotNull TYPE_OPTION type, boolean force) {
+        return updateApp(null, null, type, force);
     }
     
     /**

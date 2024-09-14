@@ -113,6 +113,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private BetterComboBox comboAppUpdateFreq;
     /** The BetterComboBox for the {@link PiPProperty#APP_UPDATE_TYPE} property. */
     private BetterComboBox comboAppUpdateType;
+    /** The BetterCheckbox for the {@link PiPProperty#APP_UPDATE_FORCE} property. */
+    private BetterCheckbox chkForceAppUpdate;
     /** The BetterComboBox for the {@link PiPProperty#BIN_UPDATE_FREQUENCY} property. */
     private BetterComboBox comboBinUpdateFreq;
     
@@ -376,6 +378,11 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             propertyChanged(PiPProperty.APP_UPDATE_FREQUENCY, frequency.toString());
             ((BetterComboBox) e.getSource()).setToolTipText(frequency.description());
         });
+        chkForceAppUpdate = new BetterCheckbox("Force Update Prompt:", true, titleFont);
+        chkForceAppUpdate.addActionListener(e -> propertyChanged(PiPProperty.APP_UPDATE_FORCE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkForceAppUpdate.setToolTipText("Force the application to ask if you'd like to update, even if the version is the same. Only with manual updates via the button.");
+        chkForceAppUpdate.setHorizontalTextPosition(SwingConstants.LEADING);
+        chkForceAppUpdate.setIconTextGap(107);
         final BetterButton btnUpdateApp = new BetterButton("Check for Application Update", titleFont, (e) -> {
             // Do not stack update requests.
             if (PiPUpdater.APP_UPDATING) return;
@@ -383,13 +390,14 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             
             // Run off of the EDT.
             CompletableFuture.runAsync(() -> {
-                final PiPUpdateResult result = PiPUpdater.updateApp(null, null, PropDefault.TYPE.matchAny(propertyState(PiPProperty.APP_UPDATE_TYPE, String.class)));
+                final boolean force = propertyState(PiPProperty.APP_UPDATE_FORCE, Boolean.class);
+                final PiPUpdateResult result = PiPUpdater.updateApp(PropDefault.TYPE.matchAny(propertyState(PiPProperty.APP_UPDATE_TYPE, String.class)), force);
                 if (result.checked()) {
                     propertyChanged(PiPProperty.APP_LAST_UPDATE_CHECK, LocalDateTime.now().toString());
                     if (!result.userPrompted()) EasyTopDialog.showMsg(this, "No update available.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), false);
                 }
                 if (result.updated()) {
-                    propertyChanged(PiPProperty.APP_UPDATING_FROM, Initializer.APP_BUILD.toString());
+                    propertyChanged(PiPProperty.APP_UPDATING_FROM, (force ? "FORCED-" : "") + Initializer.APP_BUILD.toString());
                     System.exit(0);
                 }
                 if (result.hasException()) System.err.println("Warning, app update process failed: " + result.exception().getTotalMessage());
@@ -451,8 +459,6 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         paneGeneral.add(comboDLWebMedia, "gaptop 5px, split 2, w 55%");
         paneGeneral.add(lblDLWebMediaTitle, "span, wrap 4px");
         paneGeneral.add(lblDLWebMedia, "wrap");
-//        paneGeneral.add(chkAlwaysDLWeb, "wrap 0px");
-//        paneGeneral.add(lblAlwaysDLWeb, "wrap 5px");
         paneGeneral.add(chkConvertIndWeb, "wrap 0px");
         paneGeneral.add(lblConvIndWeb, "wrap 5px");
         paneGeneral.add(chkTrimTransparency, "split 2, w 70%");
@@ -494,6 +500,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         paneUpdates.add(comboAppUpdateType, "gaptop 5px, w 40%, wrap 4px");
         paneUpdates.add(lblAppUpdateFreqTitle, "split 2, w 60%");
         paneUpdates.add(comboAppUpdateFreq, "gaptop 5px, w 40%, wrap 4px");
+        paneUpdates.add(chkForceAppUpdate, "x 3px, span, wrap 4px");
         paneUpdates.add(btnUpdateApp, "gaptop 5px, span, w 100%, h pref!, wrap 30px");
         paneUpdates.add(lblBinUpdateTitle, "alignx center, wrap");
         paneUpdates.add(lblBinUpdateDesc, "wrap");
@@ -706,6 +713,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             case SNAPSHOT -> 2;
             });
             comboAppUpdateType.setToolTipText(type.description());
+            break;
+        case APP_UPDATE_FORCE:
+            chkForceAppUpdate.setSelected(propertyState(prop, Boolean.class));
             break;
         case BIN_UPDATE_FREQUENCY:
             final FREQUENCY_OPTION binFrequency = PropDefault.FREQUENCY_BIN.matchAny(propertyState(prop, String.class));

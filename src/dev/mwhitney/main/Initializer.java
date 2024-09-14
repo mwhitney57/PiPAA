@@ -236,12 +236,16 @@ public class Initializer {
         
         // Check if Application Was Performing an Update
         if (propsManager.has(PiPProperty.APP_UPDATING_FROM)) {
-            final String updatingFrom = propsManager.get(PiPProperty.APP_UPDATING_FROM);
+            String updatingFrom = propsManager.get(PiPProperty.APP_UPDATING_FROM);
+            final boolean forced = (updatingFrom.startsWith("FORCED-"));
+            if (forced) updatingFrom = updatingFrom.replaceFirst("FORCED-", "");
             try {
                 final String[] parts = updatingFrom.split("-");
                 if (parts.length == 2) {
                     final Build fromBuild = new Build(Version.form(parts[0]), TYPE_OPTION.parseSafe(parts[1]));
-                    if (APP_BUILD.equals(fromBuild))
+                    if (APP_BUILD.equals(fromBuild) && forced)
+                        CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, "PiPAA was forcefully updated to the same version.\n\nThe app may not be any different.", "Update Complete", JOptionPane.INFORMATION_MESSAGE));
+                    else if (APP_BUILD.equals(fromBuild))
                         CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, "PiPAA failed to update.", "Update Error", JOptionPane.INFORMATION_MESSAGE));
                     else
                         CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, "PiPAA has been updated from " + fromBuild + " to " + APP_BUILD + ".", "Update Complete", JOptionPane.INFORMATION_MESSAGE));
@@ -344,7 +348,7 @@ public class Initializer {
         final String frequencyApp  = propsManager.get(PiPProperty.APP_UPDATE_FREQUENCY);
         final String lastCheckApp  = propsManager.get(PiPProperty.APP_LAST_UPDATE_CHECK);
         final String appUpdateType = propsManager.get(PiPProperty.APP_UPDATE_TYPE);
-        final PiPUpdateResult result = PiPUpdater.updateApp(frequencyApp, lastCheckApp, PropDefault.TYPE.matchAny(appUpdateType));
+        final PiPUpdateResult result = PiPUpdater.updateApp(frequencyApp, lastCheckApp, PropDefault.TYPE.matchAny(appUpdateType), false);
         if (result.checked()) propsManager.set(PiPProperty.APP_LAST_UPDATE_CHECK.toString(), LocalDateTime.now().toString());
         if (result.updated()) {
             propsManager.set(PiPProperty.APP_UPDATING_FROM.toString(), Initializer.APP_BUILD.toString());
