@@ -76,25 +76,25 @@ public class Initializer {
                                      _____________________________________________________________________
                                               LMB / MMB / RMB = Left, Middle, Right Mouse Button
                                                 *Controls that respect the following modifiers:
-                                         (Hold CTRL = More; Hold SHIFT = Less; Hold BOTH = Max Amount)
+                                        (Hold CTRL = More | Hold SHIFT = Less | Hold BOTH = Max Amount)
     
     Keyboard (Video/Audio/Adv. GIF):                                   | Mouse (Video/Audio/Adv. GIF):
     -------------------------------------------------------------------|-------------------------------------------------------------------
     Spacebar         -> Play/Pause                                     | LMB Click                       -> Play/Pause
-    L-Arrow        * -> Back                                           | MMB (Hold) then LMB Click       -> Back
-    R-Arrow        * -> Forward                                        | MMB (Hold) then RMB Click       -> Forward
+    L-Arrow        * -> Seek Backwards                                 | MMB (Hold) then LMB Click       -> Seek Backwards
+    R-Arrow        * -> Seek Forwards                                  | MMB (Hold) then RMB Click       -> Seek Forwards
     Up-Arrow       * -> Volume Up                                      | Scroll Up/Down                  -> Volume Adjust
-    Down-Arrow     * -> Volume Down                                    |
-    Minus (-)      * -> Slower Playback Rate                           |
+    Down-Arrow     * -> Volume Down                                    | RMB (Hold) then Scroll Up/Down  -> Playback Rate Adjust
+    Minus (-)      * -> Slower Playback Rate                           | RMB (Hold) then MMB Click       -> Playback Rate Reset
     Plus (+)       * -> Faster Playback Rate                           |
     Period (.)       -> Frame-by-Frame Forward                         |
     M                -> Mute/Unmute                                    |
-    CTRL + SHIFT + M -> Global Mute/Unmute                             | Mouse (Image/GIF):
-    0-9              -> Seek to 0%, 10%, ... 90% Through Video         |-------------------------------------------------------------------
-    CTRL + S         -> Save Current Media to Cache                    | Scroll Up/Down                  -> Zoom
+    CTRL + SHIFT + M -> Global Mute/Unmute                             |
+    0-9              -> Seek to 0%, 10%, ... 90% Through Video         | Mouse (Image/GIF):
+    CTRL + S         -> Save Current Media to Cache                    |-------------------------------------------------------------------
     CTRL + ALT + S   -> Quick-Save Current Media to Cache (Inaccurate) | Scroll Up/Down                  -> Zoom
-    T                -> Cycle Audio Track                              | LMB (Hold)                      -> Pan (while zoomed)
-                                                                       |
+    T                -> Cycle Audio Track                              | CTRL + MMB Click                -> Reset Zoom
+                                                                       | LMB (Hold) & Drag               -> Pan (while zoomed)
     Keyboard (Audio):                                                  |
     -------------------------------------------------------------------|
     A                -> Add Artwork to Audio File                      |
@@ -102,13 +102,13 @@ public class Initializer {
                                                                        |
     Keyboard (All):                                                    | Mouse (All):
     -------------------------------------------------------------------|-------------------------------------------------------------------
-    B                -> Flash Borders of Window                        | Right Click on Window & Drag    -> Move Window
+    B                -> Flash Borders of Window                        | RMB on Window & Drag            -> Move Window
     F                -> Fullscreen ON/OFF                              | Double-Click LMB                -> Fullscreen ON/OFF
     I                -> Show Window/Media Information                  | Double-Click LMB (Empty Window) -> Paste Shortcut
     L                -> Relocate Window In-Screen (if off-screen)      | Double-Click MMB                -> Add a Window
     Escape           -> Close Window                                   | Triple-Click RMB                -> Close Media in Window
     SHIFT + Escape   -> Close All Windows                              | Triple-Click RMB (Empty Window) -> Close Window
-    SHIFT + A        -> Add a Window                                   | 
+    SHIFT + A        -> Add a Window                                   |
     SHIFT + D        -> Duplicate Window                               |
     CTRL + C         -> Close Media in Window                          |
     CTRL + SHIFT + D -> Close then Delete Media from Cache (if cached) |
@@ -148,18 +148,16 @@ public class Initializer {
             public <T> T propertyState(PiPProperty prop, Class<T> rtnType) {
                 // Ensure the property has a value. If it doesn't, reset it to the default.
                 final boolean hasValue = propsManager.get(prop) != null;
-                if (!hasValue) {
-                    propsManager.setDefault(prop);
-                }
+                if (!hasValue) propsManager.setDefault(prop);
                 
                 // Return a different type depending on the state request.
-                if (rtnType == Boolean.class) {
+                if (rtnType == Boolean.class)
                     return (T) Boolean.valueOf(propsManager.get(prop));
-                } else if (rtnType == Float.class) {
+                else if (rtnType == Float.class)
                     return (T) Float.valueOf(propsManager.get(prop));
-                } else if (rtnType == Integer.class) {
+                else if (rtnType == Integer.class)
                     return (T) Integer.valueOf(propsManager.get(prop));
-                } else {
+                else {
                     return (T) propsManager.get(prop);
                 }
             }
@@ -178,17 +176,14 @@ public class Initializer {
         final Tray tray = new Tray() {
             @Override
             public void propertyChanged(PiPProperty prop, String value) {
-                System.out.println(prop.toString());
                 // Only Set Prop Values for Certain PiPProperty Values
                 switch(prop) {
                 case SET_ALL_PAUSED, SET_ALL_MUTED, SET_ALL_PLAYBACK_RATE, SET_ALL_VOLUME -> {}
                 case USE_SYS_BINARIES -> {
-                    if (Boolean.valueOf(value)) 
-                        CompletableFuture.runAsync(() -> {
-                            try {
-                                Binaries.refreshOnSys();
-                            } catch (InterruptedException e) { e.printStackTrace(); }
-                        });
+                    // Refresh available system binaries when property is enabled.
+                    if (Boolean.valueOf(value))
+                        CFExec.run(() -> Binaries.refreshOnSys()).excepts((i, e) -> e.printStackTrace());
+                    
                     propsManager.set(prop.toString(), value);
                 }
                 default -> propsManager.set(prop.toString(), value);

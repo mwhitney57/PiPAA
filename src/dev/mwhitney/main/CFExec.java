@@ -178,7 +178,8 @@ public class CFExec {
         private T result;
         
         /**
-         * Creates a new CFExecResult instance with any thrown {@link Exception} as well as the raw execution result.
+         * Creates a new CFExecResult instance with any thrown {@link Exception} as well
+         * as the raw execution result.
          * 
          * @param ex  - the {@link Exception} thrown during execution, if any.
          * @param res - the raw result, of type <code>T</code>.
@@ -186,6 +187,16 @@ public class CFExec {
         private CFExecResult(Exception ex, T res) {
             this.exception = ex;
             this.result = res;
+        }
+        
+        /**
+         * Creates a new CFExecResult instance with any thrown {@link Exception} and a
+         * default <code>null</code> execution result.
+         * 
+         * @param ex - the {@link Exception} thrown during execution, if any.
+         */
+        private CFExecResult(Exception ex) {
+            this(ex, null);
         }
         
         /**
@@ -210,6 +221,66 @@ public class CFExec {
         public T result() {
             return this.result;
         }
+    }
+    
+    /**
+     * Runs every passed {@link PiPRunnable} synchronously and sequentially. The
+     * method performs run calls on each Runnable, one by one. Additionally, this
+     * method will catch and store any exception thrown by each runnable. Each
+     * exception can be handled individually through the returned
+     * {@link CFExecResults}.
+     * <p>
+     * <b>Note:</b> This method blocks until each and every one has executed or
+     * thrown an exception.
+     * <p>
+     * If any passed {@link PiPRunnable} objects are <code>null</code>, they will
+     * simply be ignored and the result pertaining to that runnable will be have
+     * <code>null</code> values for both the result and any caught exception.
+     * 
+     * @param runs - one or more {@link PiPRunnable} objects to execute one after
+     *             the other.
+     * @return a {@link CFExecResults} instance with result type <code>Void</code>,
+     *         since no result is provided within.
+     * @see {@link #run(PiPRunnable...)} to run multiple batches of code
+     *      nearly-simultaneously and asynchronously.
+     * @see {@link #runAndGet(PiPSupplier...)} to get and store an object from the
+     *      passed suppliers in the returned results.
+     */
+    @SuppressWarnings("unchecked")
+    @NeedsTesting
+    public static CFExecResults<Void> runSync(PiPRunnable... runs) {
+        // Do nothing if array is null or no elements.
+        if (runs == null || runs.length < 1) return null;
+        
+        // Initialize array, nest runs and store it in array.
+        final Runnable[] nestedRuns = new Runnable[runs.length];
+        for (int i = 0; i < runs.length; i++) {
+            // Ignore any null objects.
+            if (runs[i] == null) continue;
+            
+            // Setup Nested Runnable with CompletionException Error Throw
+            final int r = i;
+            nestedRuns[i] = () -> {
+                try {
+                    runs[r].run();
+                } catch (Exception e) { throw new CompletionException(e); }
+            };
+        }
+        
+        // For each, run back to back before finishing function.
+        final CFExecResult<Void>[] results = new CFExecResult[runs.length];
+        for (int i = 0; i < nestedRuns.length; i++) {
+            Exception exc = null;
+            try {
+                if (nestedRuns[i] != null) nestedRuns[i].run();
+            } catch (CompletionException ce) {
+                exc = (Exception) ce.getCause();
+            }
+            results[i] = new CFExecResult<Void>(exc);
+        }
+        
+        // Return execution results.
+        return new CFExecResults<Void>(results);
     }
     
     /**
@@ -265,13 +336,60 @@ public class CFExec {
             } catch (CompletionException e) {
                 exc = (Exception) e.getCause();
             }
-            gets[i] = new CFExecResult<Void>(exc, null);
+            gets[i] = new CFExecResult<Void>(exc);
         }
         
         // Return execution results.
         return new CFExecResults<Void>(gets);
     }
     
+    /**
+     * Runs every passed {@link PiPRunnable} asynchronously and sequentially. The
+     * method performs async run calls on each Runnable, one after the other. Then,
+     * it waits for all of them to finish executing.
+     * <p>
+     * <b>Note:</b> This method suppresses any and every {@link Exception} thrown
+     * during execution of a {@link PiPRunnable}.
+     * <p>
+     * If any passed {@link PiPRunnable} objects are <code>null</code>, they will
+     * simply be ignored and the result pertaining to that runnable will be have
+     * <code>null</code> values for both the result and any caught exception.
+     * 
+     * @param runs - one or more PiPRunnables to execute sequentially.
+     * @see {@link #run(PiPRunnable...)} to get simultaneous and synchronous
+     *      execution, while also receiving a returned result.
+     */
+    @NeedsTesting
+    public static void runSequential(PiPRunnable... runs) {
+        // Do nothing if array is null or no elements.
+        if (runs == null || runs.length < 1) return;
+        
+        // Initialize array, nest runs and store it in array.
+        final Runnable[] nestedRuns = new Runnable[runs.length];
+        for (int i = 0; i < runs.length; i++) {
+            // Ignore any null objects.
+            if (runs[i] == null) continue;
+            
+            // Setup Nested Runnable with CompletionException Error Throw
+            final int r = i;
+            nestedRuns[i] = () -> {
+                try {
+                    runs[r].run();
+                } catch (Exception e) { throw new CompletionException(e); }
+            };
+        }
+        
+        // Perform runs sequentially and asynchronously.
+        CompletableFuture.runAsync(() -> {
+            // For each, run back to back before finishing function.
+            for (int i = 0; i < nestedRuns.length; i++) {
+                try {
+                    if (nestedRuns[i] != null) nestedRuns[i].run();
+                } catch (CompletionException e) { /* Suppress exception. */ }
+            }
+        });
+    }
+
     /**
      * Runs every passed {@link PiPSupplier} asynchronously, and nearly
      * simultaneously. The method performs async run calls on each Supplier. Then,
@@ -337,52 +455,5 @@ public class CFExec {
         
         // Return execution results.
         return new CFExecResults<T>(gets);
-    }
-    
-    /**
-     * Runs every passed {@link PiPRunnable} asynchronously and sequentially. The
-     * method performs async run calls on each Runnable, one after the other. Then,
-     * it waits for all of them to finish executing.
-     * <p>
-     * <b>Note:</b> This method suppresses any and every {@link Exception} thrown
-     * during execution of a {@link PiPRunnable}.
-     * <p>
-     * If any passed {@link PiPRunnable} objects are <code>null</code>, they will
-     * simply be ignored and the result pertaining to that runnable will be have
-     * <code>null</code> values for both the result and any caught exception.
-     * 
-     * @param runs - one or more PiPRunnables to execute sequentially.
-     * @see {@link #run(PiPRunnable...)} to get simultaneous and synchronous
-     *      execution, while also receiving a returned result.
-     */
-    @NeedsTesting
-    public static void runAsyncSequential(PiPRunnable... runs) {
-        // Do nothing if array is null or no elements.
-        if (runs == null || runs.length < 1) return;
-        
-        // Initialize array, nest runs and store it in array.
-        final Runnable[] nestedRuns = new Runnable[runs.length];
-        for (int i = 0; i < runs.length; i++) {
-            // Ignore any null objects.
-            if (runs[i] == null) continue;
-            
-            // Setup Nested Runnable with CompletionException Error Throw
-            final int r = i;
-            nestedRuns[i] = () -> {
-                try {
-                    runs[r].run();
-                } catch (Exception e) { throw new CompletionException(e); }
-            };
-        }
-        
-        // Perform runs sequentially and asynchronously.
-        CompletableFuture.runAsync(() -> {
-            // For each, run back to back before finishing function.
-            for (int i = 0; i < nestedRuns.length; i++) {
-                try {
-                    if (nestedRuns[i] != null) nestedRuns[i].run();
-                } catch (CompletionException e) { /* Suppress exception. */ }
-            }
-        });
     }
 }

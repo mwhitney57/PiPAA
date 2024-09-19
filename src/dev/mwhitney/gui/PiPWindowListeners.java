@@ -332,7 +332,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                     middleMouseDown = false;
 
                     // Playback Rate/Speed Reset Shortcut
-                    if (leftMouseDown)
+                    if (dragOrigin != null)
                         sendMediaCMD(PiPMediaCMD.SPEED_ADJUST, "SET", "1.00f");
                 }
             }
@@ -346,7 +346,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                 final boolean ctrlDown  = (e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK)  != 0;
 
                 // Playback Rate/Speed Adjust Shortcut
-                if (leftMouseDown)
+                if (dragOrigin != null)
                     sendMediaCMD(PiPMediaCMD.SPEED_ADJUST, "SKIP", Float.toString(wheelClicks * 0.1f));
                 // Zoom Adjust Shortcut
                 else if (get().state().is(PLAYER_SWING))
@@ -419,7 +419,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         } catch (InvalidTransferMediaException e) {
             System.err.println("Error: The current implementation was unable to get valid media from the clipboard transfer. (" + e.getMessage() + ")");
         }
-        
+        // Handle Failed Copy/Paste
         transferFailed("Could not interpret clipboard contents as valid media.");
     }
 
