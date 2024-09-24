@@ -56,6 +56,11 @@ public class PiPWindowState {
          */
         LOCALLY_MUTED,
         /**
+         * Whether the window or component of the window has crashed.
+         * Cannot be turned OFF (false) once set to ON (true).
+         */
+        CRASHED,
+        /**
          * Whether the window has begun closing at any point.
          * Cannot be turned OFF (false) once set to ON (true).
          */
@@ -104,7 +109,12 @@ public class PiPWindowState {
     private boolean locallyMuted;
     
     /**
-     * A boolean for whether to not the window is closing, which will
+     * A boolean for whether or not the window, or a component of the window, has
+     * crashed.
+     */
+    private boolean crashed;
+    /**
+     * A boolean for whether or not the window is closing, which will
      * only and permanently read as true when it has happened once.
      * In other words, this should never be reset to false;
      */
@@ -208,6 +218,7 @@ public class PiPWindowState {
         case MANUALLY_STOPPED -> this.manuallyStopped = val;
         case LOCALLY_MUTED    -> this.locallyMuted    = val;
         // Permanent State Property Changes
+        case CRASHED          -> this.crashed = (val ? true : this.crashed);
         case CLOSING          -> this.closing = (val ? true : this.closing);
         case CLOSED           -> this.closed  = (val ? true : this.closed);
         }
@@ -231,9 +242,9 @@ public class PiPWindowState {
         case MANUALLY_PAUSED  ->  this.manuallyPaused;
         case MANUALLY_STOPPED ->  this.manuallyStopped;
         case LOCALLY_MUTED    ->  this.locallyMuted;
+        case CRASHED          ->  this.crashed;
         case CLOSING          ->  this.closing;
         case CLOSED           ->  this.closed;
-        default               ->  false;
         };
     }
     

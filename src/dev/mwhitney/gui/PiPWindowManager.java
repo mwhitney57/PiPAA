@@ -406,7 +406,7 @@ public class PiPWindowManager implements PropertyListener {
      * Decrements the live window count by 1.
      */
     private void liveWindowCountDec() {
-        setLiveWindowCount(this.liveWindowCount - 1);
+        setLiveWindowCount(Math.max(0, this.liveWindowCount - 1));
     }
     
     /**

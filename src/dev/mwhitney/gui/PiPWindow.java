@@ -2,6 +2,7 @@ package dev.mwhitney.gui;
 
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.CRASHED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOADING;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCALLY_MUTED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.MANUALLY_PAUSED;
@@ -741,6 +742,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                  * a quick prompt to either add the image as artwork to the audio media or
                  * open it in a new window. Maybe config option for this: Replace Artwork, Open Window, Ask?
                  * That last part might be over-complicating things.
+                 * 
+                 * REF: UI-Concept-Dnd-Artwork.png for UI visual.
                  */
                 // Delete Current Artwork from VLC Art Cache to Prevent Persistence
                 final String currentArt = mediaPlayer.mediaPlayer().media().meta().get(Meta.ARTWORK_URL);
@@ -1010,8 +1013,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         relMedia.markForDeletion();
                 }
                 
-                // Only set source again if entire window is NOT being closed (didn't crash).
-                if (state.not(CLOSING)) setMedia(relMedia);
+                // Only set source again if entire window is NOT Closing/Crashed.
+                if (state.not(CLOSING, CRASHED)) setMedia(relMedia);
                 break;
             case CLOSE:
                 System.out.println("Got req to close media.");
@@ -1044,11 +1047,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         future.cancel(true);
                         System.err.println("Error: Media player crashed in window. Opening replacement...");
                         mediaPlayer = null;
+                        state.on(CRASHED);
                         managerListener.windowMediaCrashed();
                     }
                 }
-                if (!replacing) setMedia(null);
-                titleStatusUpdate(null);
+                if (state.not(CRASHED) && !replacing) setMedia(null);
                 System.out.println("Close req stopped media player.");
                 
                 // Determine if media source is cached and delete if marked for deletion.
@@ -1066,9 +1069,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 }
                 System.out.println("Done with req to close media.");
                 
-                // If the media player is null, this indicates a crash.
-                if (mediaPlayer == null)
-                    return false;
+                // Return false if a crash occurred during closing.
+                if (state.is(CRASHED)) return false;
                 break;
             }
             return true;
@@ -1085,6 +1087,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
 
     /**
      * Performs actions and adjusts the window based on the new media.
+     * <p>
+     * <b> Call on the event-dispatch thread (EDT).</b>
      */
     private void mediaChanged() {
         // Retrieve new/changed media.
@@ -1714,12 +1718,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
 
         final Runnable closeCode = () -> {
             // Only attempt to close and release media if it hasn't crashed.
-            mediaCommand(PiPMediaCMD.CLOSE);
+            if (state.not(CRASHED) && hasMedia()) mediaCommand(PiPMediaCMD.CLOSE);
             if (mediaPlayer != null) {
-                /*
-                 * This line previously had sporadic errors.
-                 * Moving it off the EDT seemed to fix it.
-                 */
+                // Release off of EDT -- Releasing on EDT had sporadic errors.
                 mediaPlayer.release();
             }
 
@@ -1731,9 +1732,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 state.on(CLOSED);
                 this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
                 this.dispose();
-                // Should not need to flush icon anymore since each is initialized once and remains static.
-//                this.icon.flush();
-//                this.icon = null;
                 this.managerListener.windowClosed();
             });
             System.out.println("X> should be done with close window req.");
