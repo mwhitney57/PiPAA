@@ -10,6 +10,7 @@ import static dev.mwhitney.gui.PiPWindowState.StateProp.MANUALLY_STOPPED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_COMBO;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_SWING;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_VLC;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.RTX_SUPER_RES;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.SAVING_MEDIA;
 
 import java.awt.BorderLayout;
@@ -311,11 +312,22 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         if (this.mediaPlayer != null)
             contentPane.remove(mediaPlayer);
         
+        // Determine player arguments.
+        final ArrayList<String> playerArgs = new ArrayList<>();
+        playerArgs.add("--aout=directsound");
+        playerArgs.add("--rate=" + propertyState(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.class));
+        // NVIDIA RTX Video Super Resolution Configuration -- Uses Hardware Decoding/Direct3D11
+        if (propertyState(PiPProperty.USE_SUPER_RES, Boolean.class)) {
+            state.on(RTX_SUPER_RES);
+            playerArgs.add("--avcodec-hw=d3d11va");
+            playerArgs.add("--vout=direct3d11");
+            playerArgs.add("--d3d11-upscale-mode=super");   // Even if using old VLC version, this argument will not break the player.
+        }
+        
+        // Create player with arguments.
         MediaPlayerFactory fac = null;
-        if (Initializer.USING_BACKUP_LIBVLC)
-            fac = new MediaPlayerFactory((NativeDiscovery) null, "--aout=directsound", "--rate=" + propertyState(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.class));
-        else
-            fac = new MediaPlayerFactory("--aout=directsound", "--rate=" + propertyState(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.class));
+        if (Initializer.USING_BACKUP_LIBVLC) fac = new MediaPlayerFactory((NativeDiscovery) null, playerArgs.toArray(new String[0]));
+        else                                 fac = new MediaPlayerFactory(playerArgs.toArray(new String[0]));
         this.mediaPlayer = new EmbeddedMediaPlayerComponent(fac, null, new Win32FullScreenStrategy(this), null, null) {
             /** The randomly-generated serial UID for this component. */
             private static final long serialVersionUID = -392052189550107898L;

@@ -36,6 +36,12 @@ public class PiPWindowState {
          */
         PLAYER_COMBO,
         /**
+         * Whether the window's VLC player is configured for hardware acceleration and
+         * use of NVIDIA's RTX Video Super Resolution feature.
+         * Cannot be turned OFF (false) once set to ON (true).
+         */
+        RTX_SUPER_RES,
+        /**
          * Whether the window is loading media.
          */
         LOADING,
@@ -79,6 +85,10 @@ public class PiPWindowState {
      * An int with a value that represents the current media player set in the window.
      */
     private int player = 0;
+    /**
+     * A boolean for whether or not the VLC player uses RTX Video Super Resolution.
+     */
+    private boolean rtxSuperRes;
     /**
      * A boolean for whether or not the window is loading media.
      */
@@ -218,9 +228,10 @@ public class PiPWindowState {
         case MANUALLY_STOPPED -> this.manuallyStopped = val;
         case LOCALLY_MUTED    -> this.locallyMuted    = val;
         // Permanent State Property Changes
-        case CRASHED          -> this.crashed = (val ? true : this.crashed);
-        case CLOSING          -> this.closing = (val ? true : this.closing);
-        case CLOSED           -> this.closed  = (val ? true : this.closed);
+        case RTX_SUPER_RES    -> this.rtxSuperRes = (val ? true : this.rtxSuperRes);
+        case CRASHED          -> this.crashed     = (val ? true : this.crashed);
+        case CLOSING          -> this.closing     = (val ? true : this.closing);
+        case CLOSED           -> this.closed      = (val ? true : this.closed);
         }
         CompletableFuture.runAsync(() -> runHooks(prop, val));
     }
@@ -237,6 +248,7 @@ public class PiPWindowState {
         case PLAYER_VLC       -> (this.player == PLAYER_VLC);
         case PLAYER_SWING     -> (this.player == PLAYER_SWING);
         case PLAYER_COMBO     -> (this.player == PLAYER_COMBO);
+        case RTX_SUPER_RES    ->  this.rtxSuperRes;
         case LOADING          ->  this.loading;
         case SAVING_MEDIA     ->  this.savingMedia;
         case MANUALLY_PAUSED  ->  this.manuallyPaused;

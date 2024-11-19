@@ -45,7 +45,8 @@ public enum MediaExt implements PiPEnum<MediaExt> {
      * {@link #parse(String)}.
      * 
      * @param str - a String with the MediaExt value.
-     * @return the MediaExt that matches the passed String value, if one exists.
+     * @return the MediaExt that matches the passed String value, if one exists;
+     *         <code>null</code> otherwise.
      * @see {@link #parse(String)} for unsafe parsing which may throw an exception.
      */
     public static MediaExt parseSafe(String str) {

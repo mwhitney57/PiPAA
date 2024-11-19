@@ -45,7 +45,7 @@ public class Initializer {
 
     // Public Static Final Application Variables
     /** The current version of the application. */
-    public static final Build APP_BUILD = new Build(new Version(0,9,4), TYPE_OPTION.SNAPSHOT);
+    public static final Build  APP_BUILD = new Build(new Version(0,9,4), TYPE_OPTION.SNAPSHOT);
     /** The application name, but shortened to an acronym. */
     public static final String APP_NAME_SHORT = "PiPAA";
     /** The application name. */
@@ -320,6 +320,7 @@ public class Initializer {
         new File(Binaries.YTDLP_PLUGINS_FOLDER).mkdirs();
         
         // Check if each binary exists within the application bin folder.
+        final String useSysVLC      = propsManager.get(PiPProperty.USE_SYS_VLC);
         final String useSysBinaries = propsManager.get(PiPProperty.USE_SYS_BINARIES);
         final boolean LOCAL_YTDLP   = Binaries.exists(Bin.YT_DLP);
         final boolean LOCAL_GALDL   = Binaries.exists(Bin.GALLERY_DL);
@@ -357,15 +358,16 @@ public class Initializer {
         if (PiPUpdater.updateBin(frequencyBin, lastCheckBin)) // Update last update check time.
             propsManager.set(PiPProperty.BIN_LAST_UPDATE_CHECK.toString(), LocalDateTime.now().toString());
         
-        // Check if VLC is installed.
-        boolean vlcReady = new NativeDiscovery().discover();
+        // VLC is ready if configured to be used and installed on the system. Otherwise use PiPAA's version.
+        boolean vlcReady = (useSysVLC != null && Boolean.valueOf(useSysVLC) ? new NativeDiscovery().discover() : false);
         final String vlcVersion = propsManager.get("LibVlc_BIN");
-        // Normal VLC installation doesn't exist, OS is Windows and either DLLs aren't set or they are on the wrong version.
+        // System VLC installation is not to be used and OS is Windows.
         if (!vlcReady && System.getProperty("os.name").startsWith("Windows")) {
-            // Ensure that files are present as well.
+            // Ensure that VLC files are extracted and present.
             final boolean vlcFilesPresent = (new File(APP_BIN_FOLDER + "/libvlc.dll").exists()
                              && new File(APP_BIN_FOLDER + "/libvlccore.dll").exists()
                              && new File(VLC_PLUGINS_FOLDER).exists());
+            // VLC version not in configuration, or the versions don't match, or the required VLC files do not exist.
             if (vlcVersion == null || !vlcVersion.equals(VLC_VERSION) || !vlcFilesPresent) {
                 // Extract Windows LibVlc DLLs to Bin Folder
                 System.out.println("<!> Extracting VLC libraries...");

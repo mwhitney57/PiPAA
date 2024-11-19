@@ -20,8 +20,12 @@ public enum PiPProperty {
     DEFAULT_VOLUME,
     /** The default playback rate to use for media in newly-created windows. */
     DEFAULT_PLAYBACK_RATE,
+    /** If PiPAA should prefer to use the required VLC build already present on the system, if available. */
+    USE_SYS_VLC,
     /** If PiPAA should prefer to use the required binaries already present on the system, if available. */
     USE_SYS_BINARIES,
+    /** If PiPAA should attempt to use NVIDIA's RTX Video Super Resolution. Enables hardware decoding and configures Direct3D11 VLC options. */
+    USE_SUPER_RES,
     /** If downloaded media files should be deleted after being closed, erasing them from the cache. */
     DISABLE_CACHE,
     /** If incoming media already exists in the cache, ask if it should be overwritten instead of assuming it shouldn't. */
@@ -81,7 +85,9 @@ public enum PiPProperty {
              GLOBAL_MUTED,
              DISABLE_CACHE,
              APP_UPDATE_FORCE,
-             USE_SYS_BINARIES         -> "false";
+             USE_SYS_VLC,
+             USE_SYS_BINARIES,
+             USE_SUPER_RES            -> "false";
         case DEFAULT_VOLUME           -> "50";
         case DEFAULT_PLAYBACK_RATE    -> "1";
         // Do Not Have Stored Properties

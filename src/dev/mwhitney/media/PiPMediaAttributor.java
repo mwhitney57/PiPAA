@@ -193,16 +193,16 @@ public class PiPMediaAttributor implements PropertyListener {
         String platUser = null, platID = null, platDesc = null;
         
         // Pre-attribution checks. Platform-specific and Audio-only.
-        final PiPSupplier<String> platSup = switch (platform) {
+        final PiPSupplier<String> platSupplier = switch (platform) {
         case X  -> () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.GALLERY_DL), "--cookies", Binaries.COOKIES_PATH_ARG, "-K", "\"" + src + "\"");
         default -> null;
         };
         
         final ArrayList<String> preRuns = CFExec.runAndGet(
-                () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.YT_DLP), "\"" + src + "\"", "-I", "1", "--print", "\"%(ext)s\""),
-                platSup)
-                .excepts((i, e) -> System.err.println("Exception caught from pre-run (#" + i + ") in web attribution: " + e))
-                .results();
+            () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.YT_DLP), "\"" + src + "\"", "-I", "1", "--print", "\"%(ext)s\""),
+            platSupplier)
+            .excepts((i, e) -> System.err.println("Exception caught from pre-run (#" + i + ") in web attribution: " + e))
+            .results();
         
         // Check if media is audio first.
         final String ext = preRuns.get(0);

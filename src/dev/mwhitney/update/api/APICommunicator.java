@@ -124,7 +124,7 @@ public class APICommunicator {
         final String currFileName = new java.io.File(APICommunicator.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
         if (currFileName.equals("classes")) return null;
         final String currFileExt  = currFileName.substring(currFileName.lastIndexOf('.'));
-        final StringBuilder link = new StringBuilder();
+        final StringBuilder link  = new StringBuilder();
         jsonLinks.forEach(l -> {
             if (((String) l).endsWith(currFileExt)) link.append(((String) l));
         });

@@ -83,8 +83,12 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private BetterComboBox comboTheme;
     /** The BetterComboBox for the {@link PiPProperty#GIF_PLAYBACK_MODE} property. */
     private BetterComboBox comboGIFPlayback;
+    /** The BetterCheckbox for the {@link PiPProperty#USE_SYS_VLC} property. */
+    private BetterCheckbox chkSystemVLC;
     /** The BetterCheckbox for the {@link PiPProperty#USE_SYS_BINARIES} property. */
     private BetterCheckbox chkSystemBin;
+    /** The BetterCheckbox for the {@link PiPProperty#USE_SUPER_RES} property. */
+    private BetterCheckbox chkSuperRes;
     /** The BetterCheckbox for the {@link PiPProperty#DND_PREFER_LINK} property. */
     private BetterCheckbox chkPreferLinkDND;
     /** The BetterCheckbox for the {@link PiPProperty#DOWNLOAD_WEB_MEDIA} property. */
@@ -441,9 +445,16 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         });
         
         // -------------------- Advanced Panel --------------------
+        final BetterLabel lblAdvWarning    = new BetterLabel("⚠️ Warning: Only for advanced users. Do not change anything unless you know what you are doing.", titleFont);
+        chkSystemVLC = new BetterCheckbox("🎥 Use System VLC", false, titleFont);
+        chkSystemVLC.addActionListener((e) -> propertyChanged(PiPProperty.USE_SYS_VLC, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        final BetterLabel lblSystemVLC  = new BetterLabel(PiPPropertyDesc.USE_SYS_VLC, textFont);
         chkSystemBin = new BetterCheckbox("⚙️ Use System Binaries", false, titleFont);
         chkSystemBin.addActionListener((e) -> propertyChanged(PiPProperty.USE_SYS_BINARIES, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblSystemBin  = new BetterLabel(PiPPropertyDesc.USE_SYS_BINARIES, textFont);
+        chkSuperRes = new BetterCheckbox("🎞️ RTX Video Super Resolution", false, titleFont);
+        chkSuperRes.addActionListener((e) -> propertyChanged(PiPProperty.USE_SUPER_RES, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        final BetterLabel lblSuperRes   = new BetterLabel(PiPPropertyDesc.USE_SUPER_RES, textFont);
         
         // Load Current Configuration
         refreshProperties();
@@ -508,8 +519,13 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         paneUpdates.add(comboBinUpdateFreq, "gaptop 5px, w 40%, wrap 4px");
         paneUpdates.add(btnUpdateBin, "gaptop 5px, span, w 100%, h pref!, wrap");
         // Advanced Pane
+        paneAdvanced.add(lblAdvWarning, "wrap");
+        paneAdvanced.add(chkSystemVLC, "gaptop 5px, wrap 0px");
+        paneAdvanced.add(lblSystemVLC, "wrap");
         paneAdvanced.add(chkSystemBin, "gaptop 5px, wrap 0px");
         paneAdvanced.add(lblSystemBin, "wrap");
+        paneAdvanced.add(chkSuperRes, "gaptop 5px, wrap 0px");
+        paneAdvanced.add(lblSuperRes, "wrap");
     }
     
     /**
@@ -728,8 +744,14 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             });
             comboBinUpdateFreq.setToolTipText(binFrequency.description());
             break;
+        case USE_SYS_VLC:
+            chkSystemVLC.setSelected(propertyState(prop, Boolean.class));
+            break;
         case USE_SYS_BINARIES:
             chkSystemBin.setSelected(propertyState(prop, Boolean.class));
+            break;
+        case USE_SUPER_RES:
+            chkSuperRes.setSelected(propertyState(prop, Boolean.class));
             break;
         // Do Nothing
         case APP_LAST_UPDATE_CHECK:
