@@ -3,6 +3,7 @@ package dev.mwhitney.gui;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CRASHED;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.FULLSCREEN;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOADING;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCALLY_MUTED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.MANUALLY_PAUSED;
@@ -65,6 +66,7 @@ import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.Loop;
+import dev.mwhitney.main.PermanentRunnable;
 import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.PiPProperty.DOWNLOAD_OPTION;
 import dev.mwhitney.main.PiPProperty.OVERWRITE_OPTION;
@@ -199,6 +201,20 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             @Override
             public void requestPaint() { contentPane.repaint(); }
         };
+        
+        // Establish Permanent Full Screen Border Hooks
+        state.hook(FULLSCREEN, true,  (PermanentRunnable) () -> {
+            if (state.is(PLAYER_SWING))
+                SwingUtilities.invokeLater(() -> setExtendedState(JFrame.MAXIMIZED_BOTH));
+            else mediaPlayer.mediaPlayer().fullScreen().set(true);
+            SwingUtilities.invokeLater(() -> contentPane.setBorder(null));  // Must be placed after mediaPlayer call to prevent occasional failure.
+        });
+        state.hook(FULLSCREEN, false, (PermanentRunnable) () -> {
+            if (state.is(PLAYER_SWING))
+                SwingUtilities.invokeLater(() -> setExtendedState(JFrame.NORMAL));
+            else mediaPlayer.mediaPlayer().fullScreen().set(false);
+            SwingUtilities.invokeLater(() -> contentPane.setBorder(fadingBorder));
+        });
 
         // Content Pane
         contentPane = new JPanel(new BorderLayout());
@@ -997,10 +1013,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 SwingUtilities.invokeLater(() -> imgLabel.repaint());
                 break;
             case FULLSCREEN:
-                if (state.is(PLAYER_SWING))
-                    SwingUtilities.invokeLater(() -> setExtendedState(getExtendedState() != JFrame.MAXIMIZED_BOTH ? JFrame.MAXIMIZED_BOTH : JFrame.NORMAL));
-                else
-                    mediaPlayer.mediaPlayer().fullScreen().toggle();
+                state.toggle(FULLSCREEN);
                 break;
             case RELOAD:
                 // Optional Argument: [0]=Preserve Attributes (DEFAULT: false)
@@ -1046,6 +1059,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         if (SwingUtilities.isEventDispatchThread()) run.run();
                         else SwingUtilities.invokeAndWait(run);
                     } catch (InvocationTargetException | InterruptedException e) { e.printStackTrace(); }
+                    state.off(FULLSCREEN);
                 }
                 else {
                     final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -1054,7 +1068,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     try {
                         // Give the media player a max runtime to execute the command. If exceeded, it has likely crashed.
                         future.get(2000, TimeUnit.MILLISECONDS);
-                        mediaPlayer.mediaPlayer().fullScreen().set(false);
+                        state.off(FULLSCREEN);  // Call here -- there are hooks into this prop with mediaPlayer commands which could crash it.
                     } catch (InterruptedException | ExecutionException | TimeoutException e) {
                         future.cancel(true);
                         System.err.println("Error: Media player crashed in window. Opening replacement...");

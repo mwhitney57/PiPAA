@@ -3,7 +3,11 @@ package dev.mwhitney.gui;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import dev.mwhitney.main.PermanentRunnable;
+import dev.mwhitney.main.RecurringRunnable;
 
 /**
  * The state of a PiPWindow, which contains numerous fields relating to its status.
@@ -41,6 +45,10 @@ public class PiPWindowState {
          * Cannot be turned OFF (false) once set to ON (true).
          */
         RTX_SUPER_RES,
+        /**
+         * Whether the window is in full screen mode.
+         */
+        FULLSCREEN,
         /**
          * Whether the window is loading media.
          */
@@ -89,6 +97,10 @@ public class PiPWindowState {
      * A boolean for whether or not the VLC player uses RTX Video Super Resolution.
      */
     private boolean rtxSuperRes;
+    /**
+     * A boolean for whether or not the window is in full screen display mode.
+     */
+    private boolean fullscreen;
     /**
      * A boolean for whether or not the window is loading media.
      */
@@ -211,6 +223,30 @@ public class PiPWindowState {
     }
     
     /**
+     * Toggles the passed StateProp to the <b>inverse</b> of its current value.
+     * 
+     * @param prop - the StateProp to toggle.
+     * @return this PiPWindowState instance.
+     */
+    public PiPWindowState toggle(StateProp prop) {
+        set(prop, not(prop));
+        return this;
+    }
+    
+    /**
+     * Toggles the passed StateProps to the <b>inverses</b> of their current values.
+     * 
+     * @param prop - the StateProps to toggle.
+     * @return this PiPWindowState instance.
+     */
+    public PiPWindowState toggle(StateProp... props) {
+        for (final StateProp prop : props) {
+            set(prop, not(prop));
+        }
+        return this;
+    }
+    
+    /**
      * Sets the passed StateProp to the passed boolean value.
      * 
      * @param prop - the StateProp to change.
@@ -222,6 +258,7 @@ public class PiPWindowState {
         case PLAYER_VLC       -> this.player = (val ? PLAYER_VLC   : this.player);
         case PLAYER_SWING     -> this.player = (val ? PLAYER_SWING : this.player);
         case PLAYER_COMBO     -> this.player = (val ? PLAYER_COMBO : this.player);
+        case FULLSCREEN       -> this.fullscreen      = val;
         case LOADING          -> this.loading         = val;
         case SAVING_MEDIA     -> this.savingMedia     = val;
         case MANUALLY_PAUSED  -> this.manuallyPaused  = val;
@@ -249,6 +286,7 @@ public class PiPWindowState {
         case PLAYER_SWING     -> (this.player == PLAYER_SWING);
         case PLAYER_COMBO     -> (this.player == PLAYER_COMBO);
         case RTX_SUPER_RES    ->  this.rtxSuperRes;
+        case FULLSCREEN       ->  this.fullscreen;
         case LOADING          ->  this.loading;
         case SAVING_MEDIA     ->  this.savingMedia;
         case MANUALLY_PAUSED  ->  this.manuallyPaused;
@@ -326,8 +364,12 @@ public class PiPWindowState {
         if (runs.size() > 0) {
             final Iterator<Runnable> runsIter = runs.iterator();
             while (runsIter.hasNext()) {
-                runsIter.next().run();
-                runsIter.remove();
+                final Runnable run = runsIter.next();
+                run.run();
+                
+                // RecurringRunnable instances are not removed after running.
+                if (!(run instanceof RecurringRunnable))
+                    runsIter.remove();
             }
         }
     }
@@ -341,24 +383,33 @@ public class PiPWindowState {
      *             activate.
      * @param run  - a {@link Runnable} with the code to execute when the hook
      *             condition is met.
+     * @see {@link RecurringRunnable} for usage in recurring hooks that are not
+     *      removed after first execution.
+     * @see {@link PermanentRunnable} for usage in permanent hooks that cannot be
+     *      removed.
      */
     public void hook(final StateProp prop, final boolean val, final Runnable run) {
         this.hooks.get(prop).get(Boolean.valueOf(val)).add(run);
     }
     
     /**
-     * Removes every hook attached to the passed {@link StateProp} and boolean value.
+     * Removes every hook attached to the passed {@link StateProp} and boolean
+     * value, except for permanent hooks using {@link PermanentRunnable}.
      * 
      * @param prop - the {@link StateProp} to unhook.
      * @param val  - the corresponding boolean value of the {@link StateProp}'s
      *             hooks.
      */
     public void unhook(final StateProp prop, final boolean val) {
+        // Save all permanent hooks before clearing, then add them back afterwards -- permanent hooks are not to be removed.
+        final List<Runnable> permanentHooks = this.hooks.get(prop).get(Boolean.valueOf(val)).stream().filter((r) -> r instanceof PermanentRunnable).toList();
         this.hooks.get(prop).get(Boolean.valueOf(val)).clear();
+        this.hooks.get(prop).get(Boolean.valueOf(val)).addAll(permanentHooks);
     }
     
     /**
-     * Removes every hook attached to <b>every</b> {@link StateProp} within this window state.
+     * Removes every hook attached to <b>every</b> {@link StateProp} within this
+     * window state, except for permanent hooks using {@link PermanentRunnable}.
      */
     public void unhookAll() {
         for (final StateProp prop : StateProp.values()) {
@@ -372,8 +423,9 @@ public class PiPWindowState {
      * them.
      * <p>
      * <b>This method should only be executed once, and hooks become unusable after
-     * calling it.</b> Therefore, it should only be called when the PiPWindowState
-     * is to be disposed of or hooks will certainly no longer be used.
+     * calling it, including permanent ones.</b> Therefore, it should only be called
+     * when the PiPWindowState is to be disposed of or hooks will certainly no
+     * longer be used.
      */
     public void disableHooks() {
         unhookAll();
