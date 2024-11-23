@@ -4,22 +4,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.Objects;
 
 import javax.imageio.ImageIO;
-
-import org.apache.commons.io.FileUtils;
 
 import dev.mwhitney.exceptions.MediaModificationException;
 import dev.mwhitney.listeners.AttributeUpdateAdapter;
 import dev.mwhitney.listeners.AttributeUpdateListener;
 import dev.mwhitney.main.Binaries;
+import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.CroppedBufferedImage;
 import dev.mwhitney.main.Initializer;
-import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.media.PiPMediaAttributes.TYPE;
+import dev.mwhitney.util.PiPAAUtils;
 
 /**
  * The media displayed within a PiPWindow.
@@ -216,15 +214,9 @@ public class PiPMedia {
                 || !media.getPath().startsWith(Initializer.APP_CLIPBOARD_FOLDER.replace('/', '\\')))
             return null;
         
-        final Collection<File> files = FileUtils.listFiles(new File(Initializer.APP_CLIPBOARD_FOLDER), new String[] { getAttributes().getFileExtension().lower() }, true);
-        for (final File file : files) {
-            if (file.getPath().equals(media.getPath())) continue;
-            
-            try {
-                if (FileUtils.contentEquals(file, media)) return file.getPath();
-            } catch (IOException ioe) { /* Ignore -- Not a problem. */ }
-        }
-        return null;
+        // Either get the path of the duplicate file, or return null (no duplicates).
+        final File file = PiPAAUtils.fileDupeInCache(media);
+        return (file != null ? file.getPath() : null);
     }
     
     /**

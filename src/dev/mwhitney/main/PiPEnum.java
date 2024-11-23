@@ -12,7 +12,7 @@ package dev.mwhitney.main;
  */
 public interface PiPEnum<E extends Enum<E>> {
     /**
-     * Attempts match the passed String with this enum value. If it is a match, this
+     * Attempts to match the passed String with this enum value. If it is a match, this
      * enum value is returned. If it is not a match, then <code>null</code> is
      * returned. This matching process is case-insensitive.
      * 

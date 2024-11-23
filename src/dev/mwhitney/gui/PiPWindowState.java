@@ -58,6 +58,10 @@ public class PiPWindowState {
          */
         SAVING_MEDIA,
         /**
+         * Whether the window is closing its current media.
+         */
+        CLOSING_MEDIA,
+        /**
          * Whether the media in the window is manually paused.
          */
         MANUALLY_PAUSED,
@@ -111,6 +115,10 @@ public class PiPWindowState {
      * could cause issues and break the saved media.
      */
     private boolean savingMedia;
+    /**
+     * A boolean for whether or not the media in the window is being closed.
+     */
+    private boolean closingMedia;
     /**
      * A boolean for whether or not the media has been paused <b>manually</b>. This
      * will be false if the media is paused but it was done by the application and
@@ -261,6 +269,7 @@ public class PiPWindowState {
         case FULLSCREEN       -> this.fullscreen      = val;
         case LOADING          -> this.loading         = val;
         case SAVING_MEDIA     -> this.savingMedia     = val;
+        case CLOSING_MEDIA    -> this.closingMedia    = val;
         case MANUALLY_PAUSED  -> this.manuallyPaused  = val;
         case MANUALLY_STOPPED -> this.manuallyStopped = val;
         case LOCALLY_MUTED    -> this.locallyMuted    = val;
@@ -289,6 +298,7 @@ public class PiPWindowState {
         case FULLSCREEN       ->  this.fullscreen;
         case LOADING          ->  this.loading;
         case SAVING_MEDIA     ->  this.savingMedia;
+        case CLOSING_MEDIA    ->  this.closingMedia;
         case MANUALLY_PAUSED  ->  this.manuallyPaused;
         case MANUALLY_STOPPED ->  this.manuallyStopped;
         case LOCALLY_MUTED    ->  this.locallyMuted;

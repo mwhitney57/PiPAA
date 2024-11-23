@@ -33,9 +33,9 @@ public class Binaries {
     /** The set of binaries used by PiPAA. */
     public enum Bin {
         /** The yt-dlp executable for downloading media, typically videos. */
-        YT_DLP("yt-dlp.exe", "stable@2024-08-06"),
+        YT_DLP("yt-dlp.exe", "stable@2024-11-18"),
         /** The gallery-dl executable for downloading media, typically images. */
-        GALLERY_DL("gallery-dl.exe", "1.27.2"),
+        GALLERY_DL("gallery-dl.exe", "1.27.7"),
         /** The ffmpeg executable for media conversions. */
         FFMPEG("ffmpeg/bin/", "ffmpeg.exe", "7.0.1-essentials"),
         /** The ImageMagick executable for image/GIF conversions. */

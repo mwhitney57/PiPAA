@@ -1,7 +1,15 @@
 package dev.mwhitney.gui;
 
+import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSED;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING_MEDIA;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.FULLSCREEN;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.LOADING;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_COMBO;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_SWING;
+import static dev.mwhitney.media.MediaFlavorPicker.MediaFlavor.FILE;
+import static dev.mwhitney.media.MediaFlavorPicker.MediaFlavor.IMAGE;
+import static dev.mwhitney.media.MediaFlavorPicker.MediaFlavor.STRING;
+import static dev.mwhitney.media.MediaFlavorPicker.MediaFlavor.WEB_URL;
 
 import java.awt.Desktop;
 import java.awt.Point;
@@ -25,16 +33,18 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import dev.mwhitney.exceptions.InvalidTransferMediaException;
-import dev.mwhitney.gui.PiPWindowState.StateProp;
 import dev.mwhitney.listeners.AttributeUpdateListener;
 import dev.mwhitney.listeners.PiPAttributeRequestListener;
 import dev.mwhitney.listeners.PiPCommandListener;
@@ -44,9 +54,12 @@ import dev.mwhitney.listeners.PiPWindowListener;
 import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.PropertiesManager;
+import dev.mwhitney.media.MediaFlavorPicker;
+import dev.mwhitney.media.MediaFlavorPicker.MediaFlavor;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaCMD;
+import dev.mwhitney.util.PiPAAUtils;
 
 /**
  * The listeners for PiPWindows and their components, especially those relating
@@ -55,8 +68,6 @@ import dev.mwhitney.media.PiPMediaCMD;
  * @author mwhitney57
  */
 public abstract class PiPWindowListeners implements PiPWindowListener, PiPCommandListener, PiPMediaTransferListener, PiPHandoffListener, PiPAttributeRequestListener {
-    /** A somewhat-useless DataFlavor, as it typically just contains the plain text URL provided by the WebURL flavor. */
-    private DataFlavor flavorWebMedia;
     /** A DataFlavor containing a web URL. */
     private DataFlavor flavorWebURL;
     
@@ -83,8 +94,8 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     private MouseMotionAdapter mouseDrag;
     
     public PiPWindowListeners() {
+        // Create custom flavor(s).
         try {
-            flavorWebMedia = new DataFlavor("text/plain;class=java.io.Reader");
             flavorWebURL   = new DataFlavor("application/x-java-url;class=java.net.URL");
         } catch (ClassNotFoundException e) {
             System.err.println("Error creating custom data flavors for drag and drop/copy and paste.");
@@ -209,7 +220,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                 case KeyEvent.VK_H:
                     if (ctrlDown && shiftDown)
                         get().getListener().hideWindows();
-                    else if (ctrlDown && get().state().not(StateProp.CLOSED))
+                    else if (ctrlDown && get().state().not(CLOSED))
                         get().setVisible(false);
                     break;
                 // CLOSE WINDOW(S)
@@ -339,7 +350,6 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
 
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-//                System.out.println("MOUSE WHEEL MOVED");
                 // Adjust as a Multiplier of the Mouse Wheel Clicks (Negated to Give Proper, Default Scroll Direction)
                 final int wheelClicks   = -(e.getWheelRotation());
                 final boolean shiftDown = (e.getModifiersEx() & KeyEvent.SHIFT_DOWN_MASK) != 0;
@@ -364,7 +374,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             @Override
             public void mouseDragged(MouseEvent e) {
                 // Only Drag if a Drag Origin is Saved (RMB is Pressed)
-                if (dragOrigin != null)
+                if (dragOrigin != null && get().state().not(FULLSCREEN))
                     get().setLocation(e.getXOnScreen() - dragOrigin.x, e.getYOnScreen() - dragOrigin.y);
                 else if (dragOriginLMB != null)
                     sendMediaCMD(PiPMediaCMD.PAN, Integer.toString(e.getXOnScreen() - dragOriginLMB.x),
@@ -422,6 +432,50 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         // Handle Failed Copy/Paste
         transferFailed("Could not interpret clipboard contents as valid media.");
     }
+    
+    /**
+     * Attempts to load the passed {@link PiPMedia} in the passed {@link PiPWindow}.
+     * This method sets hooks on {@link PiPWindowState} properties, allowing it to
+     * await certain value changes. It then continues once the hooks execute. This
+     * method will pause until loading is complete, then it will check if the media
+     * is being closed.
+     * <p>
+     * If it is, the method will again await completion of this task, then continue
+     * to return false if no media is present in the window. That indicates a failed
+     * loading attempt.
+     * <p>
+     * If it is not, the method will not require a second waiting period, returning
+     * immediately.
+     * 
+     * @param win   - the {@link PiPWindow} to load the media in.
+     * @param media - the {@link PiPMedia} to load in the window.
+     * @return <code>true</code> if the load attempt was successful;
+     *         <code>false</code> otherwise.
+     */
+    private boolean attemptLoad(final PiPWindow win, final PiPMedia media) {
+        // Setup latches and hooks.
+        final CountDownLatch loadingLatch = new CountDownLatch(1);
+        final CountDownLatch closingLatch = new CountDownLatch(1);
+        win.state().hook(LOADING, false, () -> loadingLatch.countDown());
+        win.state().hook(CLOSING_MEDIA, false, () -> closingLatch.countDown());
+        // Set media.
+        win.setMedia(media);
+        // Await loading completion -- either success or failure.
+        try {
+            loadingLatch.await();
+        } catch (InterruptedException e) { System.err.println("Unexpected interruption during D&D loading latch."); }
+        // If closing the media, assume failure and await for closing to complete.
+        if (win.state().is(CLOSING_MEDIA))  {
+            try {
+                closingLatch.await();
+            } catch (InterruptedException e) { System.err.println("Unexpected interruption during D&D closing latch."); }
+        }
+        // Remove hook in case media loaded successfully -- latch only needed for invalid media attempts.
+        win.state().unhook(CLOSING_MEDIA, false);
+        // If the window has no media, confirmed failed loading attempt. Close window and throw error to try another flavor in a new window.
+        if (!win.hasMedia()) return false;
+        return true;
+    }
 
     /**
      * Handles the transfer of media from a drag and drop event or the system clipboard to a window.
@@ -434,7 +488,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
      * @throws InvalidTransferMediaException when the transfer media is not valid.
      */
     @SuppressWarnings("unchecked")
-    private void handleMediaTransfer(Transferable t, boolean clipboardSrc) throws IOException, UnsupportedFlavorException, InvalidTransferMediaException {
+    private void handleMediaTransfer(Transferable t, boolean clipboardSrc, MediaFlavor... flavorOverrides) throws IOException, UnsupportedFlavorException, InvalidTransferMediaException {
         if (t == null) {
             System.err.println("Error: Nothing found in " + (clipboardSrc ? "clipboard." : "drag and drop."));
             return;
@@ -442,107 +496,81 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         
         // Handoff the media to another window if current window already has media.
         final boolean HANDOFF = get().hasMedia();
+        // Get Prefer Link Configuration Status
+        final boolean PREFER_LINK = get().propertyState(PiPProperty.DND_PREFER_LINK, Boolean.class);
         
         // Ensure clipboard directory exists.
         if (clipboardSrc) new File(Initializer.APP_CLIPBOARD_FOLDER).mkdirs();
 
-        final boolean PREFER_LINK = get().propertyState(PiPProperty.DND_PREFER_LINK, Boolean.class);
 
-        final boolean FLAV_STRING_SUPPORTED   = t.isDataFlavorSupported(DataFlavor.stringFlavor);
-        final boolean FLAV_IMG_SUPPORTED      = t.isDataFlavorSupported(DataFlavor.imageFlavor);
-        final boolean FLAV_WEBMEDIA_SUPPORTED = t.isDataFlavorSupported(flavorWebMedia);
-        final boolean FLAV_WEBURL_SUPPORTED   = t.isDataFlavorSupported(flavorWebURL);
-        final boolean FLAV_FILELIST_SUPPORTED = t.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
-        if (FLAV_STRING_SUPPORTED)
-            System.out.println("String flavor supported.");
-        if (FLAV_IMG_SUPPORTED)
-            System.out.println("Image flavor supported.");
-        if (FLAV_WEBMEDIA_SUPPORTED)
-            System.out.println("WebMedia flavor supported.");
-        if (FLAV_WEBURL_SUPPORTED)
-            System.out.println("Web URL flavor supported.");
-        if (FLAV_FILELIST_SUPPORTED)
-            System.out.println("File List flavor supported.");
-//        return;
-        // DEBUG ALL FLAVORS PRINTOUT
-//        for(final DataFlavor flavor : t.getTransferDataFlavors()) {
-//            System.out.println(flavor);
-//        }
+        /* TODO Test and Potentially Debug New MediaFlavor Approach. */
+        // ##### START 0.9.4-SNAPSHOT New Approach (IN TESTING)
+        final boolean hasFlavorOverrides = flavorOverrides != null && flavorOverrides.length > 0;
+        final MediaFlavorPicker picker = new MediaFlavorPicker(hasFlavorOverrides
+            ? flavorOverrides
+            : (clipboardSrc
+            ? new MediaFlavor[] { IMAGE, STRING, FILE, WEB_URL }
+            : (PREFER_LINK
+            ? new MediaFlavor[] { WEB_URL, FILE, IMAGE, STRING }
+            : MediaFlavorPicker.DEFAULT_PICK_ORDER)))
+        .support(STRING,  t.isDataFlavorSupported(DataFlavor.stringFlavor))
+        .support(IMAGE,   t.isDataFlavorSupported(DataFlavor.imageFlavor))
+        .support(FILE,    t.isDataFlavorSupported(DataFlavor.javaFileListFlavor))
+        .support(WEB_URL, t.isDataFlavorSupported(flavorWebURL));
+        // Get transfer data for all supported media flavors.
+        // For files, also relocate any and all files originating in the temporary directory to the PiPAA cache. See method doc. for why.
+        final String        dataString = (picker.supports(STRING)  ? (String) t.getTransferData(DataFlavor.stringFlavor)                              : null);
+        final BufferedImage  dataImage = (picker.supports(IMAGE)   ? (BufferedImage) t.getTransferData(DataFlavor.imageFlavor)                        : null);
+        final List<File>      dataFile = (picker.supports(FILE)    ? relocateTempFiles((List<File>) t.getTransferData(DataFlavor.javaFileListFlavor)) : null);
+        final URL           dataWebURL = (picker.supports(WEB_URL) ? (URL) t.getTransferData(flavorWebURL)                                            : null);
         
-        // Try specific flavors first in order of precedence.
-//        boolean flavSucceeded = false;
-//        final Transferable content = t;
-        // Clipboard-specific flavor handling precedence.
-        if (clipboardSrc && !FLAV_IMG_SUPPORTED) {
-            if(FLAV_STRING_SUPPORTED) {
-                System.out.println("YEP CLIPBOARD STRING SUP");
-                if (HANDOFF)
-                    handoff(new PiPMedia((String) t.getTransferData(DataFlavor.stringFlavor)));
-                else
-                    setWindowMedia(new PiPMedia((String) t.getTransferData(DataFlavor.stringFlavor)));
-                return;
+        // Pick the next supported media flavor, attempt to handle it, and repeat until completion.
+        CompletableFuture.runAsync(() -> {
+            MediaFlavor pick = picker.pick();
+            while(pick != null) {
+                System.err.println("##### Handling Media -- MediaFlavor Pick: " + pick);
+                try {
+                    switch (pick) {
+                    case FILE    -> handleFileListDrop(dataFile, HANDOFF);
+                    case IMAGE   -> handleImageDrop(dataImage, HANDOFF);
+                    case STRING  -> {
+                        /* String flavored media should not require a complex approach as seen with WEB_URL...for now.
+                         * If flavor order preference becomes customizable via the configuration, that should change. */
+                        if (HANDOFF) handoff(new PiPMedia(dataString));
+                        else  setWindowMedia(new PiPMedia(dataString));
+                    }
+                    case WEB_URL -> {
+                        final URL url = dataWebURL;
+                        
+                        if (HANDOFF) {
+                            // Attempt loading of media in new window.
+                            // If the window has no media, confirmed failed loading attempt. Close window and throw error to try another flavor in a new window.
+                            final PiPWindow win = handoff(null);
+                            if (!attemptLoad(win, new PiPMedia(url.toString()))) {
+                                win.requestClose();
+                                throw new InvalidTransferMediaException("Web URL media flavor failed. Trying next.");
+                            }
+                        } else {
+                            // Attempt loading of media in this window.
+                            // If the window has no media, confirmed failed loading attempt. Update title and throw error to try another flavor.
+                            if (!attemptLoad(get(), new PiPMedia(url.toString()))) {
+                                get().titleStatusUpdate("[Loading: No URL...]");
+                                throw new InvalidTransferMediaException("Web URL media flavor failed. Trying next.");
+                            }
+                        }
+                    }
+                    }
+                    // If reached: Indicates the media was accepted -- success.
+                    System.err.println("##### Done Handling Media");
+                    return;
+                } catch (IOException | InvalidTransferMediaException e) {
+                    System.err.println("Flavor Pick [" + Objects.toString(pick, "<null>") + "]: " + "[" + e.getClass().getSimpleName() + "] " + e.getMessage());
+                }
+                pick = picker.pick();
             }
-            else if (FLAV_FILELIST_SUPPORTED) {
-                handleFileListDrop((List<File>) t.getTransferData(DataFlavor.javaFileListFlavor), HANDOFF);
-                return;
-            }
-            else
-                throw new InvalidTransferMediaException("The clipboard does not contain an image or valid media reference.");
-        }
-        
-        /*
-         * TODO Optimize this flavor picking process.
-         * Consider changing Prefer Links with DnD to be a Prefer Loading (or other name) option.
-         * This option would be a combo box like the theme or overwrite cache options.
-         * Potential options could be:
-         * - Always Prefer Links
-         * - Always Prefer Raw Files & Images
-         * - etc....
-         * 
-         * Better yet, give the usage of the word "Prefer" some more functional meaning.
-         * If handling the drop fails with a certain flavor/type, then try another one.
-         * Right now, this doesn't really happen. It would be most difficult/lengthy to
-         * go through the URL process and try another method after that.
-         * Perhaps the current config option would make sense after all if the process
-         * is implemented in this described way.
-         */
-        // URL Flavor
-        if (FLAV_WEBURL_SUPPORTED && ((!FLAV_FILELIST_SUPPORTED && !FLAV_IMG_SUPPORTED) || PREFER_LINK)) {
-            final URL url = (URL) t.getTransferData(flavorWebURL);
-            System.out.println(url.toString());
-            
-            if (HANDOFF)
-                handoff(new PiPMedia(url.toString()));
-            else
-                setWindowMedia(new PiPMedia(url.toString()));
-            return;
-        }
-        // File Flavor
-        else if (FLAV_FILELIST_SUPPORTED) {
-            handleFileListDrop((List<File>) t.getTransferData(DataFlavor.javaFileListFlavor), HANDOFF);
-            return;
-        }
-        // Image Flavor
-        else if (FLAV_IMG_SUPPORTED) {
-            handleImageDrop((BufferedImage) t.getTransferData(DataFlavor.imageFlavor), HANDOFF);
-            return;
-        }
-        // String Flavor -- Typically Text Paths or URLs
-        else if (FLAV_STRING_SUPPORTED) {
-            if (HANDOFF) handoff(new PiPMedia((String) t.getTransferData(DataFlavor.stringFlavor)));
-            else setWindowMedia(new PiPMedia((String) t.getTransferData(DataFlavor.stringFlavor)));
-            return;
-        }
-        
-        // Check for alternative flavors.
-        for(final DataFlavor flavor : t.getTransferDataFlavors()) {
-            // Image Flavor
-            if (flavor.getSubType().equalsIgnoreCase("x-java-file-list")) {
-                System.err.println("DONT IGNORE THIS -- TAKE NOTE!! Alternate File Flavor Found?? --> " + flavor.toString());
-                handleFileListDrop((List<File>) t.getTransferData(DataFlavor.javaFileListFlavor), HANDOFF);
-                return;
-            }
-        }
+            if (dataImage != null) dataImage.flush(); // Flush image at the end if not null, ensuring no memory leak.
+        });
+        // ##### END 0.9.4-SNAPSHOT New Approach
     }
     
     /**
@@ -564,11 +592,9 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         ImageIO.write(img, "png", outfile);
         img.flush();
         img = null;
-        if (handoff)
-            handoff(possiblyMarkedMedia(outfile.getPath()));
-        else
-            setWindowMedia(possiblyMarkedMedia(outfile.getPath()));
-        System.err.println("image copied to: " + outfile.getAbsolutePath());
+        if (handoff) handoff(possiblyMarkedMedia(outfile.getPath()));
+        else  setWindowMedia(possiblyMarkedMedia(outfile.getPath()));
+//        System.err.println("image copied to: " + outfile.getAbsolutePath());  // Debug
     }
     
     /**
@@ -576,34 +602,20 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
      * 
      * @param files - a List of File objects connected to potential media sources.
      * @param handoff - a boolean for whether or not this media should be handed off to a new window instead of the current one.
-     * @throws IOException when there are input/output errors with the file(s).
      * @throws InvalidTransferMediaException when one or more media file(s) is not valid.
      */
-    private void handleFileListDrop(List<File> files, boolean handoff) throws IOException, InvalidTransferMediaException {
+    private void handleFileListDrop(List<File> files, boolean handoff) throws InvalidTransferMediaException {
         // Loop through each file 
         for (int f = 0; f < files.size(); f++) {
-            File droppedFile = files.get(f);
+            final File droppedFile = files.get(f);
             
-            System.out.println("NAME: " + droppedFile.getName() + " | PATH: " + droppedFile.getPath() + " | EXISTS? " + droppedFile.exists());
-            System.out.println(droppedFile.getPath());
-            System.out.println(System.getProperty("java.io.tmpdir"));
-            boolean fileInTemp = false;
-            // If file was copied from non-local source, it can be put in the TEMP directory until used. Save it by moving to cache folder.
-            if (droppedFile.getPath().startsWith(System.getProperty("java.io.tmpdir"))) {
-                try {
-                    final File movedFile = new File(Initializer.APP_CLIPBOARD_FOLDER + "/" + droppedFile.getName());
-                    Files.move(droppedFile.toPath(), movedFile.toPath());
-                    droppedFile = movedFile;
-                    fileInTemp = true;
-                } catch (FileAlreadyExistsException faee) {
-                    // Ignore. File already existing is fine, since that's the point of the cache.
-                } catch (IOException ioe) {
-                    if (f == 0)
-                        throw new InvalidTransferMediaException("File not valid or does not exist.");
-                    else
-                        continue;
-                }
-            }
+            // Debug
+//            System.out.println("NAME: " + droppedFile.getName() + " | PATH: " + droppedFile.getPath() + " | EXISTS? " + droppedFile.exists());
+//            System.out.println(droppedFile.getPath());
+//            System.out.println(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath());
+//            System.out.println(System.getProperty("java.io.tmpdir"));
+            /* Since 0.9.4-SNAPSHOT, it is assumed that temporary directory files have already been moved to the cache prior to calling this method. */
+            boolean fileInTemp = droppedFile.getPath().startsWith(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath());
             
             // If multiple files were dropped, pass them off to open another PiPWindow for each.
             if(f > 0) {
@@ -613,11 +625,64 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             }
             
             // Finally, set the window media.
-            if (handoff)
-                handoff(getMediaFromFile(droppedFile, fileInTemp));
-            else
-                setWindowMedia(getMediaFromFile(droppedFile, fileInTemp));
+            if (handoff) handoff(getMediaFromFile(droppedFile, fileInTemp));
+            else  setWindowMedia(getMediaFromFile(droppedFile, fileInTemp));
         }
+    }
+    
+    /**
+     * Relocates any {@link File} objects in the passed {@link List} within the
+     * temporary directory into the PiPAA cache.
+     * <p>
+     * <b>It is advised to call this method early.</b> Files in the temporary folder
+     * <i>are</i> temporary and can almost immediately be overwritten or deleted.
+     * Immediately relocating files that <i>may</i> be needed into the PiPAA cache
+     * folder ensures there is no loss.
+     * <p>
+     * For example, if dragging and dropping an image <b>file</b> from a browser,
+     * the system may download the image into the temporary directory first. If that
+     * file remains in that directory while another similar drag and drop action is
+     * performed, that file may be overwritten and PiPAA will not be able to load
+     * the first image.
+     * <p>
+     * The temporary folder is determined via: <code>System.getProperty("java.io.tmpdir")</code>
+     * 
+     * @param files - a {@link List} of {@link File} objects to relocate out of the
+     *              temporary directory, if they are even in it.
+     * @return an adjusted {@link List} of {@link File} objects with their new
+     *         paths. If no files originated in the temporary directory, then there
+     *         should be no difference between the passed and returned lists.
+     * @throws InvalidTransferMediaException if the first file throws an
+     *                                       {@link IOException} during processing.
+     */
+    private List<File> relocateTempFiles(final List<File> files) throws InvalidTransferMediaException {
+        final List<File> relocatedFiles = new ArrayList<File>();
+        // Loop through each file
+        for (int f = 0; f < files.size(); f++) {
+            File file = files.get(f);
+            
+            // If file was copied from non-local source, it can be put in the TEMP directory until used. Save it by moving to cache folder.
+            if (file.getPath().startsWith(System.getProperty("java.io.tmpdir"))) {
+                /*
+                 * Perform cache check on file. If it exists (its contents/raw data), that is returned.
+                 * The move will fail, since the file will already exist, which works perfectly and it will be loaded.
+                 * If it doesn't exist, it will be given a random unique name and returned.
+                 * The move method below will rename it and move the file there.
+                 */
+                final File movedFile = PiPAAUtils.fileCacheCheck(file);
+                try {
+                    Files.move(file.toPath(), movedFile.toPath());
+                } catch (FileAlreadyExistsException faee) {
+                    // Ignore. File already existing is fine, since that's the point of the cache.
+                } catch (IOException ioe) {
+                    if (f == 0) throw new InvalidTransferMediaException("File not valid or does not exist.");
+                    else continue;
+                }
+                file = movedFile;
+            }
+            relocatedFiles.add(file);
+        }
+        return relocatedFiles;
     }
     
     /**

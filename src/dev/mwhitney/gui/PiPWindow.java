@@ -2,6 +2,7 @@ package dev.mwhitney.gui;
 
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING_MEDIA;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CRASHED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.FULLSCREEN;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOADING;
@@ -1052,7 +1053,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 
                 // Stop the media player, but ensure that code does not freeze if the player is frozen and stop is called.
                 state.off(LOADING);
-                state.on(MANUALLY_STOPPED);
+                state.on(CLOSING_MEDIA, MANUALLY_STOPPED);
                 if (state.is(PLAYER_SWING)) {
                     final Runnable run = () -> clearImgViewer();
                     try {
@@ -1094,6 +1095,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     statusUpdate("Failed to delete from cache!");
                 }
                 System.out.println("Done with req to close media.");
+                state.off(CLOSING_MEDIA);
                 
                 // Return false if a crash occurred during closing.
                 if (state.is(CRASHED)) return false;
