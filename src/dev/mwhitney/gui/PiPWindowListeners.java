@@ -500,7 +500,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         final boolean PREFER_LINK = get().propertyState(PiPProperty.DND_PREFER_LINK, Boolean.class);
         
         // Ensure clipboard directory exists.
-        if (clipboardSrc) new File(Initializer.APP_CLIPBOARD_FOLDER).mkdirs();
+        if (clipboardSrc) PiPAAUtils.ensureExistence(Initializer.APP_CLIPBOARD_FOLDER);
 
 
         /* TODO Test and Potentially Debug New MediaFlavor Approach. */

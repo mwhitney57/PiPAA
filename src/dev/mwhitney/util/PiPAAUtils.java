@@ -17,6 +17,33 @@ import dev.mwhitney.main.Initializer;
  */
 public class PiPAAUtils {
     /**
+     * Ensures the existence of one or more folders at the specified String paths.
+     * This method creates the directories, including their parent directories, if
+     * they do not exist. None of the passed String objects can be null.
+     * 
+     * @param folders - one or more Strings corresponding to local directory
+     *                path(s).
+     */
+    public static void ensureExistence(final String... folders) {
+        for (final String s : Objects.requireNonNull(folders, "Cannot ensure the existence of null folders.")) {
+            if (s == null) continue;
+            final File folder = new File(s);
+            folder.mkdirs();
+        }
+    }
+
+    /**
+     * Performs a simple slash fix on the passed String path, converting
+     * <code>/</code> to <code>\</code> throughout.
+     * 
+     * @param path - the String path to fix.
+     * @return the fixed String path.
+     */
+    public static String slashFix(final String path) {
+        return path.replace('/', '\\');
+    }
+    
+    /**
      * Returns a "human readable" representation of the passed byte count long.
      * This method was discovered as a replacement for Apache Commons IO's
      * <code>FileUtils.byteCountToDisplaySize(long)</code>, since that

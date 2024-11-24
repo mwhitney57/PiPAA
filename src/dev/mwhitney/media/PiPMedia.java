@@ -8,6 +8,8 @@ import java.util.Objects;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.io.FilenameUtils;
+
 import dev.mwhitney.exceptions.MediaModificationException;
 import dev.mwhitney.listeners.AttributeUpdateAdapter;
 import dev.mwhitney.listeners.AttributeUpdateListener;
@@ -105,22 +107,29 @@ public class PiPMedia {
         if (source == null || source.trim().isEmpty() || source.indexOf('.') == -1 || !hasAttributes() || getAttributes().getFileExtension() == null)
             return source;
         
+        // Ensure conversion cache folder exists.
+        PiPAAUtils.ensureExistence(Initializer.APP_CONVERTED_FOLDER);
+        
+        // Setup then determine converted media format and what to use to convert the media.
+        final File sourceFile = new File(source);
+        String out = PiPAAUtils.slashFix(Initializer.APP_CONVERTED_FOLDER + "/") + FilenameUtils.removeExtension(sourceFile.getName());
         Bin convBin = null;
-        final StringBuilder out = new StringBuilder(source.substring(0, source.lastIndexOf('.')));
         final MediaExt ext = getAttributes().getFileExtension();
         switch (ext) {
+        case AVIF:
+            convBin = Bin.IMGMAGICK;
         case TIFF:
         case BMP:
-            out.append(".png");
+            out += ".png";
             break;
         case WEBP:
             // If animated, change out path and media's type.
-            final boolean animated = checkForAnimatedWEBP(new File(source));
+            final boolean animated = checkForAnimatedWEBP(sourceFile);
             if (animated) {
-                out.append(".gif");
+                out += ".gif";
                 getAttributes().setType(TYPE.GIF);
             } else {
-                out.append(".png");
+                out += ".png";
                 getAttributes().setType(TYPE.IMAGE);
             }
             convBin = Bin.IMGMAGICK;
@@ -130,20 +139,21 @@ public class PiPMedia {
         }
         
         // Don't convert again if conversion result already exists.
-        if (!new File(out.toString()).exists()) {
+        final File outFile = new File(out);
+        if (!outFile.exists()) {
             try {
-                // Conversion
+                // Conversion -- Use Java ImageIO or External Binary
                 if (convBin == null)
-                    ImageIO.write(ImageIO.read(new File(source)), out.toString().substring(out.toString().lastIndexOf('.') + 1), new File(out.toString()));
+                    ImageIO.write(ImageIO.read(sourceFile), out.substring(out.lastIndexOf('.') + 1), outFile);
                 else
-                    Binaries.exec(Binaries.bin(convBin), "\"" + source + "\"", "\"" + out.toString() + "\"");
+                    Binaries.exec(Binaries.bin(convBin), "\"" + source + "\"", "\"" + out + "\"");
             } catch (InterruptedException | IOException e) {
-                e.printStackTrace();
+                System.err.println("Unexpected error occurred during unsupported media conversion.");
                 return source;
             }
         }
-        this.setConvSrc(out.toString());
-        return out.toString();
+        this.setConvSrc(out);
+        return out;
     }
     
     /**
@@ -211,7 +221,7 @@ public class PiPMedia {
      */
     public String existsInClipboardCache(final File media) {
         if (!hasAttributes() || getAttributes().getFileExtension() == null
-                || !media.getPath().startsWith(Initializer.APP_CLIPBOARD_FOLDER.replace('/', '\\')))
+                || !media.getPath().startsWith(PiPAAUtils.slashFix(Initializer.APP_CLIPBOARD_FOLDER)))
             return null;
         
         // Either get the path of the duplicate file, or return null (no duplicates).
@@ -243,7 +253,7 @@ public class PiPMedia {
         final int inPeriodIndex = inFile.getName().lastIndexOf('.');
         final String ext = source.substring(source.lastIndexOf('.') + 1);
         final StringBuilder cropFilePath = new StringBuilder(Initializer.APP_CACHE_FOLDER).append("/trimmed");
-        new File(cropFilePath.toString()).mkdirs();
+        PiPAAUtils.ensureExistence(cropFilePath.toString());
         cropFilePath.append("/").append(inFile.getName().substring(0, inPeriodIndex)).append("_PiPAACrop").append(".").append(ext);
         
         // Return the trimmed output

@@ -17,7 +17,7 @@ public enum MediaExt implements PiPEnum<MediaExt> {
     /* VIDEO */
     MP4,MKV,WEBM,M4V,MOV,AVI,
     /* IMAGE */
-    PNG,JPG,JPEG,TIFF,BMP,
+    PNG,JPG,JPEG,TIFF,BMP,AVIF,
     /* GIF */
     GIF,WEBP,
     /* AUDIO */

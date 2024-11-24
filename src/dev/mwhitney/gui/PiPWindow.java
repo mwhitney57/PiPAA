@@ -80,6 +80,7 @@ import dev.mwhitney.media.MediaExt;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
+import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.media.WebMediaFormat;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
@@ -874,7 +875,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     titleStatusUpdate("[Converting...]");
                     iconUpdate(ICON_WORK);
                     final String mediaNameID = media.getAttributes().getFileTitleID();
-                    final String result = convertGIFToVideo(args[0], Initializer.APP_CACHE_FOLDER + "/gif/" + mediaNameID + ".mp4");
+                    final String result = convertGIFToVideo(args[0], Initializer.APP_CONVERTED_FOLDER + "/" + mediaNameID + ".mp4");
                     if (result == null) {
                         // Unable to Convert Media -- Use Fallback Method
                         System.err.println("RESULT IS NULL !_-1--11- RESULT IS NULL using fallback and setting adv playback to false");
@@ -1087,7 +1088,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         if (cacheSrc != null) new File(cacheSrc).delete();
                         if (trimSrc  != null) new File(trimSrc).delete();
                         if (convSrc  != null) new File(convSrc).delete();
-                        statusUpdate("Deleted from cache.");
+                        if (cacheSrc != null || trimSrc != null || convSrc != null) statusUpdate("Deleted from cache.");
                     }
                 } catch (NullPointerException | SecurityException e) {
                     System.err.println("Error occurred: Failed to dispose of cached media marked for deletion.");
@@ -1487,7 +1488,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
      */
     private String downloadMedia(PiPMedia media, String outDir, String[] args) {
         // Setup Cache Folder and File Name
-        new File(outDir).mkdirs();
+        PiPAAUtils.ensureExistence(outDir);
         final File fileOut = new File(outDir + "/" + media.getAttributes().getFileNameID());
         
         // Check if Media Exists Before Attempting Download

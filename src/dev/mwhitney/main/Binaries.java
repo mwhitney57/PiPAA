@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import dev.mwhitney.exceptions.UnsupportedBinActionException;
 import dev.mwhitney.listeners.BinRunnable;
 import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.util.PiPAAUtils;
 import net.codejava.utility.UnzipUtility;
 
 /**
@@ -310,7 +311,7 @@ public class Binaries {
             break;
         }
         
-        new File(pathOut.toString()).mkdirs();
+        PiPAAUtils.ensureExistence(pathOut.toString());
         
         // License and more -- return if N/A
         switch(b) {

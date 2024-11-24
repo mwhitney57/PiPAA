@@ -524,6 +524,7 @@ public class PiPMediaAttributor implements PropertyListener {
         case JPEG:
         case TIFF:
         case BMP:
+        case AVIF:
             return PiPMediaAttributes.TYPE.IMAGE;
         case GIF:
         case WEBP:

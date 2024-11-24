@@ -32,6 +32,7 @@ import dev.mwhitney.update.PiPUpdater;
 import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
 import dev.mwhitney.update.api.Build;
 import dev.mwhitney.update.api.Version;
+import dev.mwhitney.util.PiPAAUtils;
 import net.codejava.utility.UnzipUtility;
 import uk.co.caprica.vlcj.binding.support.runtime.RuntimeUtil;
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
@@ -59,7 +60,7 @@ public class Initializer {
     /** A <tt>String</tt> with the application's cache folder location. */
     public static final String APP_CACHE_FOLDER = APP_FOLDER + "/cache";
     /** A <tt>String</tt> with the application's GIF folder location in the cache. */
-    public static final String APP_GIF_FOLDER = APP_CACHE_FOLDER + "/gif";
+    public static final String APP_CONVERTED_FOLDER = APP_CACHE_FOLDER + "/converted";
     /** A <tt>String</tt> with the application's clipboard folder location in the cache. */
     public static final String APP_CLIPBOARD_FOLDER = APP_CACHE_FOLDER + "/clipboard";
     /** A <tt>String</tt> with the application's trimmed folder location in the cache. */
@@ -314,10 +315,8 @@ public class Initializer {
      * @throws ExtractionException if another exception occurs during the extraction process.
      */
     private static void extractLibResources(PropertiesManager propsManager) throws ExtractionException {
-        // Ensure bin folder exists.
-        new File(APP_BIN_FOLDER).mkdirs();
-        // Ensure plugins folder exists.
-        new File(Binaries.YTDLP_PLUGINS_FOLDER).mkdirs();
+        // Ensure bin and plugins folders exists.
+        PiPAAUtils.ensureExistence(APP_BIN_FOLDER, Binaries.YTDLP_PLUGINS_FOLDER);
         
         // Check if each binary exists within the application bin folder.
         final String useSysVLC      = propsManager.get(PiPProperty.USE_SYS_VLC);
@@ -380,7 +379,7 @@ public class Initializer {
                 propsManager.set("LibVlc_BIN", VLC_VERSION);
             }
             // Change NativeLibrary search path to app bin folder, check if extracted already.
-            NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), APP_BIN_FOLDER.replace('/', '\\'));
+            NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), PiPAAUtils.slashFix(APP_BIN_FOLDER));
             vlcReady = true;
             USING_BACKUP_LIBVLC = true;
         }
