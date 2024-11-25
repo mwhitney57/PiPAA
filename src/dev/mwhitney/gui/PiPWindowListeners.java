@@ -502,8 +502,6 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         // Ensure clipboard directory exists.
         if (clipboardSrc) PiPAAUtils.ensureExistence(Initializer.APP_CLIPBOARD_FOLDER);
 
-
-        /* TODO Test and Potentially Debug New MediaFlavor Approach. */
         // ##### START 0.9.4-SNAPSHOT New Approach (IN TESTING)
         final boolean hasFlavorOverrides = flavorOverrides != null && flavorOverrides.length > 0;
         final MediaFlavorPicker picker = new MediaFlavorPicker(hasFlavorOverrides

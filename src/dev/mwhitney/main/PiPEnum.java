@@ -64,6 +64,21 @@ public interface PiPEnum<E extends Enum<E>> {
         return (s != null) && s.equalsIgnoreCase(this.toString());
     }
     /**
+     * Gets the index of this enum within its internal <code>values()</code> array.
+     * This method will return <code>-1</code> if no match is found, but <b>this
+     * should never happen</b>. This enum has to be non-<code>null</code> to execute
+     * this method, and the values returned should correspond to its own enum class.
+     * 
+     * @return the int index of this enum in its internal array.
+     */
+    public default int index() {
+        final PiPEnum<?>[] values = this.getClass().getEnumConstants();
+        for (int i = 0; i < values.length; i++) {
+            if (this.is(values[i].toString())) return i;
+        }
+        return -1;
+    }
+    /**
      * Gets an uppercase {@link #toString()} version of this enum.
      * 
      * @return a String with the enum in uppercase.

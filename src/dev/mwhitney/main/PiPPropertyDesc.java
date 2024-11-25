@@ -28,8 +28,6 @@ public final class PiPPropertyDesc {
         DOWNLOAD_WEB_MEDIA    = "Attempt to download non-local media before playback, which is often necessary. Downloaded media is put in the cache folder, but it will be deleted if the cache is disabled.",
         CONVERT_WEB_INDIRECT  = "Attempts to discover a direct source from an indirect media link. This allows for direct playback of more content, without having to cache the media. Can be inconsistent across platforms.",
         TRIM_TRANSPARENCY     = "Trims transparent edges from images or GIFs before playing, keeping window edges closer to media content. Trimming can take a while for big or long GIFs. Results are saved to the cache.",
-//        APP_UPDATE_FREQUENCY  = "How frequently should PiPAA check for application updates? Automatic update checks run at launch and marginally increase startup time. If an update is available, the application will ask for permission to update.",
-//        APP_UPDATE_TYPE       = "What PiPAA update versions would you like? Versions are ordered most to least stable.",
         APP_UPDATES           = "Updates for the PiPAA application as a whole. Select the type of updates to check for below. Most users can stick with the default."
                 + " For newer builds that are less stable, select Beta or Snapshot versions. You can set the automatic update schedule or manually update using the button below.",
         BIN_UPDATES           = "Updates for the application's binaries or packages. This includes projects such as yt-dlp and gallery-dl which help with downloading media."

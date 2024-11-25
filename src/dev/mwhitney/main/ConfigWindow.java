@@ -170,28 +170,19 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         
         // -------------------- General Panel --------------------
         final BetterLabel lblThemeTitle = new BetterLabel("Theme", titleFont);
-        comboTheme = new BetterComboBox(new String[] {"☀️ Light", "🌑 Dark", "🌸 Pink", "🌊 Subnautica"}, titleFont, (e) -> {
+        comboTheme = new BetterComboBox(PropDefault.THEME.labels(), titleFont, (e) -> {
             final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            switch (selection) {
-            case 0 -> propertyChanged(PiPProperty.THEME, THEME_OPTION.LIGHT.toString());
-            case 1 -> propertyChanged(PiPProperty.THEME, THEME_OPTION.DARK.toString());
-            case 2 -> propertyChanged(PiPProperty.THEME, THEME_OPTION.PINK.toString());
-            case 3 -> propertyChanged(PiPProperty.THEME, THEME_OPTION.SUBNAUTICA.toString());
-            }
+            // Set property value and adjust theme based on new theme selection.
+            propertyChanged(PiPProperty.THEME, THEME_OPTION.values()[selection].toString());
             pickTheme(THEME_OPTION.LIGHT.matchAny(propertyState(PiPProperty.THEME, String.class)));
         });
         chkPreferLinkDND = new BetterCheckbox("🔗 Prefer Links with Drag and Drop", true, titleFont);
         chkPreferLinkDND.addActionListener((e) -> propertyChanged(PiPProperty.DND_PREFER_LINK, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblPreferLinkDND = new BetterLabel(PiPPropertyDesc.DND_PREFER_LINK, textFont);
         final BetterLabel lblDLWebMediaTitle = new BetterLabel("Download Web Media", titleFont);
-        comboDLWebMedia = new BetterComboBox(new String[] {"❌ Never", "💾 Normal", "✔️ Always"}, titleFont, (e) -> {
+        comboDLWebMedia = new BetterComboBox(PropDefault.DOWNLOAD.labels(), titleFont, (e) -> {
             final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final DOWNLOAD_OPTION download = switch (selection) {
-            case 0  -> DOWNLOAD_OPTION.NEVER;
-            case 1  -> DOWNLOAD_OPTION.NORMAL;
-            case 2  -> DOWNLOAD_OPTION.ALWAYS;
-            default -> throw new IllegalArgumentException("Unexpected value: " + selection);
-            };
+            final DOWNLOAD_OPTION download = DOWNLOAD_OPTION.values()[selection];
             propertyChanged(PiPProperty.DOWNLOAD_WEB_MEDIA, download.toString());
             ((BetterComboBox) e.getSource()).setToolTipText(download.description());
         });
@@ -201,14 +192,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblConvIndWeb = new BetterLabel(PiPPropertyDesc.CONVERT_WEB_INDIRECT, textFont);
         chkTrimTransparency = new BetterCheckbox("✂️ Trim Transparent Edges", true, titleFont);
         chkTrimTransparency.addActionListener((e) -> propertyChanged(PiPProperty.TRIM_TRANSPARENCY, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
-        comboTrim = new BetterComboBox(new String[] {"Normal", "Strict", "Force"}, titleFont, (e) -> {
+        comboTrim = new BetterComboBox(PropDefault.TRIM.labels(), titleFont, (e) -> {
             final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final TRIM_OPTION option = switch (selection) {
-            case 0  -> TRIM_OPTION.NORMAL;
-            case 1  -> TRIM_OPTION.STRICT;
-            case 2  -> TRIM_OPTION.FORCE;
-            default -> throw new IllegalArgumentException("Unexpected value: " + selection);
-            };
+            final TRIM_OPTION option = TRIM_OPTION.values()[selection];
             propertyChanged(PiPProperty.TRIM_TRANSPARENCY_OPTION, option.toString());
             ((BetterComboBox) e.getSource()).setToolTipText(option.description());
         });
@@ -225,13 +211,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         
         // -------------------- Playback Panel --------------------
         final BetterLabel lblGIFPlaybackTitle = new BetterLabel("GIF Playback Mode", titleFont);
-        comboGIFPlayback = new BetterComboBox(new String[] {"🍎 Basic", "🚀 Advanced"}, titleFont, (e) -> {
+        comboGIFPlayback = new BetterComboBox(PropDefault.PLAYBACK.labels(), titleFont, (e) -> {
             final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final PLAYBACK_OPTION playback = switch (selection) {
-            case 0  -> PLAYBACK_OPTION.BASIC;
-            case 1  -> PLAYBACK_OPTION.ADVANCED;
-            default -> throw new IllegalArgumentException("Unexpected value: " + selection);
-            };
+            final PLAYBACK_OPTION playback = PLAYBACK_OPTION.values()[selection];
             propertyChanged(PiPProperty.GIF_PLAYBACK_MODE, playback.toString());
             ((BetterComboBox) e.getSource()).setToolTipText(playback.description());
         });
@@ -277,14 +259,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         chkDisCache.addActionListener((e) -> propertyChanged(PiPProperty.DISABLE_CACHE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblDisCache = new BetterLabel(PiPPropertyDesc.DISABLE_CACHE, textFont);
         final BetterLabel lblOverwriteCacheTitle = new BetterLabel("Overwrite Cached Media", titleFont);
-        comboOverwriteCache = new BetterComboBox(new String[] {"❔ Ask Each Time", "✔️ Yes", "❌ No"}, titleFont, (e) -> {
+        comboOverwriteCache = new BetterComboBox(PropDefault.OVERWRITE.labels(), titleFont, (e) -> {
             final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final OVERWRITE_OPTION overwrite = switch (selection) {
-            case 0  -> OVERWRITE_OPTION.ASK;
-            case 1  -> OVERWRITE_OPTION.YES;
-            case 2  -> OVERWRITE_OPTION.NO;
-            default -> throw new IllegalArgumentException("Unexpected value: " + selection);
-            };
+            final OVERWRITE_OPTION overwrite = OVERWRITE_OPTION.values()[selection];
             propertyChanged(PiPProperty.OVERWRITE_CACHE, overwrite.toString());
             ((BetterComboBox) e.getSource()).setToolTipText(overwrite.description());
         });
@@ -357,28 +334,16 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblAppUpdateTitle = new BetterLabel("Application Updates", headerFont);
         final BetterLabel lblAppUpdateDesc  = new BetterLabel(PiPPropertyDesc.APP_UPDATES, textFont);
         final BetterLabel lblAppUpdateTypeTitle = new BetterLabel("Application Update Builds:", titleFont);
-        comboAppUpdateType = new BetterComboBox(new String[] {"🔥 Release", "🔨 Beta", "🛠️ Snapshot"}, titleFont, (e) -> {
+        comboAppUpdateType = new BetterComboBox(PropDefault.TYPE.labels(), titleFont, (e) -> {
             final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final TYPE_OPTION type = switch (selection) {
-            case 0  -> TYPE_OPTION.RELEASE;
-            case 1  -> TYPE_OPTION.BETA;
-            case 2  -> TYPE_OPTION.SNAPSHOT;
-            default -> throw new IllegalArgumentException("Unexpected value: " + selection);
-            };
+            final TYPE_OPTION type = TYPE_OPTION.values()[selection];
             propertyChanged(PiPProperty.APP_UPDATE_TYPE, type.toString());
             ((BetterComboBox) e.getSource()).setToolTipText(type.description());
         });
         final BetterLabel lblAppUpdateFreqTitle = new BetterLabel("Automatically Check for Updates:", titleFont);
-        comboAppUpdateFreq = new BetterComboBox(new String[] {"✔️ Always", "☀️ Daily", "📏 Weekly", "📅 Monthly", "❌ Never"}, titleFont, (e) -> {
+        comboAppUpdateFreq = new BetterComboBox(PropDefault.FREQUENCY_APP.labels(), titleFont, (e) -> {
             final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final FREQUENCY_OPTION frequency = switch (selection) {
-            case 0  -> FREQUENCY_OPTION.ALWAYS;
-            case 1  -> FREQUENCY_OPTION.DAILY;
-            case 2  -> FREQUENCY_OPTION.WEEKLY;
-            case 3  -> FREQUENCY_OPTION.MONTHLY;
-            case 4  -> FREQUENCY_OPTION.NEVER;
-            default -> throw new IllegalArgumentException("Unexpected value: " + selection);
-            };
+            final FREQUENCY_OPTION frequency = FREQUENCY_OPTION.values()[selection];
             propertyChanged(PiPProperty.APP_UPDATE_FREQUENCY, frequency.toString());
             ((BetterComboBox) e.getSource()).setToolTipText(frequency.description());
         });
@@ -412,16 +377,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblBinUpdateTitle = new BetterLabel("Updates for Binaries", headerFont);
         final BetterLabel lblBinUpdateDesc  = new BetterLabel(PiPPropertyDesc.BIN_UPDATES, textFont);
         final BetterLabel lblBinUpdateFreqTitle = new BetterLabel("Automatically Check for Updates:", titleFont);
-        comboBinUpdateFreq = new BetterComboBox(new String[] {"✔️ Always", "☀️ Daily", "📏 Weekly", "📅 Monthly", "❌ Never"}, titleFont, (e) -> {
+        comboBinUpdateFreq = new BetterComboBox(PropDefault.FREQUENCY_BIN.labels(), titleFont, (e) -> {
             final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final FREQUENCY_OPTION frequency = switch (selection) {
-            case 0  -> FREQUENCY_OPTION.ALWAYS;
-            case 1  -> FREQUENCY_OPTION.DAILY;
-            case 2  -> FREQUENCY_OPTION.WEEKLY;
-            case 3  -> FREQUENCY_OPTION.MONTHLY;
-            case 4  -> FREQUENCY_OPTION.NEVER;
-            default -> throw new IllegalArgumentException("Unexpected value: " + selection);
-            };
+            final FREQUENCY_OPTION frequency = FREQUENCY_OPTION.values()[selection];
             propertyChanged(PiPProperty.BIN_UPDATE_FREQUENCY, frequency.toString());
             ((BetterComboBox) e.getSource()).setToolTipText(frequency.description());
         });
@@ -575,7 +533,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
      * @param jc - the parent component to theme, along with all of its children.
      */
     private void themeComponents(THEME_OPTION theme, JComponent jc) {
-        Color colorBG, colorFG, colorBord, colorBtnFG, colorBtn1, colorBtn2, colorBtn3, colorSli, colorSliE;
+        Color colorBG, colorFG, colorBord, colorBtnFG, colorBtn1, colorBtn2, colorBtn3, colorSli, colorSliK, colorSliE;
         colorBG    = theme.color(COLOR.BG);
         colorBord  = theme.color(COLOR.BG_ACCENT);
         colorFG    = theme.color(COLOR.TXT);
@@ -584,6 +542,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         colorBtn2  = theme.color(COLOR.BTN_PRESSED);
         colorBtn3  = theme.color(COLOR.BTN_BORDER);
         colorSli   = theme.color(COLOR.SLIDER);
+        colorSliK  = theme.color(COLOR.SLIDER_KNOB);
         colorSliE  = theme.color(COLOR.SLIDER_EMPTY);
         
         if (jc instanceof BetterPanel panel) {
@@ -607,7 +566,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             else if (c instanceof BetterSlider slider) {
                 slider.setSliderColor(colorSli);
                 slider.setSliderEmptyColor(colorSliE);
-                slider.setSliderThumbColor(colorBtn1);
+                slider.setSliderThumbColor(colorSliK);
                 continue;
             }
             c.setBackground(colorBG);
@@ -644,21 +603,13 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         switch(prop) {
         case THEME: {
             final THEME_OPTION theme = PropDefault.THEME.matchAny(propertyState(prop, String.class));
-            comboTheme.setSelectedIndex(switch (theme) {
-            case LIGHT      -> 0;
-            case DARK       -> 1;
-            case PINK       -> 2;
-            case SUBNAUTICA -> 3;
-            });
+            comboTheme.setSelectedIndex(theme.index());
             pickTheme(theme);
             break;
         }
         case GIF_PLAYBACK_MODE:
             final PLAYBACK_OPTION playback = PropDefault.PLAYBACK.matchAny(propertyState(prop, String.class));
-            comboGIFPlayback.setSelectedIndex(switch (playback) {
-            case BASIC    -> 0;
-            case ADVANCED -> 1;
-            });
+            comboGIFPlayback.setSelectedIndex(playback.index());
             comboGIFPlayback.setToolTipText(playback.description());
             break;
         case DND_PREFER_LINK:
@@ -666,11 +617,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             break;
         case DOWNLOAD_WEB_MEDIA:
             final DOWNLOAD_OPTION download = PropDefault.DOWNLOAD.matchAny(propertyState(prop, String.class));
-            comboDLWebMedia.setSelectedIndex(switch (download) {
-            case NEVER  -> 0;
-            case NORMAL -> 1;
-            case ALWAYS -> 2;
-            });
+            comboDLWebMedia.setSelectedIndex(download.index());
             comboDLWebMedia.setToolTipText(download.description());
             break;
         case CONVERT_WEB_INDIRECT:
@@ -681,11 +628,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             break;
         case TRIM_TRANSPARENCY_OPTION:
             final TRIM_OPTION option = PropDefault.TRIM.matchAny(propertyState(prop, String.class));
-            comboTrim.setSelectedIndex(switch (option) {
-            case NORMAL -> 0;
-            case STRICT -> 1;
-            case FORCE  -> 2;
-            });
+            comboTrim.setSelectedIndex(option.index());
             comboTrim.setToolTipText(option.description());
             break;
         case GLOBAL_MUTED:
@@ -704,30 +647,16 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             break;
         case OVERWRITE_CACHE:
             final OVERWRITE_OPTION overwrite = PropDefault.OVERWRITE.matchAny(propertyState(prop, String.class));
-            comboOverwriteCache.setSelectedIndex(switch (overwrite) {
-            case ASK -> 0;
-            case YES -> 1;
-            case NO  -> 2;
-            });
+            comboOverwriteCache.setSelectedIndex(overwrite.index());
             break;
         case APP_UPDATE_FREQUENCY:
             final FREQUENCY_OPTION appFrequency = PropDefault.FREQUENCY_APP.matchAny(propertyState(prop, String.class));
-            comboAppUpdateFreq.setSelectedIndex(switch (appFrequency) {
-            case ALWAYS  -> 0;
-            case DAILY   -> 1;
-            case WEEKLY  -> 2;
-            case MONTHLY -> 3;
-            case NEVER   -> 4;
-            });
+            comboAppUpdateFreq.setSelectedIndex(appFrequency.index());
             comboAppUpdateFreq.setToolTipText(appFrequency.description());
             break;
         case APP_UPDATE_TYPE:
             final TYPE_OPTION type = PropDefault.TYPE.matchAny(propertyState(prop, String.class));
-            comboAppUpdateType.setSelectedIndex(switch (type) {
-            case RELEASE  -> 0;
-            case BETA     -> 1;
-            case SNAPSHOT -> 2;
-            });
+            comboAppUpdateType.setSelectedIndex(type.index());
             comboAppUpdateType.setToolTipText(type.description());
             break;
         case APP_UPDATE_FORCE:
@@ -735,13 +664,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             break;
         case BIN_UPDATE_FREQUENCY:
             final FREQUENCY_OPTION binFrequency = PropDefault.FREQUENCY_BIN.matchAny(propertyState(prop, String.class));
-            comboBinUpdateFreq.setSelectedIndex(switch (binFrequency) {
-            case ALWAYS  -> 0;
-            case DAILY   -> 1;
-            case WEEKLY  -> 2;
-            case MONTHLY -> 3;
-            case NEVER   -> 4;
-            });
+            comboBinUpdateFreq.setSelectedIndex(binFrequency.index());
             comboBinUpdateFreq.setToolTipText(binFrequency.description());
             break;
         case USE_SYS_VLC:

@@ -252,7 +252,7 @@ public class PiPMedia {
         // Ensure trimmed folder exists in cache then build media's cropped version path.
         final int inPeriodIndex = inFile.getName().lastIndexOf('.');
         final String ext = source.substring(source.lastIndexOf('.') + 1);
-        final StringBuilder cropFilePath = new StringBuilder(Initializer.APP_CACHE_FOLDER).append("/trimmed");
+        final StringBuilder cropFilePath = new StringBuilder(Initializer.APP_TRIMMED_FOLDER);
         PiPAAUtils.ensureExistence(cropFilePath.toString());
         cropFilePath.append("/").append(inFile.getName().substring(0, inPeriodIndex)).append("_PiPAACrop").append(".").append(ext);
         

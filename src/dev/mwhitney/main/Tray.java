@@ -23,7 +23,7 @@ import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.PopupMenuUI;
 import javax.swing.plaf.SeparatorUI;
 
-import dev.mwhitney.gui.InvertibleIcon;
+import dev.mwhitney.gui.ColoredArrowIcon;
 import dev.mwhitney.gui.InvertibleImage;
 import dev.mwhitney.gui.PiPWindowManager;
 import dev.mwhitney.gui.TopDialog;
@@ -32,6 +32,7 @@ import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
 import dorkbox.systemTray.Checkbox;
 import dorkbox.systemTray.Entry;
 import dorkbox.systemTray.Menu;
@@ -52,6 +53,7 @@ import dorkbox.systemTray.util.swing.DefaultSeparatorUI;
  */
 public class Tray implements PropertyListener {
     
+    @SuppressWarnings("unused")
     /** The default background color for tray elements. */
     private static final Color DEFAULT_BG_COLOR   = new Color(240, 240, 240);
     /** The default shadow color for tray elements. */
@@ -224,14 +226,16 @@ public class Tray implements PropertyListener {
         final MenuItem exitItem           = new MenuItem("Exit",          ((evt) -> {
             // Exit/Close Application
             listener.applicationClosing();
-            tray.shutdown();
-            System.exit(0);
+            tray.shutdown(() -> System.exit(0));
             /* 
              * TODO Rework threading throughout app, implement exit call in a listener that certain classes implement.
              * Bad practice to call System.exit(...) on normal shutdowns. This is why tray icon lingers until hovered over afterwards.
              * Commenting it out works, UNLESS an async thread is executing (non-daemon), such as downloading media. In that case the app
              * stays running completely in the background, with no tray icon or windows, which is obviously terrible. All async thread
              * calls must be interruptible at user-called application exit.
+             * Update (Nov. 25, 2024): Moved System.exit(0) call within the SystemTray shutdown method call. It executes after the tray has shut down.
+             * Therefore, the tray icon properly goes away on its own now without having to hover over it after exit.
+             * However, this is just a partial, temporary improvement. The other issues described above remain, which must be fixed.
              */
         }));
         
@@ -298,59 +302,22 @@ public class Tray implements PropertyListener {
      * calls to execute. This method <b>should not</b> be called on the EDT.
      */
     private void setupUIThemeProperties() {
-        // Setup Maps
+        // Initialize Props Map
         uiPropsMap = new HashMap<>();
-        final HashMap<String, Object> lightMap       = new HashMap<>();
-        final HashMap<String, Object> darkMap        = new HashMap<>();
-        final HashMap<String, Object> pinkMap        = new HashMap<>();
-        final HashMap<String, Object> subnauticaMap  = new HashMap<>();
-        
-        // Light (Normal) Theme
-        lightMap.put("Menu.background", new ColorUIResource(DEFAULT_BG_COLOR));
-        lightMap.put("Menu.foreground", Color.BLACK);
-        lightMap.put("PopupMenu.border", new LineBorder(DEFAULT_BG_COLOR, 2));
-        lightMap.put("MenuItem.background", new ColorUIResource(DEFAULT_BG_COLOR));
-        lightMap.put("MenuItem.foreground", Color.BLACK);
-        lightMap.put("Separator.background", Color.WHITE);
-        lightMap.put("Separator.shadow", new ColorUIResource(DEFAULT_SHDW_COLOR));
-        lightMap.put("TabbedPane.tabAreaBackground", new ColorUIResource(DEFAULT_BG_COLOR));
-        
-        // Dark Theme
-        darkMap.put("Menu.background", new ColorUIResource(Color.DARK_GRAY));
-        darkMap.put("Menu.foreground", Color.LIGHT_GRAY);
-        darkMap.put("PopupMenu.border", new LineBorder(Color.DARK_GRAY.darker(), 2));
-        darkMap.put("MenuItem.background", new ColorUIResource(Color.DARK_GRAY));
-        darkMap.put("MenuItem.foreground", Color.LIGHT_GRAY);
-        darkMap.put("Separator.background", Color.BLACK.darker());
-        darkMap.put("Separator.shadow", Color.BLACK.darker());
-        darkMap.put("TabbedPane.tabAreaBackground", new ColorUIResource(Color.DARK_GRAY.darker()));
-        
-        // Pink Theme
-        pinkMap.put("Menu.background", new ColorUIResource(THEME_OPTION.PINK_BG));
-        pinkMap.put("Menu.foreground", Color.WHITE);
-        pinkMap.put("PopupMenu.foreground", Color.red);
-        pinkMap.put("PopupMenu.border", new LineBorder(THEME_OPTION.PINK_BG_ACCENT, 2));
-        pinkMap.put("MenuItem.background", new ColorUIResource(THEME_OPTION.PINK_BG));
-        pinkMap.put("MenuItem.foreground", Color.WHITE);
-        pinkMap.put("Separator.background", Color.WHITE);
-        pinkMap.put("Separator.shadow", new ColorUIResource(DEFAULT_SHDW_COLOR));
-        pinkMap.put("TabbedPane.tabAreaBackground", new ColorUIResource(THEME_OPTION.PINK_BG_ACCENT));
-        
-        // Subnautica Theme
-        subnauticaMap.put("Menu.background", new ColorUIResource(THEME_OPTION.SUBNAUTICA_BG));
-        subnauticaMap.put("Menu.foreground", Color.WHITE);
-        subnauticaMap.put("PopupMenu.border", new LineBorder(THEME_OPTION.SUBNAUTICA_BG_ACCENT, 2));
-        subnauticaMap.put("MenuItem.background", new ColorUIResource(THEME_OPTION.SUBNAUTICA_BG));
-        subnauticaMap.put("MenuItem.foreground", Color.WHITE);
-        subnauticaMap.put("Separator.background", THEME_OPTION.SUBNAUTICA_TXT);
-        subnauticaMap.put("Separator.shadow", new ColorUIResource(DEFAULT_SHDW_COLOR));
-        subnauticaMap.put("TabbedPane.tabAreaBackground", new ColorUIResource(THEME_OPTION.SUBNAUTICA_BG));
-        
-        // Put Theme Maps into Container Props Map
-        uiPropsMap.put(THEME_OPTION.LIGHT.toString(),      lightMap);
-        uiPropsMap.put(THEME_OPTION.DARK.toString(),       darkMap);
-        uiPropsMap.put(THEME_OPTION.PINK.toString(),       pinkMap);
-        uiPropsMap.put(THEME_OPTION.SUBNAUTICA.toString(), subnauticaMap);
+        // Translate each theme and its colors into a map, then add it to the props map.
+        for(final THEME_OPTION theme : THEME_OPTION.values()) {
+            final HashMap<String, Object> themeMap = new HashMap<>();
+            themeMap.put("Menu.background", new ColorUIResource(theme.color(COLOR.BG)));
+            themeMap.put("Menu.foreground", theme.color(COLOR.TXT));
+            themeMap.put("Menu.arrowIcon", new ColoredArrowIcon(theme.color(COLOR.TXT)));
+            themeMap.put("PopupMenu.border", new LineBorder(theme.color(COLOR.BG_ACCENT), 2));
+            themeMap.put("MenuItem.background", new ColorUIResource(theme.color(COLOR.BG)));
+            themeMap.put("MenuItem.foreground", theme.color(COLOR.TXT));
+            themeMap.put("Separator.background", theme.color(COLOR.BG));
+            themeMap.put("Separator.shadow", new ColorUIResource(DEFAULT_SHDW_COLOR));
+            themeMap.put("TabbedPane.tabAreaBackground", new ColorUIResource(theme.color(COLOR.BG)));
+            uiPropsMap.put(theme.toString(), themeMap);
+        }
     }
     
     /**
@@ -402,7 +369,6 @@ public class Tray implements PropertyListener {
         // Get Theme's Map and Apply its Key/Values
         final HashMap<String, Object> themeMap = uiPropsMap.get(theme.toString());
         themeMap.forEach((k, v) -> UIManager.getLookAndFeelDefaults().put(k, v));
-        ((InvertibleIcon) UIManager.getLookAndFeelDefaults().get("Menu.arrowIcon")).normalize();
     }
     
     /**
@@ -415,10 +381,7 @@ public class Tray implements PropertyListener {
         final THEME_OPTION theme = PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class));
         
         // Determine whether the image inverse should be used -- theme dependent.
-        final boolean USE_INVERSE = switch (theme) {
-        case LIGHT                  -> false;
-        case SUBNAUTICA, PINK, DARK -> true;
-        };
+        final boolean USE_INVERSE = theme.usesInvertedIcons();
         
         // Iterate over each image in the map and refresh its icon.
         imgMap.forEach((ent, img) -> {

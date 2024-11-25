@@ -551,7 +551,6 @@ public class PiPMediaAttributor implements PropertyListener {
      */
     private PiPMediaAttributes.SRC_TYPE attributeSrcType(String src) throws InvalidMediaException {
         if(rgxSrcWebDirect.matcher(src).matches()) {
-//            if (ext.equals("PHP") || ext.equals("HTML"))
             // Ensure that the direct regex did not mistake certain web pages with direct media links.
             final String ext = rgxSrcWebDirect.matcher(src).replaceAll("$2");
             System.out.println("Attributing src type found ext: " + ext);

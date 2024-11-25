@@ -131,8 +131,34 @@ public enum PiPProperty {
         /** The pink theme for the application. */
         PINK,
         /** A theme with colors based on the "Subnautica" video game, developed and published by Unknown Worlds Entertainment. */
-        SUBNAUTICA;
+        SUBNAUTICA,
+        /** A blue-heavy ocean theme for the application. */
+        OCEAN;
         
+        /**
+         * Checks if this theme uses inverted icons.
+         * 
+         * @return <code>true</code> if this theme uses inverted icons;
+         *         <code>false</code> if this theme uses normal icons.
+         */
+        public boolean usesInvertedIcons() {
+            return switch (this) {
+            case LIGHT -> false;
+            case SUBNAUTICA, PINK, DARK, OCEAN -> true;
+            };
+        }
+        
+        @Override
+        public String label() {
+            return switch(this) {
+            case LIGHT      -> "☀️ Light";
+            case DARK       -> "🌑 Dark";
+            case PINK       -> "🌸 Pink";
+            case SUBNAUTICA -> "🚀 Subnautica";
+            case OCEAN      -> "🌊 Ocean";
+            };
+        }
+
         /**
          * Options within the {@link THEME_OPTION} sub-property which reference specific colors
          * for parts of the user interface.
@@ -152,6 +178,8 @@ public enum PiPProperty {
             BTN_BORDER,
             /** The color of the filled/progressed space in a slider. */
             SLIDER,
+            /** The color of the knob or thumb in a slider. */
+            SLIDER_KNOB,
             /** The color of the empty space in a slider. */
             SLIDER_EMPTY;
         }
@@ -164,6 +192,7 @@ public enum PiPProperty {
         public static final Color LIGHT_BTN_PRESSED  = new Color(0, 84, 150);
         public static final Color LIGHT_BTN_BORDER   = new Color(0, 60, 107);
         public static final Color LIGHT_SLIDER       = LIGHT_BTN.brighter();
+        public static final Color LIGHT_SLIDER_KNOB  = LIGHT_BTN;
         public static final Color LIGHT_SLIDER_EMPTY = LIGHT_BTN_BORDER.darker().darker().darker();
         /* DARK COLORS */
         public static final Color DARK_BG           = Color.DARK_GRAY;
@@ -173,6 +202,7 @@ public enum PiPProperty {
         public static final Color DARK_BTN_PRESSED  = DARK_BTN.darker();
         public static final Color DARK_BTN_BORDER   = Color.BLACK;
         public static final Color DARK_SLIDER       = DARK_BG_ACCENT;
+        public static final Color DARK_SLIDER_KNOB  = DARK_BTN;
         public static final Color DARK_SLIDER_EMPTY = Color.BLACK;
         /* PINK COLORS */
         public static final Color PINK_BG           = Color.PINK;
@@ -182,6 +212,7 @@ public enum PiPProperty {
         public static final Color PINK_BTN_PRESSED  = PINK_BTN.darker();
         public static final Color PINK_BTN_BORDER   = PINK_BTN_PRESSED.darker();
         public static final Color PINK_SLIDER       = PINK_BTN_PRESSED;
+        public static final Color PINK_SLIDER_KNOB  = PINK_BTN;
         public static final Color PINK_SLIDER_EMPTY = Color.WHITE;
         /* SUBNAUTICA COLORS */
         public static final Color SUBNAUTICA_BG           = new Color(247,135,59);
@@ -191,7 +222,18 @@ public enum PiPProperty {
         public static final Color SUBNAUTICA_BTN_PRESSED  = new Color(9, 122, 204);
         public static final Color SUBNAUTICA_BTN_BORDER   = new Color(8, 107, 179);
         public static final Color SUBNAUTICA_SLIDER       = SUBNAUTICA_BTN_PRESSED;
+        public static final Color SUBNAUTICA_SLIDER_KNOB  = SUBNAUTICA_BTN;
         public static final Color SUBNAUTICA_SLIDER_EMPTY = SUBNAUTICA_BTN_BORDER.darker().darker().darker();
+        /* OCEAN COLORS */
+        public static final Color OCEAN_BG           = new Color(0, 64, 128);
+        public static final Color OCEAN_BG_ACCENT    = OCEAN_BG.darker();
+        public static final Color OCEAN_TXT          = Color.WHITE;
+        public static final Color OCEAN_BTN          = new Color(0, 26, 51);
+        public static final Color OCEAN_BTN_PRESSED  = OCEAN_BTN.darker();
+        public static final Color OCEAN_BTN_BORDER   = OCEAN_BTN_PRESSED.darker();
+        public static final Color OCEAN_SLIDER       = new Color(0, 51, 102).darker();
+        public static final Color OCEAN_SLIDER_KNOB  = OCEAN_SLIDER.darker();
+        public static final Color OCEAN_SLIDER_EMPTY = OCEAN_SLIDER_KNOB.darker().darker().darker();
         
         /**
          * Gets {@link THEME_OPTION}-specific Color for the specific component or element of
@@ -211,6 +253,7 @@ public enum PiPProperty {
                 case BTN_BORDER   -> LIGHT_BTN_BORDER;
                 case BTN_PRESSED  -> LIGHT_BTN_PRESSED;
                 case SLIDER       -> LIGHT_SLIDER;
+                case SLIDER_KNOB  -> LIGHT_SLIDER_KNOB;
                 case SLIDER_EMPTY -> LIGHT_SLIDER_EMPTY;
                 };
             case DARK -> switch (c) {
@@ -221,6 +264,7 @@ public enum PiPProperty {
                 case BTN_BORDER   -> DARK_BTN_BORDER;
                 case BTN_PRESSED  -> DARK_BTN_PRESSED;
                 case SLIDER       -> DARK_SLIDER;
+                case SLIDER_KNOB  -> DARK_SLIDER_KNOB;
                 case SLIDER_EMPTY -> DARK_SLIDER_EMPTY;
                 };
             case PINK -> switch (c) {
@@ -231,6 +275,7 @@ public enum PiPProperty {
                 case BTN_BORDER   -> PINK_BTN_BORDER;
                 case BTN_PRESSED  -> PINK_BTN_PRESSED;
                 case SLIDER       -> PINK_SLIDER;
+                case SLIDER_KNOB  -> PINK_SLIDER_KNOB;
                 case SLIDER_EMPTY -> PINK_SLIDER_EMPTY;
                 };
             case SUBNAUTICA -> switch(c) {
@@ -241,7 +286,19 @@ public enum PiPProperty {
                 case BTN_BORDER   -> SUBNAUTICA_BTN_BORDER;
                 case BTN_PRESSED  -> SUBNAUTICA_BTN_PRESSED;
                 case SLIDER       -> SUBNAUTICA_SLIDER;
+                case SLIDER_KNOB  -> SUBNAUTICA_SLIDER_KNOB;
                 case SLIDER_EMPTY -> SUBNAUTICA_SLIDER_EMPTY;
+                };
+            case OCEAN -> switch(c) {
+                case BG           -> OCEAN_BG;
+                case BG_ACCENT    -> OCEAN_BG_ACCENT;
+                case TXT          -> OCEAN_TXT;
+                case BTN          -> OCEAN_BTN;
+                case BTN_BORDER   -> OCEAN_BTN_BORDER;
+                case BTN_PRESSED  -> OCEAN_BTN_PRESSED;
+                case SLIDER       -> OCEAN_SLIDER;
+                case SLIDER_KNOB  -> OCEAN_SLIDER_KNOB;
+                case SLIDER_EMPTY -> OCEAN_SLIDER_EMPTY;
                 };
             };
         }
@@ -257,6 +314,15 @@ public enum PiPProperty {
         NORMAL,
         /** Always download web media, even when it's not necessary for playback. */
         ALWAYS;
+        
+        @Override
+        public String label() {
+            return switch (this) {
+            case NEVER  -> "❌ Never";
+            case NORMAL -> "💾 Normal";
+            case ALWAYS -> "✔️ Always";
+            };
+        }
         @Override
         public String description() {
             return switch (this) {
@@ -279,6 +345,14 @@ public enum PiPProperty {
         FORCE;
         
         @Override
+        public String label() {
+            return switch (this) {
+            case NORMAL -> "Normal";
+            case STRICT -> "Strict";
+            case FORCE  -> "Force";
+            };
+        }
+        @Override
         public String description() {
             return switch (this) {
             case NORMAL -> "Trim nearly-invisible pixels and fully-transparent pixels.";
@@ -296,6 +370,13 @@ public enum PiPProperty {
         /** The Advanced GIF Playback mode which downloads and converts GIFs to videos. */
         ADVANCED;
         
+        @Override
+        public String label() {
+            return switch (this) {
+            case BASIC    -> "🍎 Basic";
+            case ADVANCED -> "🚀 Advanced";
+            };
+        }
         @Override
         public String description() {
             return switch (this) {
@@ -315,6 +396,14 @@ public enum PiPProperty {
         /** The No option for if to overwrite the cache when there's a conflict. */
         NO;
         
+        @Override
+        public String label() {
+            return switch (this) {
+            case ASK -> "❔ Ask";
+            case YES -> "✔️ Yes";
+            case NO  -> "❌ No";
+            };
+        }
         @Override
         public String description() {
             return switch (this) {
@@ -338,15 +427,25 @@ public enum PiPProperty {
         MONTHLY,
         /** Never attempt automatic updates of the binaries. Not recommended for most users. */
         NEVER;
-
+        
+        @Override
+        public String label() {
+            return switch (this) {
+            case ALWAYS  -> "✔️ Always";
+            case DAILY   -> "☀️ Daily";
+            case WEEKLY  -> "📏 Weekly";
+            case MONTHLY -> "📅 Monthly";
+            case NEVER   -> "❌ Never";
+            };
+        }
         @Override
         public String description() {
             return switch (this) {
-            case NEVER   -> "Never attempt automatic updates. Not recommended for most users.";
             case ALWAYS  -> "Always attempt to automatically update during application launch.";
             case DAILY   -> "Only attempt to automatically update once per day.";
             case WEEKLY  -> "Only attempt to automatically update once per week.";
             case MONTHLY -> "Only attempt to automatically update once per month.";
+            case NEVER   -> "Never attempt automatic updates. Not recommended for most users.";
             };
         }
     }
@@ -428,6 +527,14 @@ public enum PiPProperty {
             return ext;
         }
         
+        @Override
+        public String label() {
+            return switch (this) {
+            case RELEASE  -> "🔥 Release";
+            case BETA     -> "🔨 Beta";
+            case SNAPSHOT -> "🛠️ Snapshot";
+            };
+        }
         @Override
         public String description() {
             return switch (this) {
