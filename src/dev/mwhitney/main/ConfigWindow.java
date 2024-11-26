@@ -24,7 +24,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 
 import org.apache.commons.io.FileUtils;
 
@@ -170,34 +169,19 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         
         // -------------------- General Panel --------------------
         final BetterLabel lblThemeTitle = new BetterLabel("Theme", titleFont);
-        comboTheme = new BetterComboBox(PropDefault.THEME.labels(), titleFont, (e) -> {
-            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            // Set property value and adjust theme based on new theme selection.
-            propertyChanged(PiPProperty.THEME, THEME_OPTION.values()[selection].toString());
-            pickTheme(THEME_OPTION.LIGHT.matchAny(propertyState(PiPProperty.THEME, String.class)));
-        });
+        comboTheme = new BetterComboBox(PropDefault.THEME.labels(), titleFont);
         chkPreferLinkDND = new BetterCheckbox("🔗 Prefer Links with Drag and Drop", true, titleFont);
         chkPreferLinkDND.addActionListener((e) -> propertyChanged(PiPProperty.DND_PREFER_LINK, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblPreferLinkDND = new BetterLabel(PiPPropertyDesc.DND_PREFER_LINK, textFont);
         final BetterLabel lblDLWebMediaTitle = new BetterLabel("Download Web Media", titleFont);
-        comboDLWebMedia = new BetterComboBox(PropDefault.DOWNLOAD.labels(), titleFont, (e) -> {
-            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final DOWNLOAD_OPTION download = DOWNLOAD_OPTION.values()[selection];
-            propertyChanged(PiPProperty.DOWNLOAD_WEB_MEDIA, download.toString());
-            ((BetterComboBox) e.getSource()).setToolTipText(download.description());
-        });
+        comboDLWebMedia = new BetterComboBox(PropDefault.DOWNLOAD.labels(), titleFont);
         final BetterLabel lblDLWebMedia = new BetterLabel(PiPPropertyDesc.DOWNLOAD_WEB_MEDIA, textFont);
         chkConvertIndWeb = new BetterCheckbox("📦 Convert Indirect Web Links to Direct", true, titleFont);
         chkConvertIndWeb.addActionListener((e) -> propertyChanged(PiPProperty.CONVERT_WEB_INDIRECT, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblConvIndWeb = new BetterLabel(PiPPropertyDesc.CONVERT_WEB_INDIRECT, textFont);
         chkTrimTransparency = new BetterCheckbox("✂️ Trim Transparent Edges", true, titleFont);
         chkTrimTransparency.addActionListener((e) -> propertyChanged(PiPProperty.TRIM_TRANSPARENCY, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
-        comboTrim = new BetterComboBox(PropDefault.TRIM.labels(), titleFont, (e) -> {
-            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final TRIM_OPTION option = TRIM_OPTION.values()[selection];
-            propertyChanged(PiPProperty.TRIM_TRANSPARENCY_OPTION, option.toString());
-            ((BetterComboBox) e.getSource()).setToolTipText(option.description());
-        });
+        comboTrim = new BetterComboBox(PropDefault.TRIM.labels(), titleFont);
         final BetterLabel lblTrimTransparency = new BetterLabel(PiPPropertyDesc.TRIM_TRANSPARENCY, textFont);
         final BetterButton btnOpenFolder = new BetterButton("Open Application Folder", titleFont, (e) -> {
             try {
@@ -211,12 +195,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         
         // -------------------- Playback Panel --------------------
         final BetterLabel lblGIFPlaybackTitle = new BetterLabel("GIF Playback Mode", titleFont);
-        comboGIFPlayback = new BetterComboBox(PropDefault.PLAYBACK.labels(), titleFont, (e) -> {
-            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final PLAYBACK_OPTION playback = PLAYBACK_OPTION.values()[selection];
-            propertyChanged(PiPProperty.GIF_PLAYBACK_MODE, playback.toString());
-            ((BetterComboBox) e.getSource()).setToolTipText(playback.description());
-        });
+        comboGIFPlayback = new BetterComboBox(PropDefault.PLAYBACK.labels(), titleFont);
         final BetterLabel lblGIFPlayback = new BetterLabel(PiPPropertyDesc.GIF_PLAYBACK_MODE, textFont);
         chkGlobMute = new BetterCheckbox("🔇 Global Mute", true, titleFont);
         chkGlobMute.addActionListener((e) -> propertyChanged(PiPProperty.GLOBAL_MUTED, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
@@ -259,12 +238,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         chkDisCache.addActionListener((e) -> propertyChanged(PiPProperty.DISABLE_CACHE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblDisCache = new BetterLabel(PiPPropertyDesc.DISABLE_CACHE, textFont);
         final BetterLabel lblOverwriteCacheTitle = new BetterLabel("Overwrite Cached Media", titleFont);
-        comboOverwriteCache = new BetterComboBox(PropDefault.OVERWRITE.labels(), titleFont, (e) -> {
-            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final OVERWRITE_OPTION overwrite = OVERWRITE_OPTION.values()[selection];
-            propertyChanged(PiPProperty.OVERWRITE_CACHE, overwrite.toString());
-            ((BetterComboBox) e.getSource()).setToolTipText(overwrite.description());
-        });
+        comboOverwriteCache = new BetterComboBox(PropDefault.OVERWRITE.labels(), titleFont);
         final BetterLabel lblAskCache = new BetterLabel(PiPPropertyDesc.OVERWRITE_CACHE, textFont);
         final BetterLabel lblMediaCacheTitle = new BetterLabel("Media Cache", titleFont);
         final BetterLabel lblMediaCache = new BetterLabel("Open, prune, or delete the media cache. Prune deletes empty folders and subfolders from the cache.", textFont);
@@ -334,19 +308,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblAppUpdateTitle = new BetterLabel("Application Updates", headerFont);
         final BetterLabel lblAppUpdateDesc  = new BetterLabel(PiPPropertyDesc.APP_UPDATES, textFont);
         final BetterLabel lblAppUpdateTypeTitle = new BetterLabel("Application Update Builds:", titleFont);
-        comboAppUpdateType = new BetterComboBox(PropDefault.TYPE.labels(), titleFont, (e) -> {
-            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final TYPE_OPTION type = TYPE_OPTION.values()[selection];
-            propertyChanged(PiPProperty.APP_UPDATE_TYPE, type.toString());
-            ((BetterComboBox) e.getSource()).setToolTipText(type.description());
-        });
+        comboAppUpdateType = new BetterComboBox(PropDefault.TYPE.labels(), titleFont);
         final BetterLabel lblAppUpdateFreqTitle = new BetterLabel("Automatically Check for Updates:", titleFont);
-        comboAppUpdateFreq = new BetterComboBox(PropDefault.FREQUENCY_APP.labels(), titleFont, (e) -> {
-            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final FREQUENCY_OPTION frequency = FREQUENCY_OPTION.values()[selection];
-            propertyChanged(PiPProperty.APP_UPDATE_FREQUENCY, frequency.toString());
-            ((BetterComboBox) e.getSource()).setToolTipText(frequency.description());
-        });
+        comboAppUpdateFreq = new BetterComboBox(PropDefault.FREQUENCY_APP.labels(), titleFont);
         chkForceAppUpdate = new BetterCheckbox("Force Update Prompt:", true, titleFont);
         chkForceAppUpdate.addActionListener(e -> propertyChanged(PiPProperty.APP_UPDATE_FORCE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         chkForceAppUpdate.setToolTipText("Force the application to ask if you'd like to update, even if the version is the same. Only with manual updates via the button.");
@@ -377,12 +341,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblBinUpdateTitle = new BetterLabel("Updates for Binaries", headerFont);
         final BetterLabel lblBinUpdateDesc  = new BetterLabel(PiPPropertyDesc.BIN_UPDATES, textFont);
         final BetterLabel lblBinUpdateFreqTitle = new BetterLabel("Automatically Check for Updates:", titleFont);
-        comboBinUpdateFreq = new BetterComboBox(PropDefault.FREQUENCY_BIN.labels(), titleFont, (e) -> {
-            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
-            final FREQUENCY_OPTION frequency = FREQUENCY_OPTION.values()[selection];
-            propertyChanged(PiPProperty.BIN_UPDATE_FREQUENCY, frequency.toString());
-            ((BetterComboBox) e.getSource()).setToolTipText(frequency.description());
-        });
+        comboBinUpdateFreq = new BetterComboBox(PropDefault.FREQUENCY_BIN.labels(), titleFont);
         final BetterButton btnUpdateBin = new BetterButton("Update Downloader Binaries", titleFont, (e) -> {
             // Do not stack update requests.
             if (PiPUpdater.BIN_UPDATING) return;
@@ -413,9 +372,6 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         chkSuperRes = new BetterCheckbox("🎞️ RTX Video Super Resolution", false, titleFont);
         chkSuperRes.addActionListener((e) -> propertyChanged(PiPProperty.USE_SUPER_RES, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblSuperRes   = new BetterLabel(PiPPropertyDesc.USE_SUPER_RES, textFont);
-        
-        // Load Current Configuration
-        refreshProperties();
         
         // Add Components to Content Panes
         contentPane.add(header, "dock north, h 30:50, gapleft push, gapright push, wrap 5px");
@@ -484,6 +440,59 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         paneAdvanced.add(lblSystemBin, "wrap");
         paneAdvanced.add(chkSuperRes, "gaptop 5px, wrap 0px");
         paneAdvanced.add(lblSuperRes, "wrap");
+        
+        // Load Current Configuration After Adding (Prevents Theme Inconsistencies)
+        refreshProperties();
+        
+        // Add Listeners After Loading Configuration to Prevent Firing During Initialization
+        comboTheme.addActionListener((e) -> {
+            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
+            // Set property value and adjust theme based on new theme selection.
+            propertyChanged(PiPProperty.THEME, THEME_OPTION.values()[selection].toString());
+            pickTheme(THEME_OPTION.LIGHT.matchAny(propertyState(PiPProperty.THEME, String.class)));
+        });
+        comboDLWebMedia.addActionListener((e) -> {
+            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
+            final DOWNLOAD_OPTION download = DOWNLOAD_OPTION.values()[selection];
+            propertyChanged(PiPProperty.DOWNLOAD_WEB_MEDIA, download.toString());
+            ((BetterComboBox) e.getSource()).setToolTipText(download.description());
+        });
+        comboTrim.addActionListener((e) -> {
+            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
+            final TRIM_OPTION option = TRIM_OPTION.values()[selection];
+            propertyChanged(PiPProperty.TRIM_TRANSPARENCY_OPTION, option.toString());
+            ((BetterComboBox) e.getSource()).setToolTipText(option.description());
+        });
+        comboGIFPlayback.addActionListener((e) -> {
+            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
+            final PLAYBACK_OPTION playback = PLAYBACK_OPTION.values()[selection];
+            propertyChanged(PiPProperty.GIF_PLAYBACK_MODE, playback.toString());
+            ((BetterComboBox) e.getSource()).setToolTipText(playback.description());
+        });
+        comboOverwriteCache.addActionListener((e) -> {
+            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
+            final OVERWRITE_OPTION overwrite = OVERWRITE_OPTION.values()[selection];
+            propertyChanged(PiPProperty.OVERWRITE_CACHE, overwrite.toString());
+            ((BetterComboBox) e.getSource()).setToolTipText(overwrite.description());
+        });
+        comboAppUpdateType.addActionListener((e) -> {
+            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
+            final TYPE_OPTION type = TYPE_OPTION.values()[selection];
+            propertyChanged(PiPProperty.APP_UPDATE_TYPE, type.toString());
+            ((BetterComboBox) e.getSource()).setToolTipText(type.description());
+        });
+        comboAppUpdateFreq.addActionListener((e) -> {
+            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
+            final FREQUENCY_OPTION frequency = FREQUENCY_OPTION.values()[selection];
+            propertyChanged(PiPProperty.APP_UPDATE_FREQUENCY, frequency.toString());
+            ((BetterComboBox) e.getSource()).setToolTipText(frequency.description());
+        });
+        comboBinUpdateFreq.addActionListener((e) -> {
+            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
+            final FREQUENCY_OPTION frequency = FREQUENCY_OPTION.values()[selection];
+            propertyChanged(PiPProperty.BIN_UPDATE_FREQUENCY, frequency.toString());
+            ((BetterComboBox) e.getSource()).setToolTipText(frequency.description());
+        });
     }
     
     /**
@@ -692,15 +701,12 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
      * Refreshes the display of the properties within the ConfigWindow. Gets all of
      * the current property values and ensures that the window reflects their state.
      * <p>
-     * This method automatically runs the refresh code on the EDT, so <b>there is no
-     * need</b> to call this method within a
+     * If not called from the EDT, this method should be called within a
      * <code>SwingUtilities.invokeLater(Runnable)</code> block.
      */
     public void refreshProperties() {
-        SwingUtilities.invokeLater(() -> {
-            // Iterate over each property and refresh it.
-            for (final PiPProperty prop : PiPProperty.values()) handlePropertyChange(prop);
-        });
+        // Iterate over each property and refresh it.
+        for (final PiPProperty prop : PiPProperty.values()) handlePropertyChange(prop);
     }
 
     // To Be Overriden

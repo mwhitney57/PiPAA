@@ -112,8 +112,8 @@ public enum PiPProperty {
         public static final PLAYBACK_OPTION  PLAYBACK  = PLAYBACK_OPTION.BASIC;
         /** The default value for the {@link PiPProperty#OVERWRITE_CACHE} property: {@link OVERWRITE_OPTION#NO} */
         public static final OVERWRITE_OPTION OVERWRITE = OVERWRITE_OPTION.NO;
-        /** The default value for the {@link PiPProperty#APP_UPDATE_FREQUENCY} property: {@link FREQUENCY_OPTION#DAILY} */
-        public static final FREQUENCY_OPTION FREQUENCY_APP = FREQUENCY_OPTION.DAILY;
+        /** The default value for the {@link PiPProperty#APP_UPDATE_FREQUENCY} property: {@link FREQUENCY_OPTION#WEEKLY} */
+        public static final FREQUENCY_OPTION FREQUENCY_APP = FREQUENCY_OPTION.WEEKLY;
         /** The default value for the {@link PiPProperty#BIN_UPDATE_FREQUENCY} property: {@link FREQUENCY_OPTION#DAILY} */
         public static final FREQUENCY_OPTION FREQUENCY_BIN = FREQUENCY_OPTION.DAILY;
         /** The default value for the {@link PiPProperty#APP_UPDATE_TYPE} property: {@link TYPE_OPTION#RELEASE} */
@@ -133,7 +133,9 @@ public enum PiPProperty {
         /** A theme with colors based on the "Subnautica" video game, developed and published by Unknown Worlds Entertainment. */
         SUBNAUTICA,
         /** A blue-heavy ocean theme for the application. */
-        OCEAN;
+        OCEAN,
+        /** A red-heavy fire theme for the application. */
+        FIRE;
         
         /**
          * Checks if this theme uses inverted icons.
@@ -144,7 +146,7 @@ public enum PiPProperty {
         public boolean usesInvertedIcons() {
             return switch (this) {
             case LIGHT -> false;
-            case SUBNAUTICA, PINK, DARK, OCEAN -> true;
+            case SUBNAUTICA, PINK, DARK, OCEAN, FIRE -> true;
             };
         }
         
@@ -156,6 +158,7 @@ public enum PiPProperty {
             case PINK       -> "🌸 Pink";
             case SUBNAUTICA -> "🚀 Subnautica";
             case OCEAN      -> "🌊 Ocean";
+            case FIRE       -> "🔥 Fire";
             };
         }
 
@@ -234,6 +237,16 @@ public enum PiPProperty {
         public static final Color OCEAN_SLIDER       = new Color(0, 51, 102).darker();
         public static final Color OCEAN_SLIDER_KNOB  = OCEAN_SLIDER.darker();
         public static final Color OCEAN_SLIDER_EMPTY = OCEAN_SLIDER_KNOB.darker().darker().darker();
+        /* FIRE COLORS */
+        public static final Color FIRE_BG           = new Color(221,22,0);
+        public static final Color FIRE_BG_ACCENT    = FIRE_BG.darker();
+        public static final Color FIRE_TXT          = Color.WHITE;
+        public static final Color FIRE_BTN          = new Color(127,0,0);
+        public static final Color FIRE_BTN_PRESSED  = FIRE_BTN.darker();
+        public static final Color FIRE_BTN_BORDER   = FIRE_BTN_PRESSED.darker();
+        public static final Color FIRE_SLIDER       = new Color (255,47,24).darker();
+        public static final Color FIRE_SLIDER_KNOB  = FIRE_SLIDER.darker();
+        public static final Color FIRE_SLIDER_EMPTY = FIRE_SLIDER_KNOB.darker().darker().darker();
         
         /**
          * Gets {@link THEME_OPTION}-specific Color for the specific component or element of
@@ -299,6 +312,17 @@ public enum PiPProperty {
                 case SLIDER       -> OCEAN_SLIDER;
                 case SLIDER_KNOB  -> OCEAN_SLIDER_KNOB;
                 case SLIDER_EMPTY -> OCEAN_SLIDER_EMPTY;
+                };
+            case FIRE -> switch(c) {
+                case BG           -> FIRE_BG;
+                case BG_ACCENT    -> FIRE_BG_ACCENT;
+                case TXT          -> FIRE_TXT;
+                case BTN          -> FIRE_BTN;
+                case BTN_BORDER   -> FIRE_BTN_BORDER;
+                case BTN_PRESSED  -> FIRE_BTN_PRESSED;
+                case SLIDER       -> FIRE_SLIDER;
+                case SLIDER_KNOB  -> FIRE_SLIDER_KNOB;
+                case SLIDER_EMPTY -> FIRE_SLIDER_EMPTY;
                 };
             };
         }

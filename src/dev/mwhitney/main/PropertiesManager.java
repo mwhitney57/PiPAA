@@ -25,7 +25,7 @@ public class PropertiesManager {
     private FileReader reader;
     
     /** A <tt>String</tt> containing the properties file name. */
-    private static final String CONFIG_FILE_NAME = "/config.properties";
+    private static final String CONFIG_FILE      = Initializer.APP_FOLDER + "/config.properties";
     /** A <tt>String</tt> containing the properties file description. */
     private static final String CONFIG_FILE_DESC = Initializer.APP_NAME_SHORT + " Configuration\nDon't make modifications manually unless you know what you're doing.";
     
@@ -43,7 +43,7 @@ public class PropertiesManager {
      */
     private void setupProperties() {
         // Create the file/directory if it doesn't exist.
-        final File file = new File(Initializer.APP_FOLDER + CONFIG_FILE_NAME);
+        final File file = new File(CONFIG_FILE);
         if (!file.exists()) {
             file.getParentFile().mkdir();
             try {
@@ -107,7 +107,7 @@ public class PropertiesManager {
      */
     public void setPropertiesReader() {
         try {
-            this.reader = new FileReader(Initializer.APP_FOLDER + CONFIG_FILE_NAME);
+            this.reader = new FileReader(CONFIG_FILE);
         } catch(Exception e) {}
     }
     
@@ -116,7 +116,7 @@ public class PropertiesManager {
      */
     public void setPropertiesWriter() {
         try {
-            this.writer = new FileWriter(Initializer.APP_FOLDER + CONFIG_FILE_NAME);
+            this.writer = new FileWriter(CONFIG_FILE);
         } catch(Exception e) {}
     }
     

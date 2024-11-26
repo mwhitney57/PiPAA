@@ -10,7 +10,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
-import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -19,7 +18,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import com.sun.jna.NativeLibrary;
 
 import dev.mwhitney.exceptions.ExtractionException;
-import dev.mwhitney.gui.InvertibleIcon;
 import dev.mwhitney.gui.PiPWindowManager;
 import dev.mwhitney.gui.TopDialog;
 import dev.mwhitney.listeners.BinRunnable;
@@ -292,7 +290,6 @@ public class Initializer {
                 // Common Theme Defaults
                 UIManager.getLookAndFeelDefaults().put("Menu.opaque", true);
                 UIManager.getLookAndFeelDefaults().put("MenuItem.opaque", true);
-                UIManager.getLookAndFeelDefaults().put("Menu.arrowIcon", new InvertibleIcon(((Icon) UIManager.getLookAndFeelDefaults().get("Menu.arrowIcon"))));
                 UIManager.getLookAndFeelDefaults().put("TabbedPane.contentOpaque", false);
                 UIManager.getLookAndFeelDefaults().put("TabbedPane.tabInsets", new Insets(2, 10, 0, 10));
             });

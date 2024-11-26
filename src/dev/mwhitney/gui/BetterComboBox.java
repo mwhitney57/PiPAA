@@ -38,8 +38,8 @@ public class BetterComboBox extends JComboBox<String> {
     public BetterComboBox(String[] options, final Font f) {
         super(options);
         
-        this.boxColor        = Color.DARK_GRAY;
-        this.boxBorderColor  = Color.BLACK;
+        this.boxColor         = Color.DARK_GRAY;
+        this.boxBorderColor   = Color.BLACK;
         this.selectionFGColor = Color.WHITE;
         setBorder(null);
         setFocusable(false);
