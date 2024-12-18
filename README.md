@@ -4,7 +4,7 @@
     <h1 align="center">PiPAA</h1>
 </p>
 <p align="center">
-    Picture-in-Picture Anything Anywhere — Easily play almost any media, from almost any source, all within always-on-top windows.
+    Picture-in-Picture Anything Anywhere — Play almost any media, whatever the source, within simple, always-on-top windows.
     <br><br>
     <img src="https://img.shields.io/badge/designed for-windows-blue?style=flat&logo=windows" alt="Designed for and Tested on Windows">
     <img src="https://img.shields.io/badge/latest release-0.9.4-00456B" alt="PiPAA v0.9.4">
@@ -41,13 +41,35 @@ With no windows running, PiPAA is designed to take up as little processing power
 - Run as many media windows as you need, within the limits of your computer.
 - Control windows and media with ease via simple **[keyboard and mouse shortcuts](#-shortcuts)**.
 - Advanced functionality, such as downloading/caching media from the web.
-- Display embedded album art on audio files, or add your own via the [shortcut](#-shortcuts).
+- Display embedded album art on audio files, or add your own.
 - Configurable, over-the-air (OTA) updating ensures you stay up-to-date. Be notified when an update is available.
 - Themes! Custom themes coming soon.
 - Much more! Read on for more info or download PiPAA from the [Releases](https://github.com/mwhitney57/PiPAA/releases) section.
 
 ## 📸 Images
-*[to be added]*
+With numerous features to explore, here's an introduction to some basics of PiPAA!
+<details open><summary><h3>Tray Menu</h3></summary>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoTrayMenu.jpg" alt="PiPAA Tray Menu."></details>
+<details><summary><h3>Configuration Menu</h3></summary>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoConfigMain.jpg" alt="PiPAA Configuration Menu."><br><br>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoConfigDark.jpg" alt="PiPAA Dark Theme."></details>
+<details><summary><h3>Loading Media</h3></summary>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoWebLoad1.jpg" alt="PiPAA Web Load."><br><br>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoWebLoad2.jpg" alt="PiPAA Web Load Finished."><br><br>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoWebLoadCache-2.jpg" alt="PiPAA Web Load Cache."></details>
+<details><summary><h3>Resizing Windows</h3></summary>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoWindowResize1.jpg" alt="PiPAA Resizing Windows."><br><br>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoWindowResize2.jpg" alt="PiPAA Resizing Windows Result."><br><br>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoWindowDuplicates.jpg" alt="PiPAA Duplicate Windows."></details>
+<details><summary><h3>YouTube Example</h3></summary>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoWebLoadCopyPaste.jpg" alt="PiPAA YouTube Loading Example."><br><br>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoLoading.jpg" alt="PiPAA YouTube Loading Example Progress."><br><br>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoLoadingDone.jpg" alt="PiPAA YouTube Loading Example Done"></details>
+<details><summary><h3>Multitasking</h3></summary>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoMultitasking.jpg" alt="PiPAA Multitasking."></details>
+
+> [!NOTE]
+> Click on a title to display the associated image(s).
 
 ## 💾 Installation and Usage
 PiPAA is a portable application and requires no installation. It should work with almost any machine running Windows 10 or 11. It may also run on older versions of Windows, but this has not been tested.
@@ -69,19 +91,45 @@ Download the `PiPAA-with-Java.zip` asset from a [release](https://github.com/mwh
 1. Extract `PiPAA-with-Java.zip`.
 2. Run `PiPAA.exe` within the extracted folder.
 
-> ⚠️ _Do not move `PiPAA.exe` outside of this folder unless you have Java installed on your system. It will not be able to locate the Java bundle it shipped with and you will receive an error._
+> ⚠️ Do not move `PiPAA.exe` outside of this folder unless you have Java installed on your system. It will not be able to locate the Java bundle it shipped with and you will receive an error.
 
 </details>
 
-That's it! You are set and PiPAA should be working on your system. Continue reading this section if you are more technical and would like to understand more about how PiPAA works.
+That's it! You are set and PiPAA should be working on your system.
 
-### Application Folder 
+### ⚙ Loading Media
+Media can be loaded in two ways:
+1. Drag and Drop
+2. Copy and Paste
+
+- Media can be dragged and dropped into any PiPAA window. If the window is empty, it will load there. If the window has media, a new window will be opened for it.
+- Media can originate from a local file, or from a web source (i.e. YouTube, Google Images, etc.).
+- You can quickly paste a link, source location, or the media itself by double-clicking inside an empty window.
+- **Loading web media can take some time**, especially if PiPAA has to download it in order to start playback.
+
+> [!TIP]
+> You can quickly load drag and drop images if you disable `Prefer Links with Drag and Drop` in the PiPAA configuration, but they _may_ be lower resolution.
+
+### ▶ Media Playback and Display
+There are many [controls](#-shortcuts) available to you once media has loaded. They may differ depending on where the media was loaded from and what kind of media it is.
+
+---
+The following is more technical. Continue if you would like to understand how PiPAA works or its advanced features.
+
+### 📁 Application Folder
 After running PiPAA, an application folder will be created at `%APPDATA%\PiPAA`. PiPAA almost exclusively operates within this folder. PiPAA extracts its dependencies to `%APPDATA%\PiPAA\bin`. Any cached media, by default, will be saved and categorized within `%APPDATA%\PiPAA\cache`.
 
-### Web Media and Cookies
+### 🍪 Web Media and Cookies
 PiPAA can play media from many web sources. To do so, it may have to cache the media, which means downloading it to the application's cache folder. You can clear the cache at any time in the PiPAA configuration panel or by manually deleting the cache folder.
 
-Some websites will not let you play or download media from them without being logged in. For these sites, PiPAA can utilize a Netscape HTTP Cookie File containing login cookies. The sites' cookies are stored in this file and used to authorize downloads. To do this, follow the [guide](#how-to-create-and-use-a-cookies-file-with-pipaa).
+> [!IMPORTANT]
+> Some websites will not let you play or download media from them without being logged in. For these sites, PiPAA can utilize a Netscape HTTP Cookie File containing login cookies. The sites' cookies are stored in this file and used to authorize downloads. To do this, follow the [guide](#how-to-create-and-use-a-cookies-file-with-pipaa).
+
+### <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" width="20"> Custom VLC Installation
+Under the hood, PiPAA uses [libVLC](https://www.videolan.org/vlc/libvlc.html), developed by the VideoLAN Organization and used in [VLC media player](https://www.videolan.org/vlc/), to play video and audio. This library is bundled with PiPAA and extracted to the [application folder](#-application-folder) when the application is first launched. PiPAA allows the user to utilize the VLC installation on their system, if preferred. This option is located here: `PiPAA Tray Icon -> Config... -> Advanced`
+
+> [!WARNING]
+> Enabling this option is generally not recommended, as it can slow down application startup and cause issues if using an old version of VLC.
 
 ## ⌨ Shortcuts
 PiPAA is designed to be powerful and easy-to-use. There are a bunch of default shortcuts available to get things done quicker and in a more convenient way.
@@ -140,15 +188,16 @@ Please reference the tables below with the available shortcuts and how they can 
 
 </details>
 
-_Shortcut customization will come in a future release._
+> [!NOTE]
+> _Shortcut customization will come in a future release._
 
 ## 📜 Guides
-A collection of simple guides to help new PiPAA users. Video demonstrations and guides will likely come in the future.
+A collection of simple guides to help new PiPAA users.
 <details><summary><h3>How to create and use a cookies file with PiPAA.</h3></summary>
 
 1. Download a browser extension to easily export your cookies, or export them manually. A few open-source solutions:  
-    1a. [Chrome](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)  
-    1b. [Firefox](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/)
+    - [Chrome](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)  
+    - [Firefox](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/)
 2. Go to the website you would like to export your cookies from.
 3. Export the cookies from that site to a Netscape HTTP Cookie File. If you already have a `cookies.txt` file, copy the _content_ of the new file to your current one.
 4. Ensure the file is named `cookies.txt` and is located in `%APPDATA%\PiPAA`.
@@ -156,6 +205,13 @@ A collection of simple guides to help new PiPAA users. Video demonstrations and 
 It is not recommended to export your cookies from _every_ site, as that is unnecessary and could include critical logins. Only give access to the specific sites you might use with PiPAA.
 
 </details>
+<details><summary><h3>How to bypass Windows Defender SmartScreen warning.</h3></summary>
+Windows Defender SmartScreen may display a warning when you first try to launch the application. This warning often displays when an application does not have a verified publisher. It is <b><i>not</i></b> an indicator of malicious code. To bypass this warning and run the application:<br><br>
+<img src="https://f.mwhitney.dev/projects/pipaa/demo/demoSmartScreen1.jpg" alt="PiPAA SmartScreen1."><br><br><img src="https://f.mwhitney.dev/projects/pipaa/demo/demoSmartScreen2.jpg" alt="PiPAA SmartScreen2.">
+</details>
+
+> [!NOTE]
+> _Video demonstrations and more guides will likely come in the future._
 
 ## 🤔 F.A.Q.
 <details><summary><h3>What is the point of PiPAA? How should I use it?</h3></summary>
@@ -180,7 +236,7 @@ If you have any suggestions on how to make PiPAA better in any way, even as simp
   
 Many applications, especially games, have the option to run in fullscreen mode. There are two main types of fullscreen modes. Without getting too technical, **Exclusive Fullscreen** is when the application takes up the entire screen and gets more control over what is displayed. Other windows, even always-on-top ones like PiPAA's, get suppressed behind it, so they do not show up on top of it. **Windowed Fullscreen** or **Borderless Fullscreen** is when the window is simply maximized to take up the entire screen, but it does not have the additional permissions and complexity of Exclusive Fullscreen.
 
-If your application is running in **Exclusive Fullscreen** mode, PiPAA windows will not be able to show on top of it. This is a limitation of the app in its current state, but it could be possible to add this functionality in the future. PiPAA windows should still show up on top of other types of fullscreen windows. It is also worth noting that, if a window shares the same always-on-top property as a PiPAA window, they will have equal priority to show on top, and the last focused window will be on top.
+If your application is running in **Exclusive Fullscreen** mode, PiPAA windows will not be able to show on top of it. This is a limitation of the app in its current state, but it could be possible to add this functionality in the future. PiPAA windows should still show up on top of other types of fullscreen windows. If a window shares the same always-on-top property as a PiPAA window, they will have equal priority, and the last focused window will be on top.
 </details>
 <details><summary><h3>How do I update PiPAA?</h3></summary>
 
@@ -188,16 +244,24 @@ The easiest way to update PiPAA is using the built-in over-the-air (OTA) updatin
 
 If you prefer updating manually, you can simply replace the `PiPAA.jar` or `PiPAA.exe` file you downloaded previously. Simple as that!
 </details>
+<details><summary><h3>I got a Windows Defender SmartScreen warning? Is this bad? How do I bypass it?</h3></summary>
+
+This is completely normal. When you first launch a new application that does not have a verified publisher, you may get a Windows Defender SmartScreen pop-up. This is just a precautionary warning, and it can be quickly bypassed with two clicks.
+Check the guide [here](#how-to-bypass-windows-defender-smartscreen-warning).
+</details>
+
+> [!NOTE]
+> Click on a question to see the answer.
 
 ## 🔐 Privacy
-All projects I create adhere to a basic principle. Do not track the user. Only collect data that is *absolutely necessary* for the application to work, and be maximally transparent if doing so. I write this section not because I feel obligated to, but because I _want_ to. I care about privacy. I care about transparency. 
+All projects I create adhere to a basic principle. Privacy first. Do not track the user. Only collect data that is *absolutely necessary* for the application to work, and be maximally transparent if doing so. I write this section not because I feel obligated to, but because I _want_ to. I care about privacy. I care about transparency. 
 
-In this case, **PiPAA does not perform any additional tracking or collection of data.** It was designed to be noninvasive and require very little of your system under normal use. With that being said, PiPAA relies on multiple projects maintained by other developers. These projects have been listed and linked to in full below in the [Binaries](#-binaries) and [Libraries](#-libraries) sections, so you can easily get more information. To my knowledge, none of PiPAA's dependencies track the user. If anything is collected, it should be basic analytics and diagnostics _at most_. **Please** reach out if you know this to be false so that I may look into it.
+In this case, **PiPAA does not perform any tracking or collection of data.** It was designed to be noninvasive and require very little of your system under normal use. PiPAA relies on multiple projects maintained by other developers. These projects have been listed and linked to in full below in the [Binaries](#-binaries) and [Libraries](#-libraries) sections, so you can easily get more information about their privacy practices. To my knowledge, none of PiPAA's dependencies track the user. **Please** reach out if you know this to be false so that I may look into it further.
 
 **Connections**
 - PiPAA offers over-the-air (OTA) updating. This makes basic requests to the PiPAA API to get the available versions. **No user data is sent to the API. Each request is anonymous.** You can view the source code for this part of the application [here](https://github.com/mwhitney57/PiPAA/tree/main/src/dev/mwhitney/update/api). Furthermore, you can completely disable automatic update checks within the configuration.
-- The `yt-dlp` and `gallery-dl` projects that PiPAA utilizes also feature OTA updating. This can be similarly controlled in the application's configuration, including being disabled entirely. However, it is not recommended to do so. These projects are critical to the process of playing and caching media from the web, and the updates often keep them working properly.
-- Besides that, PiPAA will only make connections to the Internet to perform tasks at the **user's** discretion (not in the background).
+- The `yt-dlp` and `gallery-dl` projects that PiPAA utilizes also feature OTA updating. This can be similarly controlled in the application's configuration, including being disabled entirely. However, it is not recommended to do so. These projects are critical to the process of playing and caching media from the web, and the updates often keep them working properly. If disabled and certain sources stop working, this is likely why.
+- Besides that, PiPAA will only make connections to the Internet to perform tasks at the **user's** discretion (not randomly in the background).
     - For example, when PiPAA loads a video from the web, it must obviously make a request to that URL.
 
 ## 🚩 Known Issues
@@ -212,7 +276,7 @@ PiPAA should be simple to build on your own. It requires Java 17 or later and [M
 Download the [project code archive](https://github.com/mwhitney57/PiPAA/archive/refs/heads/main.zip). If using Eclipse, import as a Maven project. Run Maven `install` on the project's [`pom.xml`](https://github.com/mwhitney57/PiPAA/blob/main/pom.xml). Use the shaded JAR file from the output. To wrap within an `EXE`, you can use [launch4j](https://launch4j.sourceforge.net/).
 
 ## ⚙ Binaries
-Projects bundled with PiPAA to help make it work, even if certain files are missing on your system.
+Projects bundled with PiPAA which help make it work, even if certain files are missing on your system.
 
 For video and audio playback.
 - `libVLC` @ <a target="_blank" href="https://www.videolan.org/vlc/libvlc.html">https://www.videolan.org/vlc/libvlc.html</a>
