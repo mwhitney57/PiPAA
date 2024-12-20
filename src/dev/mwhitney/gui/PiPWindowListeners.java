@@ -560,13 +560,19 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                     }
                     // If reached: Indicates the media was accepted -- success.
                     System.err.println("##### Done Handling Media");
-                    return;
+                    break;  // Break outside of loading while loop into cleanup section below.
                 } catch (IOException | InvalidTransferMediaException e) {
                     System.err.println("Flavor Pick [" + Objects.toString(pick, "<null>") + "]: " + "[" + e.getClass().getSimpleName() + "] " + e.getMessage());
                 }
                 pick = picker.pick();
             }
-            if (dataImage != null) dataImage.flush(); // Flush image at the end if not null, ensuring no memory leak.
+            // Delete leftover URL files placed in cache, if any are present.
+            if (dataFile  != null) dataFile.stream()
+                .filter(f -> f.getPath().toLowerCase().endsWith(".url"))
+                .filter(f -> f.getPath().startsWith(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath()))
+                .forEach(f -> f.delete());
+            // Flush image at the end if not null, ensuring no memory leak.
+            if (dataImage != null) dataImage.flush();
         });
         // ##### END 0.9.4-SNAPSHOT New Approach
     }
@@ -613,10 +619,10 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
 //            System.out.println(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath());
 //            System.out.println(System.getProperty("java.io.tmpdir"));
             /* Since 0.9.4-SNAPSHOT, it is assumed that temporary directory files have already been moved to the cache prior to calling this method. */
-            boolean fileInTemp = droppedFile.getPath().startsWith(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath());
+            final boolean fileInTemp = droppedFile.getPath().startsWith(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath());
             
             // If multiple files were dropped, pass them off to open another PiPWindow for each.
-            if(f > 0) {
+            if (f > 0) {
                 System.out.println("Extra File " + (f+1));
                 handoff(getMediaFromFile(droppedFile, fileInTemp));
                 continue;
