@@ -357,7 +357,7 @@ public class PiPMedia {
      * @return this PiPMedia instance.
      */
     public PiPMedia setCacheSrc(String src) {
-        this.cacheSrc = src.trim();
+        this.cacheSrc = (src != null ? src.trim() : src);
         return this;
     }
     

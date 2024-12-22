@@ -182,7 +182,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                 case KeyEvent.VK_R:
                     if (ctrlDown) {
                         get().flashBorderEDT(PiPWindow.BORDER_OK);
-                        sendMediaCMD(PiPMediaCMD.RELOAD);
+                        sendMediaCMD(PiPMediaCMD.RELOAD, (shiftDown ? "true" : "false"));
                     }
                     break;
                 // DELETE & CONTINUE (CLOSE MEDIA) OR DUPLICATE WINDOW

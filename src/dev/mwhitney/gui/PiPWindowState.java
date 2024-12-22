@@ -54,6 +54,10 @@ public class PiPWindowState {
          */
         LOADING,
         /**
+         * Whether the window is changing size.
+         */
+        RESIZING,
+        /**
          * Whether the window is saving/caching its current media.
          */
         SAVING_MEDIA,
@@ -74,7 +78,7 @@ public class PiPWindowState {
          */
         LOCALLY_MUTED,
         /**
-         * Whether the window or component of the window has crashed.
+         * Whether the window or a component of the window has crashed.
          * Cannot be turned OFF (false) once set to ON (true).
          */
         CRASHED,
@@ -109,6 +113,11 @@ public class PiPWindowState {
      * A boolean for whether or not the window is loading media.
      */
     private boolean loading;
+    /**
+     * A boolean for whether or not the window is currently being resized.
+     * This property is usually on for an extremely brief period.
+     */
+    private boolean resizing;
     /**
      * A boolean for whether or not the media in the window is being saved/cached.
      * This is tracked to prevent concurrent save attempts from taking place, which
@@ -268,6 +277,7 @@ public class PiPWindowState {
         case PLAYER_COMBO     -> this.player = (val ? PLAYER_COMBO : this.player);
         case FULLSCREEN       -> this.fullscreen      = val;
         case LOADING          -> this.loading         = val;
+        case RESIZING         -> this.resizing        = val;
         case SAVING_MEDIA     -> this.savingMedia     = val;
         case CLOSING_MEDIA    -> this.closingMedia    = val;
         case MANUALLY_PAUSED  -> this.manuallyPaused  = val;
@@ -297,6 +307,7 @@ public class PiPWindowState {
         case RTX_SUPER_RES    ->  this.rtxSuperRes;
         case FULLSCREEN       ->  this.fullscreen;
         case LOADING          ->  this.loading;
+        case RESIZING         ->  this.resizing;
         case SAVING_MEDIA     ->  this.savingMedia;
         case CLOSING_MEDIA    ->  this.closingMedia;
         case MANUALLY_PAUSED  ->  this.manuallyPaused;
@@ -385,7 +396,7 @@ public class PiPWindowState {
     }
     
     /**
-     * Creates a hook into the window state and execute the passed Runnable when the
+     * Creates a hook into the window state which executes the passed Runnable when the
      * passed {@link StateProp} is set to be equal to the passed boolean.
      * 
      * @param prop - the {@link StateProp} to hook into.
@@ -400,6 +411,33 @@ public class PiPWindowState {
      */
     public void hook(final StateProp prop, final boolean val, final Runnable run) {
         this.hooks.get(prop).get(Boolean.valueOf(val)).add(run);
+    }
+    
+    /**
+     * Checks the first passed boolean. If true, creates a hook into the window
+     * state which executes the passed Runnable when the passed {@link StateProp} is
+     * set to be equal to the last passed boolean.
+     * <p>
+     * If the first boolean was false, this method does nothing. The value is
+     * returned to indicate what this method accomplished. This method will
+     * typically not be preferred over using an <code>if</code> statement, but will
+     * be preferable for readability on occasion.
+     * 
+     * @param prop - the {@link StateProp} to hook into.
+     * @param val  - the boolean value of the {@link StateProp} when the hook should
+     *             activate.
+     * @param run  - a {@link Runnable} with the code to execute when the hook
+     *             condition is met.
+     * @return <code>true</code> if this method applied the hook; <code>false</code>
+     *         otherwise.
+     * @see {@link RecurringRunnable} for usage in recurring hooks that are not
+     *      removed after first execution.
+     * @see {@link PermanentRunnable} for usage in permanent hooks that cannot be
+     *      removed.
+     */
+    public boolean hookIf(final boolean b, final StateProp prop, final boolean val, final Runnable run) {
+        if (b) this.hook(prop, val, run);
+        return b;
     }
     
     /**

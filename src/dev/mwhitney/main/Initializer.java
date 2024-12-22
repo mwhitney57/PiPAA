@@ -116,6 +116,7 @@ public class Initializer {
     CTRL + SHIFT + M -> Global Mute ON/OFF                             |
     CTRL + O         -> Open Cache Folder or Media's Folder Location   |
     CTRL + R         -> Reload Media                                   |
+    CTRL + SHIFT + R -> Quick-Reload Media                             |
     """;
     
     /** A boolean for whether or not the backup LibVlc solution should be used. */

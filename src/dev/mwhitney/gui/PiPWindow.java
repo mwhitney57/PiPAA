@@ -1,19 +1,6 @@
 package dev.mwhitney.gui;
 
-import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSED;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING_MEDIA;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.CRASHED;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.FULLSCREEN;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.LOADING;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCALLY_MUTED;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.MANUALLY_PAUSED;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.MANUALLY_STOPPED;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_COMBO;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_SWING;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_VLC;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.RTX_SUPER_RES;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.SAVING_MEDIA;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -61,6 +48,7 @@ import org.apache.commons.lang3.StringUtils;
 import darrylbu.icon.StretchIcon;
 import dev.mwhitney.exceptions.InvalidMediaException;
 import dev.mwhitney.exceptions.MediaModificationException;
+import dev.mwhitney.gui.PiPWindowSnapshot.SnapshotData;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries;
@@ -324,10 +312,25 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     }
     
     /**
+     * Gets the {@link MediaPlayer} from within this window's media player
+     * component.
+     * <p>
+     * This method just retrieves the VLC media player from within its embedded
+     * component. Its purpose should not be confused with retrieving the type of
+     * media player currently in use. That can be achieved by using
+     * {@link PiPWindowState} via {@link #state()}.
+     * 
+     * @return the {@link MediaPlayer}, A.K.A. the VLC media player.
+     */
+    public MediaPlayer getMediaPlayer() {
+        return (mediaPlayerValid() ? this.mediaPlayer.mediaPlayer() : null);
+    }
+    
+    /**
      * Performs setup for the media player.
      */
     private void setupMediaPlayer() {
-        if (this.mediaPlayer != null)
+        if (mediaPlayerValid())
             contentPane.remove(mediaPlayer);
         
         // Determine player arguments.
@@ -368,6 +371,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
              * @param mediaPlayer - the MediaPlayer to apply the configuration to.
              */
             private void applyVideo(MediaPlayer mediaPlayer) {
+                state.on(RESIZING);
                 CompletableFuture.runAsync(() -> {
                     System.err.println("> Started applying video.");
                     // Get Media Size and Update Attributes
@@ -487,6 +491,16 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             @Override
             public void keyPressed(KeyEvent e) { handleKeyControl(e); }
         });
+    }
+    
+    /**
+     * Simply checks if the VLC media player component within the window is
+     * non-<code>null</code> and therefore still valid to call upon.
+     * 
+     * @return <code>true</code> if valid; <code>false</code> otherwise.
+     */
+    private boolean mediaPlayerValid() {
+        return (this.mediaPlayer != null);
     }
     
     /**
@@ -1022,35 +1036,42 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 final boolean preserve = (anyArgs && Boolean.valueOf(args[0]));
                 
                 // Temporarily store parts of media before they get cleared.
-                final String currSrc          = media.getSrc();
-                final String cache            = media.getCacheSrc();
-                final String trim             = media.getTrimSrc();
-                final String conv             = media.getConvertSrc();
-                final PiPMediaAttributes attr = media.getAttributes();
+                final boolean vlc = (state.not(PLAYER_SWING) && mediaPlayerValid());
+                final PiPWindowSnapshot snapshot = new PiPWindowSnapshot(!vlc, (vlc ? SnapshotData.ALL : SnapshotData.PLAYER)).capture(this);
                 
                 // Close media before setting it again.
                 mediaCommand(PiPMediaCMD.CLOSE);
                 
                 // Create new media and potentially preserve previous attributes.
-                final PiPMedia relMedia = new PiPMedia(currSrc);
-                if (preserve)  {
-                    relMedia.setCacheSrc(cache).setTrimSrc(trim).setConvSrc(conv).setAttributes(attr).setAttributed();
+                final PiPMedia relMedia = new PiPMedia(snapshot.getMediaSrc());
+                if (preserve) {
+                    snapshot.apply(relMedia);
                     // Mark Media for Deletion Upon Close if Cache is Disabled
                     if (!relMedia.getAttributes().isLocal() && relMedia.isCached() && propertyState(PiPProperty.DISABLE_CACHE, Boolean.class))
                         relMedia.markForDeletion();
                 }
-                
                 // Only set source again if entire window is NOT Closing/Crashed.
-                if (state.not(CLOSING, CRASHED)) setMedia(relMedia);
+                if (state.not(CLOSING, CRASHED)) {
+                    setMedia(relMedia);
+                    // Preserve aspects of media player and window after loading completes (if reload was successful).
+                    state.hookIf(preserve, LOADING, false, () -> {
+                        if (state.not(CLOSING_MEDIA)) {
+                            // Run after loading resizing is completed.
+                            state.hook(RESIZING, false, () -> SwingUtilities.invokeLater(() -> snapshot.apply(this)));
+                            if (vlc) snapshot.apply(getMediaPlayer());
+                        }
+                    });
+                }
                 break;
             case CLOSE:
                 System.out.println("Got req to close media.");
                 titleStatusUpdate("[Closing...]");
                 final boolean replacing = (anyArgs    ? Boolean.valueOf(args[0])    : false);
                 final boolean marked    = (hasMedia() ? media.isMarkedForDeletion() : false);
-                final String cacheSrc   = (hasMedia() ? media.getCacheSrc()         : null);
-                final String trimSrc    = (hasMedia() ? media.getTrimSrc()          : null);
-                final String convSrc    = (hasMedia() ? media.getConvertSrc()       : null);
+                final PiPWindowSnapshot srcSnap = new PiPWindowSnapshot(SnapshotData.MEDIA_SOURCES).capture(this);
+                final boolean hasCacheSrc = srcSnap.hasMediaCacheSrc(),
+                              hasTrimSrc  = srcSnap.hasMediaTrimSrc(),
+                              hasConvSrc  = srcSnap.hasMediaConvertSrc();
                 
                 // Stop the media player, but ensure that code does not freeze if the player is frozen and stop is called.
                 state.off(LOADING);
@@ -1085,10 +1106,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 // Determine if media source is cached and delete if marked for deletion.
                 try {
                     if (marked) {
-                        if (cacheSrc != null) new File(cacheSrc).delete();
-                        if (trimSrc  != null) new File(trimSrc).delete();
-                        if (convSrc  != null) new File(convSrc).delete();
-                        if (cacheSrc != null || trimSrc != null || convSrc != null) statusUpdate("Deleted from cache.");
+                        if (hasCacheSrc) new File(srcSnap.getMediaCacheSrc()).delete();
+                        if (hasTrimSrc)  new File(srcSnap.getMediaTrimSrc()).delete();
+                        if (hasConvSrc)  new File(srcSnap.getMediaConvertSrc()).delete();
+                        if (hasCacheSrc || hasTrimSrc || hasConvSrc) statusUpdate("Deleted from cache.");
                     }
                 } catch (NullPointerException | SecurityException e) {
                     System.err.println("Error occurred: Failed to dispose of cached media marked for deletion.");
@@ -1567,6 +1588,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         else
             throw new InvalidMediaException("Neither image source option is valid.");
             
+        state.on(RESIZING);
         media.getAttributes().setSize(imgLabelIcon.getImgWidth(), imgLabelIcon.getImgHeight());
         PiPWindow.this.cr.setAspectRatio(media.getAttributes().getSize());
         SwingUtilities.invokeLater(() -> {
@@ -1673,9 +1695,12 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     /**
      * Changes the size to be the passed Dimension, plus the necessary border width
      * and height. Call this method from the EDT. This method is shorthand for
-     * calling <code>changeSize(Dimension size, boolean ignoreBorders)</code>.
+     * calling {@link #changeSize(Dimension, boolean)} with a boolean of
+     * <code>false</code>.
      * 
      * @param size - the Dimension to set the size to.
+     * @see {@link #changeSize(Dimension, boolean)} to have the ability to ignore
+     *      borders.
      */
     public void changeSize(final Dimension size) {
         changeSize(size, false);
@@ -1689,10 +1714,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
      * @param ignoreBorders - a boolean for whether or not to ignore the window
      *                      borders and set the size without appending the border
      *                      widths.
+     * @see {@link #changeSize(Dimension)} for a shorthand version of calling this
+     *      method with a <code>false</code> boolean value.
      */
     public void changeSize(final Dimension size, final boolean ignoreBorders) {
         if (!ignoreBorders) size.setSize(size.width + (BORDER_SIZE * 2), size.height + (BORDER_SIZE * 2));
         PiPWindow.this.setSize(size);
+        state.off(RESIZING);
     }
     
     /**
@@ -1748,7 +1776,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         final Runnable closeCode = () -> {
             // Only attempt to close and release media if it hasn't crashed.
             if (state.not(CRASHED) && hasMedia()) mediaCommand(PiPMediaCMD.CLOSE);
-            if (mediaPlayer != null) {
+            if (mediaPlayerValid()) {
                 // Release off of EDT -- Releasing on EDT had sporadic errors.
                 mediaPlayer.release();
             }
