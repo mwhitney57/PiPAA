@@ -4,6 +4,7 @@ import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING_MEDIA;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.FULLSCREEN;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOADING;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.READY;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_COMBO;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_SWING;
 import static dev.mwhitney.media.MediaFlavorPicker.MediaFlavor.FILE;
@@ -191,25 +192,21 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                     if (!shiftDown || !get().hasMedia())
                         break;
                     
+                    // Mark the media for deletion and continue to next case to close.
                     if (ctrlDown)
                         get().getMedia().markForDeletion();
+                    // Duplicate the window.
                     else {
-                        // Duplicate the window.
-                        final PiPWindow dupeWindow = handoff(new PiPMedia(get().getMedia()));
-                        CompletableFuture.runAsync(() -> {
-                            // Wait for the media to be loaded, then set the window size and location relative to this window.
-                            float sleepMS = 1.00f;
-                            while (dupeWindow.hasMedia() && dupeWindow.getMedia().isLoading()) {
-                                try { Thread.sleep((int) sleepMS); }
-                                catch (InterruptedException ie) { ie.printStackTrace(); }
-                                sleepMS += Math.log10(sleepMS + 1);
-                            }
-                            SwingUtilities.invokeLater(() -> {
-                                dupeWindow.changeSize(get().getSize(), true);
-                                dupeWindow.setLocation(get().getLocation().x + 40, get().getLocation().y + 25);
-                                dupeWindow.ensureOnScreen();
-                            });
+                        // Create a new window.
+                        final PiPWindow dupeWindow = handoff(null);
+                        // Create READY hook and adjust size and location relative to current window.
+                        dupeWindow.state().hook(READY, true, () -> {
+                            dupeWindow.changeSize(get().getSize(), true);
+                            dupeWindow.setLocation(get().getX() + 40, get().getY() + 25);
+                            dupeWindow.ensureOnScreen();
                         });
+                        // Set media, which eventually executes the above hook or unhooks it if the window fails to load.
+                        dupeWindow.setMedia(new PiPMedia(get().getMedia()));
                         break;
                     }
                 // CLOSE MEDIA

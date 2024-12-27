@@ -84,6 +84,8 @@ public class PiPWindowManager implements PropertyListener {
      * Adds/generates a new window with default parameters. Immediately loads and
      * plays the passed media if it is not <code>null</code>.
      * 
+     * @param media - the {@link PiPMedia} to load and play, or <code>null</code> if
+     *              the window should be created and start empty.
      * @return the added {@link PiPWindow}.
      */
     public PiPWindow addWindow(PiPMedia media) {

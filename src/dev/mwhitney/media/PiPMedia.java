@@ -77,6 +77,8 @@ public class PiPMedia {
     public PiPMedia(PiPMedia media) {
         this.src               = (media.src        == null ? null : new String(media.src));
         this.cacheSrc          = (media.cacheSrc   == null ? null : new String(media.cacheSrc));
+        this.trimSrc           = (media.trimSrc    == null ? null : new String(media.trimSrc));
+        this.convSrc           = (media.convSrc    == null ? null : new String(media.convSrc));
         this.loading           =  true;
         this.markedForDeletion =  media.markedForDeletion;
         this.attributed        =  media.attributed;
@@ -206,6 +208,21 @@ public class PiPMedia {
     }
     
     /**
+     * Checks if this media's source points to a location somewhere within the
+     * {@link Initializer#APP_CACHE_FOLDER}. Since this method simply compares the
+     * beginning of two paths, the media source can be within subfolders of
+     * {@link Initializer#APP_CACHE_FOLDER} and this method will still return
+     * <code>true</code>.
+     * 
+     * @return <code>true</code> if this media's source stems from somewhere in the
+     *         cache; <code>false</code> otherwise.
+     */
+    public boolean isFromCache() {
+        return (hasAttributes() && getAttributes().isLocal() && hasSrc()
+                && new File(getSrc()).getPath().startsWith(PiPAAUtils.slashFix(Initializer.APP_CACHE_FOLDER)));
+    }
+    
+    /**
      * Checks if the passed media file already exists within the
      * {@link Initializer#APP_CLIPBOARD_FOLDER}. Since this method is intended to
      * check for duplicate clipboard media, the passed {@link File} is expected to
@@ -312,6 +329,16 @@ public class PiPMedia {
      */
     public boolean sameSrcAs(final PiPMedia media) {
         return (media != null && this.getSrc().equals(media.getSrc()));
+    }
+    
+    /**
+     * Checks if the PiPMedia has a source.
+     * 
+     * @return <code>true</code> if the media has a non-<code>null</code> source of
+     *         a non-zero length; <code>false</code> otherwise.
+     */
+    public boolean hasSrc() {
+        return (this.src != null && this.src.length() > 0);
     }
     
     /**

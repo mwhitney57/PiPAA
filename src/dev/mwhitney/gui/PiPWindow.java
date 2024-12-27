@@ -393,6 +393,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         
                         // Ensure the window is on-screen after loading content.
                         ensureOnScreen();
+                        state().on(READY);
                     });
                     
                     System.err.println("---> FINISHED applying video.");
@@ -401,7 +402,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
 
             @Override
             public void positionChanged(MediaPlayer mediaPlayer, float newPosition) {
-//                System.out.println("POSITION CHANGED " + (System.nanoTime() / 1000000));
+//                System.out.println("POSITION CHANGED: [" + newPosition + "]" + (System.nanoTime() / 1000000));
                 // Sets the media to be done loading if it was still loading and the position changed.
                 if (media != null && media.isLoading() && newPosition > 0.0f) {
                     media.setLoading(false);
@@ -416,10 +417,23 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
 //                System.out.println("VIDEOOUTPUT EVENT " + (System.nanoTime() / 1000000));
 //                System.err.println("NEW VIDEO OUTPUT DETECTED.");
                 
+                /**
+                 * Commented-out applyVideo call, as it is likely unnecessary. positionChanged
+                 * seems like it should fire, even if the media starts paused. I suspect the
+                 * videoOutput call was added so that the video could be applied earlier,
+                 * therefore solving instances where the video would show, but hadn't loaded
+                 * enough to fire a positionChanged event, leading to a window with an odd size.
+                 * Initial tests indicate this will is unlikely to be an issue. That might be
+                 * because of the fact that the window is minimized during loading and only shown
+                 * after loading completes.
+                 * TODO Delete comments here after next commit, pending no unforeseen issues.
+                 * 
+                 * @since Commit d2c7a17
+                 */
                 // Only fire when the media is loading. Otherwise, ignore.
                 if (media != null && media.isLoading()) {
                     applyAudio();
-                    applyVideo(mediaPlayer);
+//                    applyVideo(mediaPlayer);
                 }
             }
             @Override
@@ -847,6 +861,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         media.setCacheSrc(args[0]);
                         media.setAttributes(managerListener.requestAttributes(new PiPMedia(args[0])));
                     }
+                    // Set as cache source if true -- allows for user deletion of media via shortcut.
+                    if (media.isFromCache()) {
+                        media.setCacheSrc(media.getSrc());
+                    }
                 }
                 // Web Media
                 else {
@@ -1052,15 +1070,20 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 }
                 // Only set source again if entire window is NOT Closing/Crashed.
                 if (state.not(CLOSING, CRASHED)) {
-                    setMedia(relMedia);
-                    // Preserve aspects of media player and window after loading completes (if reload was successful).
-                    state.hookIf(preserve, LOADING, false, () -> {
+                    // Setup Hook Before Setting Media
+                    // Preserve aspects of media player and window after ready.
+                    state.hookIf(preserve, READY, true, () -> {
+                        System.out.println("Executing ready hook.");
+                        // Ensure window is not closing media, though this shouldn't be an issue.
                         if (state.not(CLOSING_MEDIA)) {
-                            // Run after loading resizing is completed.
-                            state.hook(RESIZING, false, () -> SwingUtilities.invokeLater(() -> snapshot.apply(this)));
+                            // Run after window ready.
+                            SwingUtilities.invokeLater(() -> snapshot.apply(this));
                             if (vlc) snapshot.apply(getMediaPlayer());
                         }
                     });
+                    
+                    // Finally, set the media.
+                    setMedia(relMedia);
                 }
                 break;
             case CLOSE:
@@ -1146,6 +1169,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         
         // Media is null when closed. Otherwise, treat as new media.
         if (mediaNew == null) {
+            // Unhook READY hooks so that they do not carry over to new media.
+            state.unhook(READY);
+            state.off(READY);
+            
             this.setTitle("");
             textField.setVisible(true);
             contentPane.remove(imgLabel);
@@ -1172,7 +1199,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         // Minimize during loading to prevent obstruction. Loading status ON and set hook.
         setExtendedState(JFrame.ICONIFIED);
         setIconImage(ICON_WORK);
-        state().on(LOADING).hook(LOADING, false, () -> SwingUtilities.invokeLater(() -> {
+        state().off(READY).on(LOADING).hook(LOADING, false, () -> SwingUtilities.invokeLater(() -> {
             setExtendedState(JFrame.NORMAL); setIconImage(ICON_NORMAL);
         }));
 
@@ -1595,6 +1622,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             imgLabel.setIcon(imgLabelIcon);
             changeSize(media.getAttributes().getScaledSize(DEFAULT_MEDIA_SIZE));
             ensureOnScreen();
+            state.on(READY);
         });
     }
     

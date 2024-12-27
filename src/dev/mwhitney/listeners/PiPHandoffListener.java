@@ -10,9 +10,12 @@ import dev.mwhitney.media.PiPMedia;
  */
 public interface PiPHandoffListener extends PiPListener {
     /**
-     * Performs a handoff of PiPMedia.
+     * Performs a handoff of {@link PiPMedia} to a new {@link PiPWindow}, returning
+     * the window after it is created.
      * 
      * @param media - the PiPMedia to handoff.
+     * @return the new {@link PiPWindow} that was created as a result of this
+     *         handoff.
      */
     public PiPWindow handoff(PiPMedia media);
 }

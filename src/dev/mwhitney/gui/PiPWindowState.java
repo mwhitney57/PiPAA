@@ -54,6 +54,11 @@ public class PiPWindowState {
          */
         LOADING,
         /**
+         * Whether the window is "ready."
+         * A window is ready after loading then adjusting to the media and beginning automatic playback.
+         */
+        READY,
+        /**
          * Whether the window is changing size.
          */
         RESIZING,
@@ -113,6 +118,11 @@ public class PiPWindowState {
      * A boolean for whether or not the window is loading media.
      */
     private boolean loading;
+    /**
+     * A boolean for whether or not the window is ready.
+     * A window is ready after loading then adjusting to the media and beginning automatic playback.
+     */
+    private boolean ready;
     /**
      * A boolean for whether or not the window is currently being resized.
      * This property is usually on for an extremely brief period.
@@ -277,6 +287,7 @@ public class PiPWindowState {
         case PLAYER_COMBO     -> this.player = (val ? PLAYER_COMBO : this.player);
         case FULLSCREEN       -> this.fullscreen      = val;
         case LOADING          -> this.loading         = val;
+        case READY            -> this.ready           = val;
         case RESIZING         -> this.resizing        = val;
         case SAVING_MEDIA     -> this.savingMedia     = val;
         case CLOSING_MEDIA    -> this.closingMedia    = val;
@@ -307,6 +318,7 @@ public class PiPWindowState {
         case RTX_SUPER_RES    ->  this.rtxSuperRes;
         case FULLSCREEN       ->  this.fullscreen;
         case LOADING          ->  this.loading;
+        case READY            ->  this.ready;
         case RESIZING         ->  this.resizing;
         case SAVING_MEDIA     ->  this.savingMedia;
         case CLOSING_MEDIA    ->  this.closingMedia;
@@ -441,12 +453,30 @@ public class PiPWindowState {
     }
     
     /**
+     * Removes every hook attached to the passed {@link StateProp}, except for
+     * permanent hooks using {@link PermanentRunnable}.
+     * <p>
+     * This method is short for calling {@link #unhook(StateProp, boolean)} with
+     * <code>true</code> and <code>false</code> boolean values.
+     * 
+     * @param prop - the {@link StateProp} to unhook.
+     * @see {@link PiPWindowState#unhook(StateProp, boolean)} to only unhook either
+     *      the <code>true</code> or <code>false</code> hooks.
+     */
+    public void unhook(final StateProp prop) {
+        unhook(prop, true);
+        unhook(prop, false);
+    }
+    
+    /**
      * Removes every hook attached to the passed {@link StateProp} and boolean
      * value, except for permanent hooks using {@link PermanentRunnable}.
      * 
      * @param prop - the {@link StateProp} to unhook.
      * @param val  - the corresponding boolean value of the {@link StateProp}'s
      *             hooks.
+     * @see {@link PiPWindowState#unhook(StateProp)} to unhook both boolean values
+     *      of the {@link StateProp}.
      */
     public void unhook(final StateProp prop, final boolean val) {
         // Save all permanent hooks before clearing, then add them back afterwards -- permanent hooks are not to be removed.
