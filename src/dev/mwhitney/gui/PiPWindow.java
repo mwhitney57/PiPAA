@@ -5,6 +5,7 @@ import static dev.mwhitney.gui.PiPWindowState.StateProp.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.DisplayMode;
 import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.GraphicsDevice;
@@ -68,9 +69,9 @@ import dev.mwhitney.media.MediaExt;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
-import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.media.WebMediaFormat;
+import dev.mwhitney.util.PiPAAUtils;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
 import uk.co.caprica.vlcj.media.AudioTrackInfo;
@@ -346,9 +347,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         }
         
         // Create player with arguments.
-        MediaPlayerFactory fac = null;
-        if (Initializer.USING_BACKUP_LIBVLC) fac = new MediaPlayerFactory((NativeDiscovery) null, playerArgs.toArray(new String[0]));
-        else                                 fac = new MediaPlayerFactory(playerArgs.toArray(new String[0]));
+        final MediaPlayerFactory fac = (Initializer.USING_BACKUP_LIBVLC
+                ? new MediaPlayerFactory((NativeDiscovery) null, playerArgs.toArray(new String[0]))
+                : new MediaPlayerFactory(playerArgs.toArray(new String[0])));
         this.mediaPlayer = new EmbeddedMediaPlayerComponent(fac, null, new Win32FullScreenStrategy(this), null, null) {
             /** The randomly-generated serial UID for this component. */
             private static final long serialVersionUID = -392052189550107898L;
@@ -361,7 +362,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 if (propertyState(PiPProperty.GLOBAL_MUTED, Boolean.class))
                     mediaCommand(PiPMediaCMD.MUTE, "false");
                 mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", propertyState(PiPProperty.DEFAULT_VOLUME, String.class));
-                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", propertyState(PiPProperty.DEFAULT_PLAYBACK_RATE, String.class));
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST,  "SET", propertyState(PiPProperty.DEFAULT_PLAYBACK_RATE, String.class));
             }
             
             /**
@@ -417,23 +418,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
 //                System.out.println("VIDEOOUTPUT EVENT " + (System.nanoTime() / 1000000));
 //                System.err.println("NEW VIDEO OUTPUT DETECTED.");
                 
-                /**
-                 * Commented-out applyVideo call, as it is likely unnecessary. positionChanged
-                 * seems like it should fire, even if the media starts paused. I suspect the
-                 * videoOutput call was added so that the video could be applied earlier,
-                 * therefore solving instances where the video would show, but hadn't loaded
-                 * enough to fire a positionChanged event, leading to a window with an odd size.
-                 * Initial tests indicate this will is unlikely to be an issue. That might be
-                 * because of the fact that the window is minimized during loading and only shown
-                 * after loading completes.
-                 * TODO Delete comments here after next commit, pending no unforeseen issues.
-                 * 
-                 * @since Commit d2c7a17
-                 */
                 // Only fire when the media is loading. Otherwise, ignore.
                 if (media != null && media.isLoading()) {
                     applyAudio();
-//                    applyVideo(mediaPlayer);
                 }
             }
             @Override
@@ -862,9 +849,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         media.setAttributes(managerListener.requestAttributes(new PiPMedia(args[0])));
                     }
                     // Set as cache source if true -- allows for user deletion of media via shortcut.
-                    if (media.isFromCache()) {
-                        media.setCacheSrc(media.getSrc());
-                    }
+                    if (media.isFromCache()) media.setCacheSrc(media.getSrc());
                 }
                 // Web Media
                 else {
@@ -933,10 +918,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 }
                 // VLC and COMBO Players
                 if(state.not(PLAYER_SWING)) {
-//                    System.out.println("Ready to play.\n" + media.toString());
+                    // Set repeat as false -- restart playback is handled manually for more control.
                     mediaPlayer.mediaPlayer().controls().setRepeat(false);
                     mediaPlayer.mediaPlayer().media().play(args[0], options);
-//                    System.out.println("Should be playing:\n" + args[0]);
                 }
                 titleStatusUpdate(null);
                 break;
@@ -1760,8 +1744,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     public void ensureOnScreen() {
         final int x = getX(), y = getY();
         final GraphicsDevice screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        final int adjX  = Math.max(0, Math.min(x, screen.getDisplayMode().getWidth()  - getWidth())),
-                  adjY  = Math.max(0, Math.min(y, screen.getDisplayMode().getHeight() - getHeight()));
+        // Call once, as each call creates a new DisplayMode object. This is slightly more efficient.
+        final DisplayMode displayMode = screen.getDisplayMode();
+        final int adjX  = Math.max(0, Math.min(x, displayMode.getWidth()  - getWidth())),
+                  adjY  = Math.max(0, Math.min(y, displayMode.getHeight() - getHeight()));
         
         PiPWindow.this.setLocation(adjX, adjY);
     }

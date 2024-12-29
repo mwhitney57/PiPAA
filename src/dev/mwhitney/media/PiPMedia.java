@@ -94,11 +94,12 @@ public class PiPMedia {
      * String. If no conversion was necessary, this method will simply return the
      * media's unmodified source.
      * <p>
-     * <b>WARNING:</b> The passed source must be locally-accessible. If the file
-     * is not already stored locally, then conversion will not be possible.
+     * <b>WARNING:</b> The passed source must be locally-accessible. If the file is
+     * not already stored locally, then conversion will not be possible.
      * <p>
      * <b>Note:</b> This method does not alter any properties of this PiPMedia
-     * instance. It is a convenience method for converting invalid media and
+     * instance <b>other than setting its converted source</b>, if conversion took place.
+     * It is otherwise a convenience method for converting invalid media and
      * obtaining the path to the result.
      * 
      * @param source - a String with a custom source to use.

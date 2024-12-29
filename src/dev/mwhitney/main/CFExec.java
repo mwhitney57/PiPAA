@@ -345,15 +345,14 @@ public class CFExec {
     
     /**
      * Runs every passed {@link PiPRunnable} asynchronously and sequentially. The
-     * method performs async run calls on each Runnable, one after the other. Then,
-     * it waits for all of them to finish executing.
+     * method performs run calls asynchronously on another thread. Therefore, this
+     * method will return almost immediately.
      * <p>
      * <b>Note:</b> This method suppresses any and every {@link Exception} thrown
      * during execution of a {@link PiPRunnable}.
      * <p>
      * If any passed {@link PiPRunnable} objects are <code>null</code>, they will
-     * simply be ignored and the result pertaining to that runnable will be have
-     * <code>null</code> values for both the result and any caught exception.
+     * simply be ignored.
      * 
      * @param runs - one or more PiPRunnables to execute sequentially.
      * @see {@link #run(PiPRunnable...)} to get simultaneous and synchronous
@@ -364,28 +363,16 @@ public class CFExec {
         // Do nothing if array is null or no elements.
         if (runs == null || runs.length < 1) return;
         
-        // Initialize array, nest runs and store it in array.
-        final Runnable[] nestedRuns = new Runnable[runs.length];
-        for (int i = 0; i < runs.length; i++) {
-            // Ignore any null objects.
-            if (runs[i] == null) continue;
-            
-            // Setup Nested Runnable with CompletionException Error Throw
-            final int r = i;
-            nestedRuns[i] = () -> {
-                try {
-                    runs[r].run();
-                } catch (Exception e) { throw new CompletionException(e); }
-            };
-        }
-        
         // Perform runs sequentially and asynchronously.
         CompletableFuture.runAsync(() -> {
             // For each, run back to back before finishing function.
-            for (int i = 0; i < nestedRuns.length; i++) {
+            for (int i = 0; i < runs.length; i++) {
+                // Ignore any null objects.
+                if (runs[i] == null) continue;
+                
                 try {
-                    if (nestedRuns[i] != null) nestedRuns[i].run();
-                } catch (CompletionException e) { /* Suppress exception. */ }
+                    runs[i].run();
+                } catch (Exception e) { /* Suppress exception. */ }
             }
         });
     }

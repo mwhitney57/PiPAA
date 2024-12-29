@@ -3,12 +3,8 @@ package dev.mwhitney.gui;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowFocusListener;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -18,6 +14,8 @@ import dev.mwhitney.gui.PiPWindowState.StateProp;
 import dev.mwhitney.listeners.PiPWindowCountListener;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.listeners.WindowFocusGainedListener;
+import dev.mwhitney.main.CFExec;
 import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
@@ -117,12 +115,7 @@ public class PiPWindowManager implements PropertyListener {
 
         // Window Index in List
         final int index = windows.size();
-        window.addWindowFocusListener(new WindowFocusListener() {
-            @Override
-            public void windowGainedFocus(WindowEvent e) { lastWindowFocused = index; }
-            @Override
-            public void windowLostFocus(WindowEvent e) {}
-        });
+        window.addWindowFocusListener((WindowFocusGainedListener) (e) -> lastWindowFocused = index);
         // PiPAdapter for Communications Back to Manager
         window.setListener(new PiPWindowManagerAdapter() {
             @Override
@@ -263,11 +256,10 @@ public class PiPWindowManager implements PropertyListener {
      * Runs <b>asynchronously</b>.
      */
     public void clearWindows() {
-        CompletableFuture.runAsync(() -> {
+        CFExec.runSequential(() -> {
             clearWindowsInSync();
-            if (propertyState(PiPProperty.DISABLE_CACHE, Boolean.class)) try {
+            if (propertyState(PiPProperty.DISABLE_CACHE, Boolean.class))
                 PiPAAUtils.pruneCacheFolder();
-            } catch (IOException ioe) { /* Ignore, not an issue. */ }
         });
     }
     
@@ -330,12 +322,11 @@ public class PiPWindowManager implements PropertyListener {
     public boolean hasDuplicates(final PiPWindow win) {
         if (win == null) return false;
         
-        final int indexInList = windows.indexOf(win);
-        for (int i = 0; i < this.windows.size(); i++) {
+        for (final PiPWindow window : this.windows) {
             // Skip self in list.
-            if (i == indexInList) continue;
+            if (win.equals(window)) continue;
             
-            final PiPWindow window = windows.get(i);
+            // Check for another window that meets "duplicate" criteria.
             if (window != null && window.state().not(StateProp.CLOSED) && win.hasMedia()
                     && win.getMedia().sameSrcAs(window.getMedia())
                     && win.state().get(StateProp.PLAYER_NONE).equals(window.state().get(StateProp.PLAYER_NONE))) {
