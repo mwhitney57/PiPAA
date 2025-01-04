@@ -170,15 +170,44 @@ public class PiPMediaAttributes {
     }
     
     /**
+     * Gets a file name representation of this media, including its web ID if
+     * applicable.
+     * <p>
+     * This specific method ensures that if {@link #isPlaylist()} were
+     * to return <code>true</code>, then the returned String will instead have the
+     * {@link MediaExt#MP4} extension. Downloading from {@link TYPE#PLAYLIST} media
+     * should not return a playlist extension, as that would be redundant and
+     * incorrect.
+     * <p>
+     * Otherwise, this method simply appends the file extension and web
+     * ID to the end of the media's title. The web ID is the unique identifier
+     * pointing to the web media on its respective platform. If the media is not of
+     * the source type <code>WEB_INDIRECT</code>, this method is equivalent to
+     * <code>getFileName()</code>. Example:
+     * <pre>getFileNameID() --> How to tie a tie - Quick and Easy (9BMhFmNzw-o).mp4</pre>
+     * <p>
+     * If the media is not <code>WEB_INDIRECT</code> and you still choose to use
+     * this function, it would instead look like this, with no web ID:
+     * <pre>getFileNameID() --> How to tie a tie - Quick and Easy.mp4</pre>
+     * 
+     * @return a String with the full file name.
+     */
+    public String getDownloadFileNameID() {
+        // Return with MP4 extension if playlist. Otherwise behave similarly to getFileNameID().
+        return this.getFileTitleID()
+                + (this.getFileExtension() != null ? "." + (isPlaylist() ? "mp4" : this.getFileExtension().lower()) : "");
+    }
+    
+    /**
      * Gets a file name representation of this media, including its web ID if applicable.
      * This simply appends the file extension and web ID to the end of the media's title.
      * The web ID is the unique identifier pointing to the web media on its respective platform.
      * If the media is not of the source type <code>WEB_INDIRECT</code>, this method is equivalent to <code>getFileName()</code>.
-     * Example: <br>
-     * <code>getFileNameID() --> How to tie a tie - Quick and Easy (9BMhFmNzw-o).mp4</code>
+     * Example:
+     * <pre>getFileNameID() --> How to tie a tie - Quick and Easy (9BMhFmNzw-o).mp4</pre>
      * <p>
-     * If the media is not <code>WEB_INDIRECT</code> and you still choose to use this function, it would instead look like this:
-     * <code>getFileNameID() --> How to tie a tie - Quick and Easy.mp4</code>
+     * If the media is not <code>WEB_INDIRECT</code> and you still choose to use this function, it would instead look like this, with no web ID:
+     * <pre>getFileNameID() --> How to tie a tie - Quick and Easy.mp4</pre>
      * 
      * @return a String with the full file name.
      */
@@ -189,8 +218,8 @@ public class PiPMediaAttributes {
     /**
      * Gets a file name representation of this media.
      * This simply appends a <code>.</code> and the file extension to the title String.
-     * Example: <br>
-     * <code>getFileName() --> myVideo.mp4</code>
+     * Example:
+     * <ore>getFileName() --> myVideo.mp4</pre>
      * 
      * @return a String with the full file name.
      */
@@ -207,11 +236,11 @@ public class PiPMediaAttributes {
      * This method also appends the web ID to the end of the title.
      * The web ID is the unique identifier pointing to the web media on its respective platform.
      * If the media is not of the source type <code>WEB_INDIRECT</code>, this method is equivalent to <code>getFileTitle()</code>.
-     * Example: <br>
-     * <code>getFileTitleID() --> How to tie a tie - Quick and Easy (9BMhFmNzw-o)</code>
+     * Example:
+     * <pre>getFileTitleID() --> How to tie a tie - Quick and Easy (9BMhFmNzw-o)</pre>
      * <p>
-     * If the media is not <code>WEB_INDIRECT</code> and you still choose to use this function, it would instead look like this:
-     * <code>getFileNameID() --> How to tie a tie - Quick and Easy</code>
+     * If the media is not <code>WEB_INDIRECT</code> and you still choose to use this function, it would instead look like this, with no web ID:
+     * <pre>getFileNameID() --> How to tie a tie - Quick and Easy</pre>
      * 
      * @return a String with the file title and its web ID, if applicable.
      */

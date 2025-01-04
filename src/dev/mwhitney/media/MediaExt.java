@@ -13,7 +13,7 @@ import dev.mwhitney.main.PiPEnum;
  */
 public enum MediaExt implements PiPEnum<MediaExt> {
     /* PLAYLIST/STREAMING */
-    M3U8,TS,
+    M3U8,MPD,TS,
     /* VIDEO */
     MP4,MKV,WEBM,M4V,MOV,AVI,
     /* IMAGE */
@@ -34,7 +34,7 @@ public enum MediaExt implements PiPEnum<MediaExt> {
     public static MediaExt parse(String str) throws InvalidMediaExtensionException {
         try {
             if (str != null) return MediaExt.valueOf(str.toUpperCase());
-        } catch(IllegalArgumentException e) {}
+        } catch(IllegalArgumentException e) {}  // Catch if no match, which leads to InvalidMediaExtensionException being thrown below.
         throw new InvalidMediaExtensionException("No valid media extension value for '" + Objects.toString(str, "NULL").toUpperCase() + "'");
     }
     
@@ -72,5 +72,24 @@ public enum MediaExt implements PiPEnum<MediaExt> {
         case MP3, WAV -> true;
         default -> false;
         };
+    }
+    
+    /**
+     * Gets the MediaExt values as a single String, separated by the passed character.
+     * 
+     * @param separator - the char to separate each MediaExt value.
+     * @return a String with the values, separated by the passed char.
+     * @since 0.9.4
+     */
+    public static String values(char separator) {
+        final MediaExt[] exts = MediaExt.values();
+        final StringBuilder vals = new StringBuilder();
+        for (int i = 0; i < exts.length; i++) {
+            vals.append(exts[i]);
+            // Only append separator afterward if not last element.
+            if (i < exts.length - 1)
+                vals.append(separator);
+        }
+        return vals.toString();
     }
 }

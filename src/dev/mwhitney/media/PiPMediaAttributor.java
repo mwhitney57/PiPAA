@@ -52,7 +52,7 @@ public class PiPMediaAttributor implements PropertyListener {
      */
     public PiPMediaAttributor() {
         this.rgxSpacer         = Pattern.compile(" +");
-        this.rgxSrcQueryExt    = Pattern.compile(".*\\?.*(MP4|MKV|WEBM|M4V|MOV|AVI|PNG|JPG|JPEG|TIFF|GIF|WEBP|MP3|M4A|WAV|WMA|OGG|FLAC|OPUS).*", Pattern.CASE_INSENSITIVE);
+        this.rgxSrcQueryExt    = Pattern.compile(".*\\?.*(" + MediaExt.values('|') + ").*", Pattern.CASE_INSENSITIVE);
         this.rgxTextValidator  = Pattern.compile("[^\\w\\s\\.!@#$^+=-]");
         this.rgxTitleLocal     = Pattern.compile(".*\\\\(.*)\\..*");
         this.rgxTitleID        = Pattern.compile(".*?(?:id|name|title)=(.+?)(?:(?=\\&)|$).*", Pattern.CASE_INSENSITIVE);
@@ -510,6 +510,7 @@ public class PiPMediaAttributor implements PropertyListener {
         
         switch(extension) {
         case M3U8:
+        case MPD:
             return PiPMediaAttributes.TYPE.PLAYLIST;
         case MP4:
         case MKV:

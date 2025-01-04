@@ -1365,7 +1365,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             return null;
         
         final List<String> platformArgs = new ArrayList<String>();
-        final String mediaFileNameID = media.getAttributes().getFileNameID();
+        final String mediaFileNameID = media.getAttributes().getDownloadFileNameID();
         final WebMediaFormat wmf = media.getAttributes().getWMF();
         final boolean multiMedia = wmf.isItem();
         boolean useCookies = true;
@@ -1521,7 +1521,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     private String downloadMedia(PiPMedia media, String outDir, String[] args) {
         // Setup Cache Folder and File Name
         PiPAAUtils.ensureExistence(outDir);
-        final File fileOut = new File(outDir + "/" + media.getAttributes().getFileNameID());
+        final File fileOut = new File(outDir + "/" + media.getAttributes().getDownloadFileNameID());
         
         // Check if Media Exists Before Attempting Download
         final boolean fileExists = fileOut.exists();
