@@ -100,34 +100,48 @@ public class APICommunicator {
      * @throws InterruptedException if the request communication is interrupted.
      */
     public static UpdatePayload request(@NotNull Request r) throws IOException, InterruptedException {
+        // Create the HttpRequest.
         HttpRequest request = null;
         try {
             request = HttpRequest.newBuilder()
                     .uri(new URI(r.url()))
                     .timeout(Duration.ofSeconds(10))
-                    .header("nothing", "nothing")
                     .GET()
                     .build();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+        } catch (URISyntaxException urise) {
+            System.err.println("<!> Error parsing URI while building update request.");
+            return null;
         }
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        
+        // Send the HttpRequest, then get the HttpResponse.
+        final HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        // Return if response has no information.
         if (response.body().isBlank()) return null;
+        // Otherwise continue and convert body to JSON.
         final JSONObject json = new JSONObject(response.body());
+        // Filter information from JSON response body.
         final JSONObject version = json.getJSONObject("version");
         final Version v = new Version(version.getInt("majorVersion"), version.getInt("middleVersion"), version.getInt("minorVersion"));
         final TYPE_OPTION type = TYPE_OPTION.parseSafe(json.getString("releaseType").toUpperCase());
+        // Return if either piece of update information is null.
         if (v == null || type == null) return null;
+        // Otherwise continue and create Build using update information.
         final Build build = new Build(v, type);
         
+        // Get the Build's available links as JSON.
         final JSONArray jsonLinks = json.getJSONArray("links");
+        // Determine PiPAA's current executable name.
         final String currFileName = new java.io.File(APICommunicator.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
+        // Return if running in IDE.
         if (currFileName.equals("classes")) return null;
+        // Determine PiPAA's current executable extension.
         final String currFileExt  = currFileName.substring(currFileName.lastIndexOf('.'));
+        // Save Build's available links.
         final StringBuilder link  = new StringBuilder();
         jsonLinks.forEach(l -> {
             if (((String) l).endsWith(currFileExt)) link.append(((String) l));
         });
+        // Combine Build and Build Links into UpdatePayload and return it.
         return new UpdatePayload(build, link.toString());
     }
     

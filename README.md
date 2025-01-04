@@ -249,6 +249,12 @@ If you prefer updating manually, you can simply replace the `PiPAA.jar` or `PiPA
 This is completely normal. When you first launch a new application that does not have a verified publisher, you may get a Windows Defender SmartScreen pop-up. This is just a precautionary warning, and it can be quickly bypassed with two clicks.
 Check the guide [here](#how-to-bypass-windows-defender-smartscreen-warning).
 </details>
+<details><summary><h3>What sites or types of media does PiPAA <i>not</i> support?</h3></summary>
+
+PiPAA supports a wide variety of formats and sites. `PDF` files are not supported right now, but that will likely change in the future. Unfortunately, PiPAA will likely not work with certain paid streaming sites (i.e. Netflix).
+
+If you found a site or file that you feel should work but doesn't, let me know! Consider leaving an [Issue](https://github.com/mwhitney57/PiPAA/issues).
+</details>
 
 > [!NOTE]
 > Click on a question to see the answer.

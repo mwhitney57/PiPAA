@@ -110,9 +110,10 @@ public class CroppedBufferedImage {
     
     /**
      * Flushes the internal {@link BufferedImage} and nullifies it to prepare for
-     * garbage collection. This method will fully invalidate or break certain calls,
-     * such as {@link #determineCrop(int)}, {@link #raw()}, or {@link #cropped()}.
-     * However, the internal crop amounts will still be accessible for reference.
+     * garbage collection. This method will fully invalidate or break certain future
+     * calls, such as {@link #determineCrop(int)}, {@link #raw()}, or
+     * {@link #cropped()}. However, the internal crop amounts will still be
+     * accessible for reference.
      */
     public void flush() {
         if (imgValid()) {

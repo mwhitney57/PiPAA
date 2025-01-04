@@ -62,32 +62,43 @@ public class PiPUpdater {
             this.exception = e;
         }
         /* Checked Attribute */
+        /** Whether or not an update check was performed at all. */
         public boolean checked() { return checked; }
+        /** Set whether or not an update check was performed. */
         public PiPUpdateResult setChecked(boolean checked) {
             this.checked = checked;
             return this;
         }
         /* User Prompted Attribute */
+        /** Whether or not the user was asked if they wanted to update. */
         public boolean userPrompted() { return userPrompted; }
+        /** Sets whether or not the user was asked if they wanted to update. */
         public PiPUpdateResult setUserPrompted(boolean userPrompted) {
             this.userPrompted = userPrompted;
             return this;
         }
         /* Tried Updating Attribute */
+        /** Whether or not the updater tried updating. */
         public boolean triedUpdating() { return triedUpdating; }
+        /** Sets whether or not the update tried updating. */
         public PiPUpdateResult setTriedUpdating(boolean triedUpdating) {
             this.triedUpdating = triedUpdating;
             return this;
         }
         /* Updated Attribute */
+        /** Whether or not the updater completed the update process, which does not guarantee the process succeeded. */
         public boolean updated() { return updated; }
+        /** Sets whether or not the updater completed the update process, which does not guarantee the process succeeded. */
         public PiPUpdateResult setUpdated(boolean updated) {
             this.updated = updated;
             return this;
         }
         /* Exception */
+        /** Did an exception occur during the update process? */
         public boolean hasException() { return (this.exception != null); }
+        /** Get the exception that occurred during the update process, if there is one. */
         public PiPUpdateException exception() { return exception; }
+        /** Set the exception that occurred during the update process. */
         public PiPUpdateResult setException(PiPUpdateException exception) {
             this.exception = exception;
             return this;

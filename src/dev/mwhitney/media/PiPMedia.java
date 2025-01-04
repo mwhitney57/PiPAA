@@ -263,19 +263,19 @@ public class PiPMedia {
             return source;
         
         // Return the source if it is already PiPAA cropped media.
-        final File inFile = new File(source);
-        if (inFile.getName().endsWith("_PiPAACrop"))
+        final File   inFile         = new File(source);
+        final String inFileBaseName = FilenameUtils.getBaseName(inFile.getPath());
+        if (inFileBaseName.endsWith("_PiPAACrop"))
             return source;
         
         // Ensure trimmed folder exists in cache then build media's cropped version path.
-        final int inPeriodIndex = inFile.getName().lastIndexOf('.');
-        final String ext = source.substring(source.lastIndexOf('.') + 1);
-        final StringBuilder cropFilePath = new StringBuilder(Initializer.APP_TRIMMED_FOLDER);
-        PiPAAUtils.ensureExistence(cropFilePath.toString());
-        cropFilePath.append("/").append(inFile.getName().substring(0, inPeriodIndex)).append("_PiPAACrop").append(".").append(ext);
+        final String ext = FilenameUtils.getExtension(inFile.getPath());
+        String cropFilePath = Initializer.APP_TRIMMED_FOLDER;
+        PiPAAUtils.ensureExistence(cropFilePath);
+        cropFilePath += ("/" + inFileBaseName + "_PiPAACrop" + (ext.isEmpty() ? "" : "." + ext));
         
-        // Return the trimmed output
-        final File outFile = new File(cropFilePath.toString());
+        // Return the trimmed output if the file exists.
+        final File outFile = new File(cropFilePath);
         if (outFile.exists())
             return outFile.getPath();
         
@@ -285,13 +285,13 @@ public class PiPMedia {
             // Check for any transparent edges on the image/first frame of image.
             CroppedBufferedImage img = null;
             try {
-                img = new CroppedBufferedImage(ImageIO.read(new File(source)));
+                img = new CroppedBufferedImage(ImageIO.read(inFile));
                 img.determineCrop((option == TRIM_OPTION.STRICT ? 0 : 5));
             } catch (IOException ioe) {
                 ioe.printStackTrace();
                 final Throwable cause = ioe.getCause();
                 if (cause != null && cause.getMessage().contains("no End of Image tag present")) {
-                    System.err.println("Recognized, rare image error: Forcing trim as fallback and in attempt to fix.");
+                    System.err.println("Recognized, rare image error: Forcing trim as fallback in attempt to fix.");
                     FORCE = true;
                 } else
                     throw new MediaModificationException("PiPAA may not have permission to view or edit the necessary file(s) or folder(s).");
@@ -316,7 +316,7 @@ public class PiPMedia {
         } catch (IOException e) {
             throw new MediaModificationException("PiPAA may not have permission to view or edit the necessary file(s) or folder(s).");
         }
-        return cropFilePath.toString();
+        return cropFilePath;
     }
     
     /**
@@ -366,7 +366,7 @@ public class PiPMedia {
      * @return <code>true</code> if the media is cached; <code>false</code> otherwise.
      */
     public boolean isCached() {
-        return (getCacheSrc() != null && getCacheSrc().length() > 0);
+        return (this.cacheSrc != null && this.cacheSrc.length() > 0);
     }
     
     /**
@@ -395,7 +395,7 @@ public class PiPMedia {
      * @return <code>true</code> if the media is trimmed and in the cache; <code>false</code> otherwise.
      */
     public boolean hasTrimSrc() {
-        return getTrimSrc() != null && getTrimSrc().length() > 0;
+        return this.trimSrc != null && this.trimSrc.length() > 0;
     }
     
     /**
@@ -424,7 +424,7 @@ public class PiPMedia {
      * @return <code>true</code> if the media is converted and in the cache; <code>false</code> otherwise.
      */
     public boolean hasConvertSrc() {
-        return getConvertSrc() != null && getConvertSrc().length() > 0;
+        return this.convSrc != null && this.convSrc.length() > 0;
     }
     
     /**
@@ -510,7 +510,7 @@ public class PiPMedia {
      *         otherwise.
      */
     public boolean hasAttributes() {
-        return this.getAttributes() != null;
+        return this.attributes != null;
     }
     
     /**
@@ -554,13 +554,13 @@ public class PiPMedia {
     public String toString() {
         return String.format("%s (%s)%n%14s: %s%n%14s: %s%n%14s: %s%n%14s: %s%n%14s: %s%n%14s: %s%n%14s: %s%n---- %s",
                 "Media", (hasAttributes() ? "Has Attributes" : "No Attributes"),
-                "Src", Objects.toString(src, "NONE"),
-                "Cache Src", Objects.toString(cacheSrc, "NONE"),
-                "Trim Src", Objects.toString(trimSrc, "NONE"),
-                "Conversion Src", Objects.toString(convSrc, "NONE"),
-                "Is Loading", loading,
-                "Del. on Close", markedForDeletion,
-                "Attributed", attributed,
+                "Src", Objects.toString(this.src, "NONE"),
+                "Cache Src", Objects.toString(this.cacheSrc, "NONE"),
+                "Trim Src", Objects.toString(this.trimSrc, "NONE"),
+                "Conversion Src", Objects.toString(this.convSrc, "NONE"),
+                "Is Loading", this.loading,
+                "Del. on Close", this.markedForDeletion,
+                "Attributed", this.attributed,
                 Objects.toString(getAttributes(), ""));
     }
 }

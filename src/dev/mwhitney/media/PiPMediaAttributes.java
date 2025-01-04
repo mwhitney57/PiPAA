@@ -86,7 +86,6 @@ public class PiPMediaAttributes {
          */
         public boolean hostMatches(final String h) {
             for (final String host : hosts()) {
-//                System.err.println("!@#!@# ???? MATCHING SRC PLATFORM: " + h + "  ||  " + host);
                 if (h.equalsIgnoreCase(host))
                     return true;
             }
@@ -250,7 +249,7 @@ public class PiPMediaAttributes {
      * @return <code>true</code> if the type if <code>PLAYLIST</code>; <code>false</code> otherwise.
      */
     public boolean isPlaylist() {
-        return (this.getType() == TYPE.PLAYLIST);
+        return (this.type == TYPE.PLAYLIST);
     }
     
     /**
@@ -259,7 +258,7 @@ public class PiPMediaAttributes {
      * @return <code>true</code> if the type if <code>VIDEO</code>; <code>false</code> otherwise.
      */
     public boolean isVideo() {
-        return (this.getType() == TYPE.VIDEO);
+        return (this.type == TYPE.VIDEO);
     }
     
     /**
@@ -268,7 +267,7 @@ public class PiPMediaAttributes {
      * @return <code>true</code> if the type if <code>GIF</code>; <code>false</code> otherwise.
      */
     public boolean isGIF() {
-        return (this.getType() == TYPE.GIF);
+        return (this.type == TYPE.GIF);
     }
     
     /**
@@ -277,7 +276,7 @@ public class PiPMediaAttributes {
      * @return <code>true</code> if the type if <code>IMAGE</code>; <code>false</code> otherwise.
      */
     public boolean isImage() {
-        return (this.getType() == TYPE.IMAGE);
+        return (this.type == TYPE.IMAGE);
     }
     
     /**
@@ -286,7 +285,7 @@ public class PiPMediaAttributes {
      * @return <code>true</code> if the type if <code>AUDIO</code>; <code>false</code> otherwise.
      */
     public boolean isAudio() {
-        return (this.getType() == TYPE.AUDIO);
+        return (this.type == TYPE.AUDIO);
     }
     
     /**
@@ -342,7 +341,7 @@ public class PiPMediaAttributes {
      * @return <code>true</code> if the source type is <code>LOCAL</code>; <code>false</code> otherwise.
      */
     public boolean isLocal() {
-        return (this.getSrcType() == SRC_TYPE.LOCAL);
+        return (this.srcType == SRC_TYPE.LOCAL);
     }
     
     /**
@@ -351,7 +350,7 @@ public class PiPMediaAttributes {
      * @return <code>true</code> if the source type is <code>WEB_DIRECT</code>; <code>false</code> otherwise.
      */
     public boolean isWebDirect() {
-        return (this.getSrcType() == SRC_TYPE.WEB_DIRECT);
+        return (this.srcType == SRC_TYPE.WEB_DIRECT);
     }
     
     /**
@@ -360,7 +359,7 @@ public class PiPMediaAttributes {
      * @return <code>true</code> if the source type is <code>WEB_INDIRECT</code>; <code>false</code> otherwise.
      */
     public boolean isWebIndirect() {
-        return (this.getSrcType() == SRC_TYPE.WEB_INDIRECT);
+        return (this.srcType == SRC_TYPE.WEB_INDIRECT);
     }
     
     /**
@@ -389,7 +388,6 @@ public class PiPMediaAttributes {
      * @return <code>true</code> if the platform is <code>GENERIC</code>, <code>false</code> otherwise.
      */
     public boolean isGenericPlatform() {
-//        return (this.srcPlatform == SRC_PLATFORM.GENERIC || this.srcPlatform == SRC_PLATFORM.GENERIC_GALLERY);
         return (this.srcPlatform == SRC_PLATFORM.GENERIC);
     }
     
@@ -586,7 +584,7 @@ public class PiPMediaAttributes {
         final Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         
         // Scale window based on media size while respecting passed maximum.
-        int x = getSize().width, y = getSize().height;
+        int x = this.size.width, y = this.size.height;
         if (x >= y) {
             y = (int) (y * (screen.width / (float) x));
             x = screen.width;
@@ -602,10 +600,10 @@ public class PiPMediaAttributes {
      * This method does nothing if that variable is null.
      */
     private void determineSizeRatio() {
-        if(getSize() == null) return;
+        if(this.size == null) return;
         
         // Scale window based on media size while respecting default maximums.
-        final float sizeRatio = (float) getSize().width / (float) getSize().height;
+        final float sizeRatio = (float) this.size.width / (float) this.size.height;
         setSizeRatio(sizeRatio);
     }
     
@@ -653,14 +651,14 @@ public class PiPMediaAttributes {
     @Override
     public String toString() {
         return String.format("%s'%s'%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%s",
-                "Media Attributes for ", Objects.toString(getTitle(), "NONE"),
-                "File Extension", Objects.toString(getFileExtension(), "NONE"),
-                "Type", Objects.toString(getType(), "NONE"),
-                "Source Type", Objects.toString(getSrcType(), "NONE"),
-                "Source Platform", Objects.toString(getSrcPlatform(), "NONE"),
-                "Size", Objects.toString(getSize(), "NONE"),
-                "Size Ratio", Objects.toString(getSizeRatio(), "NONE"),
-                "Adv. GIF Playback", usesAdvancedGIFPlayback(),
-                Objects.toString(getWMF(), ""));
+                "Media Attributes for ", Objects.toString(this.title, "NONE"),
+                "File Extension", Objects.toString(this.fileExtension, "NONE"),
+                "Type", Objects.toString(this.type, "NONE"),
+                "Source Type", Objects.toString(this.srcType, "NONE"),
+                "Source Platform", Objects.toString(this.srcPlatform, "NONE"),
+                "Size", Objects.toString(this.size, "NONE"),
+                "Size Ratio", Objects.toString(this.sizeRatio, "NONE"),
+                "Adv. GIF Playback", this.usesAdvGIFPlayback,
+                Objects.toString(this.wmf, ""));
     }
 }

@@ -72,12 +72,13 @@ public class PiPAAUtils {
     /**
      * Prunes/deletes every empty directory within the passed directory, then ultimately deletes the directory itself (if it is empty.)
      * This method will recursively search directories and remove any empty ones.
+     * <b>The passed {@link File} must be non-<code>null</code>.</b>
      * 
      * @param folder - the File with folder to prune (if empty) and any empty directories within it.
      * @throws IOException if there was a problem ensuring the directory is empty.
      */
     public static void pruneFolder(File folder) throws IOException {
-        final File[] files = folder.listFiles();
+        final File[] files = Objects.requireNonNull(folder, "Cannot prune folders within a <null> File directory.").listFiles();
         if(files != null) // Null if error or is a file instead of a directory.
             for(final File f : files)
                 if(f.isDirectory())

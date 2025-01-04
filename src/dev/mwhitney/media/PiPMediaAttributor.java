@@ -239,7 +239,7 @@ public class PiPMediaAttributor implements PropertyListener {
         System.out.println("Attempting web attribution gets...");
         // Determine command arguments based on platform and attempt number.
         final ArrayList<String> cmdOuts = CFExec.runAndGet(
-              () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP, audioMedia).toArray(new String[0])),
+              () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     audioMedia).toArray(new String[0])),
               () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, audioMedia).toArray(new String[0])))
               .excepts((i, e) -> System.err.println("Exception caught from binary (#" + i + ") in web attribution: " + e))
               .results();
@@ -342,7 +342,7 @@ public class PiPMediaAttributor implements PropertyListener {
         boolean useCookies = true;
         
         // Determine which binary to use, defaulting to the calculated value if no override was provided.
-        boolean useYTDLP = false;
+        boolean useYTDLP = false;   // Current default is false.
         useYTDLP = (binOverride == Bin.YT_DLP ? true : (binOverride == Bin.GALLERY_DL ? false : useYTDLP));
         
         // Change Commands Depending on Remote Source Platform (if any)

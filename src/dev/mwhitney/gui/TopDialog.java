@@ -31,7 +31,7 @@ public class TopDialog {
      * @param message - the message to display.
      * @param title - the title of the displayed dialog.
      * @param messageType - the type of dialog message to display.
-     * @see {@link JOptionPane}.showMessageDialog(Component, Object, String, int)
+     * @see {@link JOptionPane#showMessageDialog(Component, Object, String, int)}
      */
     public static void showMsg(Object message, String title, int messageType) {
         showMsg(message, title, messageType, null);
@@ -45,7 +45,7 @@ public class TopDialog {
      * @param title - the title of the displayed dialog.
      * @param messageType - the type of dialog message to display.
      * @param icon - the icon to display inside of the dialog.
-     * @see {@link JOptionPane}.showMessageDialog(Component, Object, String, int, Icon)
+     * @see {@link JOptionPane#showMessageDialog(Component, Object, String, int, Icon)}
      */
     public static void showMsg(Object message, String title, int messageType, Icon icon) {
         final JDialog parent = genTopParent();
@@ -60,7 +60,7 @@ public class TopDialog {
      * @param message - the message to display.
      * @param title - the title of the displayed dialog.
      * @param optionType - the type of dialog option to display.
-     * @see {@link JOptionPane}.showConfirmDialog(Component, Object, String, int)
+     * @see {@link JOptionPane#showConfirmDialog(Component, Object, String, int)}
      */
     public static int showConfirm(Object message, String title, int optionType) {
         final JDialog parent = genTopParent();
@@ -74,7 +74,7 @@ public class TopDialog {
      * Reference {@link JOptionPane} for documentation.
      * 
      * @param message - the message to display.
-     * @see {@link JOptionPane}.showInputDialog(Component, Object)
+     * @see {@link JOptionPane#showInputDialog(Component, Object)}
      */
     public static String showInput(Object message) {
         final JDialog parent = genTopParent();
