@@ -172,8 +172,8 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                 // GLOBAL MUTE
                 case KeyEvent.VK_M:
                     if (ctrlDown && shiftDown)
-                        PropertiesManager.MEDIATOR.propertyChanged(PiPProperty.GLOBAL_MUTED,
-                                String.valueOf(!PropertiesManager.MEDIATOR.propertyState(PiPProperty.GLOBAL_MUTED, Boolean.class)));
+                        PropertiesManager.mediator.propertyChanged(PiPProperty.GLOBAL_MUTED,
+                                String.valueOf(!PropertiesManager.mediator.propertyState(PiPProperty.GLOBAL_MUTED, Boolean.class)));
                     break;
                 // ADD NEW WINDOW
                 case KeyEvent.VK_A:

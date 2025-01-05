@@ -187,7 +187,7 @@ public class PiPUpdater {
         try {
             // Get Latest Version from API
             final UpdatePayload update = APICommunicator.request(type);
-            if (update == null)    return result.setException(new PiPUpdateException("Could not fetch latest update."));
+            if (update == null)    return result.setException(new PiPUpdateException("Could not fetch latest update. Connection issue or API may be down."));
             if (!update.hasLink()) return result.setException(new PiPUpdateException("Latest update contains no download link with current file extension."));
             
             // Compare Current Version to Version from API -- Get User Confirmation Before Proceeding

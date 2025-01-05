@@ -327,7 +327,11 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
                 final PiPUpdateResult result = PiPUpdater.updateApp(PropDefault.TYPE.matchAny(propertyState(PiPProperty.APP_UPDATE_TYPE, String.class)), force);
                 if (result.checked()) {
                     propertyChanged(PiPProperty.APP_LAST_UPDATE_CHECK, LocalDateTime.now().toString());
-                    if (!result.userPrompted()) EasyTopDialog.showMsg(this, "No update available.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), false);
+                    // The user was not prompted. Either there was no update or there was an error.
+                    if (!result.userPrompted()) EasyTopDialog.showMsg(this,
+                            result.hasException() ? "Could not update. Is the server down?" : "No update available.",
+                            PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)),
+                            result.hasException() ? 2500 : 1500, false);
                 }
                 if (result.updated()) {
                     propertyChanged(PiPProperty.APP_UPDATING_FROM, (force ? "FORCED-" : "") + Initializer.APP_BUILD.toString());

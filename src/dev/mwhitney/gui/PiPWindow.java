@@ -693,6 +693,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     mediaCommand(PiPMediaCMD.MUTEUNMUTE);
                 }
                 break;
+            /* TODO Subtitle track switching. */
             // CYCLE AUDIO TRACKS
             case KeyEvent.VK_T:
                 final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().audio().trackDescriptions();

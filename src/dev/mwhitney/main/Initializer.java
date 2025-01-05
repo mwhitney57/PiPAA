@@ -147,7 +147,7 @@ public class Initializer {
             @Override
             public <T> T propertyState(PiPProperty prop, Class<T> rtnType) {
                 // Ensure the property has a value. If it doesn't, reset it to the default.
-                final boolean hasValue = propsManager.get(prop) != null;
+                final boolean hasValue = propsManager.has(prop);
                 if (!hasValue) propsManager.setDefault(prop);
                 
                 // Return a different type depending on the state request.
@@ -184,9 +184,9 @@ public class Initializer {
                     if (Boolean.valueOf(value))
                         CFExec.run(() -> Binaries.refreshOnSys()).excepts((i, e) -> e.printStackTrace());
                     
-                    propsManager.set(prop.toString(), value);
+                    propsManager.set(prop, value);
                 }
-                default -> propsManager.set(prop.toString(), value);
+                default -> propsManager.set(prop, value);
                 }
                 windowManager.propertyChanged(prop, value);
             }
@@ -204,7 +204,7 @@ public class Initializer {
             public PiPWindowManager get() { return windowManager; }
         });
         
-        PropertiesManager.MEDIATOR = new PropertyListener() {
+        PropertiesManager.mediator = new PropertyListener() {
             @Override
             public void propertyChanged(PiPProperty prop, String value) { tray.forwardPropertyChange(prop, value); }
             @Override
@@ -246,7 +246,7 @@ public class Initializer {
                         CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, "PiPAA has been updated from " + fromBuild + " to " + APP_BUILD + ".", "Update Complete", JOptionPane.INFORMATION_MESSAGE));
                 }
             } catch (Exception e) { /* Do Nothing -- Assume User Manual Configuration Error, Ultimately Deletes Invalid Properties */ }
-            propsManager.getProperties().remove(PiPProperty.APP_UPDATING_FROM.toString());
+            propsManager.remove(PiPProperty.APP_UPDATING_FROM);
         }
     }
     
@@ -342,9 +342,9 @@ public class Initializer {
         final String lastCheckApp  = propsManager.get(PiPProperty.APP_LAST_UPDATE_CHECK);
         final String appUpdateType = propsManager.get(PiPProperty.APP_UPDATE_TYPE);
         final PiPUpdateResult result = PiPUpdater.updateApp(frequencyApp, lastCheckApp, PropDefault.TYPE.matchAny(appUpdateType), false);
-        if (result.checked()) propsManager.set(PiPProperty.APP_LAST_UPDATE_CHECK.toString(), LocalDateTime.now().toString());
+        if (result.checked()) propsManager.set(PiPProperty.APP_LAST_UPDATE_CHECK, LocalDateTime.now().toString());
         if (result.updated()) {
-            propsManager.set(PiPProperty.APP_UPDATING_FROM.toString(), Initializer.APP_BUILD.toString());
+            propsManager.set(PiPProperty.APP_UPDATING_FROM, Initializer.APP_BUILD.toString());
             System.exit(0);
         }
         if (result.hasException()) System.err.println("Warning, app update process failed: " + result.exception().getTotalMessage());
@@ -353,7 +353,7 @@ public class Initializer {
         final String frequencyBin = propsManager.get(PiPProperty.BIN_UPDATE_FREQUENCY);
         final String lastCheckBin = propsManager.get(PiPProperty.BIN_LAST_UPDATE_CHECK);
         if (PiPUpdater.updateBin(frequencyBin, lastCheckBin)) // Update last update check time.
-            propsManager.set(PiPProperty.BIN_LAST_UPDATE_CHECK.toString(), LocalDateTime.now().toString());
+            propsManager.set(PiPProperty.BIN_LAST_UPDATE_CHECK, LocalDateTime.now().toString());
         
         // VLC is ready if configured to be used and installed on the system. Otherwise use PiPAA's version.
         boolean vlcReady = (useSysVLC != null && Boolean.valueOf(useSysVLC) ? new NativeDiscovery().discover() : false);
