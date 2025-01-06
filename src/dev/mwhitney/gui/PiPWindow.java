@@ -693,12 +693,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     mediaCommand(PiPMediaCMD.MUTEUNMUTE);
                 }
                 break;
-            /* TODO Subtitle track switching. */
             // CYCLE AUDIO TRACKS
             case KeyEvent.VK_T:
-                final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().audio().trackDescriptions();
-                if (tracks.size() > 1) {
+                if (mediaPlayer.mediaPlayer().audio().trackCount() > 1) {
                     // Determine starting index for loop, then find next track in cycle.
+                    final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().audio().trackDescriptions();
                     final List<Integer> trackIDs = tracks.stream().map(t -> t.id()).toList();
                     final int index = trackIDs.indexOf(mediaPlayer.mediaPlayer().audio().track());
                     final Loop<TrackDescription> trackLoop = new Loop<>(tracks.toArray(TrackDescription[]::new), index);
@@ -714,9 +713,26 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     EasyTopDialog.showMsg(this, "No audio tracks.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
                 }
                 break;
-            // SAVE TO CACHE
+            // SUBTITLES and SAVE TO CACHE
             case KeyEvent.VK_S:
-                if (ctrlDown && state.not(SAVING_MEDIA) && hasAttributedMedia() && !media.getAttributes().isLocal()) {
+                // Subtitles
+                if (!ctrlDown && !shiftDown && !altDown) {
+                    if (mediaPlayer.mediaPlayer().subpictures().trackCount() > 1) {
+                        // Determine starting index for loop, then find next track in cycle.
+                        final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().subpictures().trackDescriptions();
+                        final List<Integer> trackIDs = tracks.stream().map(t -> t.id()).toList();
+                        final int index = trackIDs.indexOf(mediaPlayer.mediaPlayer().subpictures().track());
+                        final Loop<TrackDescription> trackLoop = new Loop<>(tracks.toArray(TrackDescription[]::new), index);
+                        
+                        // Set new subtitle track selection and notify user.
+                        mediaPlayer.mediaPlayer().subpictures().setTrack(trackLoop.next().id());
+                        EasyTopDialog.showMsg(this, "Subtitle Track: " + trackLoop.current().description(), PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
+                    } else {
+                        EasyTopDialog.showMsg(this, "No subtitle tracks.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
+                    }
+                }
+                // Save to Cache
+                else if (ctrlDown && state.not(SAVING_MEDIA) && hasAttributedMedia() && !media.getAttributes().isLocal()) {
                     // Cancel if media is already cached.
                     if (media.isCached()) {
                         flashBorderEDT(BORDER_WARNING);

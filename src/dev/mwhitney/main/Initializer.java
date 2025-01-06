@@ -89,10 +89,12 @@ public class Initializer {
     Period (.)       -> Frame-by-Frame Forward                         |
     M                -> Mute/Unmute                                    |
     CTRL + SHIFT + M -> Global Mute/Unmute                             |
-    0-9              -> Seek to 0%, 10%, ... 90% Through Video         | Mouse (Image/GIF):
-    CTRL + S         -> Save Current Media to Cache                    |-------------------------------------------------------------------
-    CTRL + ALT + S   -> Quick-Save Current Media to Cache (Inaccurate) | Scroll Up/Down                  -> Zoom
-    T                -> Cycle Audio Track                              | CTRL + MMB Click                -> Reset Zoom
+    0-9              -> Seek to 0%, 10%, ... 90% Through Video         |
+    S                -> Cycle Subtitle Track                           |
+    CTRL + S         -> Save Current Media to Cache                    | Mouse (Image/GIF):
+    CTRL + ALT + S   -> Quick-Save Current Media to Cache (Inaccurate) |-------------------------------------------------------------------
+    T                -> Cycle Audio Track                              | Scroll Up/Down                  -> Zoom
+                                                                       | CTRL + MMB Click                -> Reset Zoom
                                                                        | LMB (Hold) & Drag               -> Pan (while zoomed)
     Keyboard (Audio):                                                  |
     -------------------------------------------------------------------|
