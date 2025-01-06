@@ -125,6 +125,11 @@ PiPAA can play media from many web sources. To do so, it may have to cache the m
 > [!IMPORTANT]
 > Some websites will not let you play or download media from them without being logged in. For these sites, PiPAA can utilize a Netscape HTTP Cookie File containing login cookies. The sites' cookies are stored in this file and used to authorize downloads. To do this, follow the [guide](#how-to-create-and-use-a-cookies-file-with-pipaa).
 
+### 🔌 Using [yt-dlp](https://github.com/yt-dlp/yt-dlp) Plugins with PiPAA
+Since PiPAA utilizes the open-source project [yt-dlp](https://github.com/yt-dlp/yt-dlp), it can also utilize plugins for yt-dlp that the user provides. These plugins can provide many benefits, including the ability to load media from additional sites that yt-dlp does not natively support.
+
+For more information on how to use plugins, check the [Plugins section on the yt-dlp repository](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#plugins). This is also where you can find how the directories should be laid out _within_ the folder PiPAA provides, located here: `%APPDATA%\PiPAA\bin\yt-dlp-plugins`
+
 ### <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" width="20"> Custom VLC Installation
 Under the hood, PiPAA uses [libVLC](https://www.videolan.org/vlc/libvlc.html), developed by the VideoLAN Organization and used in [VLC media player](https://www.videolan.org/vlc/), to play video and audio. This library is bundled with PiPAA and extracted to the [application folder](#-application-folder) when the application is first launched. PiPAA allows the user to utilize the VLC installation on their system, if preferred. This option is located here: `PiPAA Tray Icon -> Config... -> Advanced -> Use System VLC`
 

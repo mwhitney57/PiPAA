@@ -27,7 +27,7 @@ public class Binaries {
     /** A String with the path to the cookies file, which is used as the value to the cookies argument for some binaries. */
     public static final String COOKIES_PATH_ARG = "\"" + Initializer.APP_FOLDER + "/cookies.txt\"";
     /** A String with the path containing app ffmpeg binaries, which is used as the value to the '--ffmpeg-location' argument for some binaries. */
-    public static final String FFMPEG_LOC_ARG = "\"" + System.getProperty("user.home") + "/AppData/Roaming/PiPAA/bin/ffmpeg/bin" + "\"";
+    public static final String FFMPEG_LOC_ARG = "\"" + System.getProperty("user.home") + "/AppData/Roaming/PiPAA/bin/ffmpeg/bin\"";
     /** A <tt>String</tt> with the application's yt-dlp binary plugins folder location. */
     public static final String YTDLP_PLUGINS_FOLDER = Initializer.APP_BIN_FOLDER + "/yt-dlp-plugins";
     
@@ -38,9 +38,9 @@ public class Binaries {
         /** The gallery-dl executable for downloading media, typically images. */
         GALLERY_DL("gallery-dl.exe", "1.28.3"),
         /** The ffmpeg executable for media conversions. */
-        FFMPEG("ffmpeg/bin/", "ffmpeg.exe", "7.0.1-essentials"),
+        FFMPEG("ffmpeg/bin/", "ffmpeg.exe", "7.1-120"),
         /** The ImageMagick executable for image/GIF conversions. */
-        IMGMAGICK("imagemagick/", "magick.exe", "7.1.1-34");
+        IMGMAGICK("imagemagick/", "magick.exe", "7.1.1-43");
         
         /** The path within the bin folder to the binary. */
         private String path;
