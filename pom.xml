@@ -36,7 +36,7 @@
 	<dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
-        <version>2.0.13</version>
+        <version>2.0.16</version>
     </dependency>
 	<!-- This library is for having a modern tray look and feel, compared to the default Java SystemTray which looks a bit dated. -->
 	<!-- GitHub: https://github.com/dorkbox/SystemTray -->
@@ -56,7 +56,7 @@
     <dependency>
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
-        <version>2.16.1</version>
+        <version>2.18.0</version>
     </dependency>
     <!-- GitHub: https://github.com/whois-server-list/public-suffix-list -->
     <dependency>
@@ -68,7 +68,7 @@
     <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
-      <version>20240303</version>
+      <version>20241224</version>
     </dependency>
   </dependencies>
 
