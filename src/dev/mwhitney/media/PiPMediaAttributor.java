@@ -198,23 +198,29 @@ public class PiPMediaAttributor implements PropertyListener {
         default -> null;
         };
         
-        final ArrayList<String> preRuns = CFExec.runAndGet(
-            () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.YT_DLP), "\"" + src + "\"", "-I", "1", "--print", "\"%(ext)s\""),
-            platSupplier)
-            .excepts((i, e) -> System.err.println("Exception caught from pre-run (#" + i + ") in web attribution: " + e))
-            .results();
-        
+        System.out.println("Attempting web attribution gets...");
+        // Execute multiple binary commands asynchronously and concurrently, including audio-only test, platform-specific and regular attribution.
+        final ArrayList<String> cmdOuts = CFExec.runAndGet(
+                () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.YT_DLP), "\"" + src + "\"", "-I", "1", "--print", "\"%(ext)s\""),
+                platSupplier,
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     false).toArray(new String[0])),
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, false).toArray(new String[0])),
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     true).toArray(new String[0])),
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, true).toArray(new String[0])))
+                .excepts((i, e) -> System.err.println("Exception caught from binary (#" + i + ") in web attribution: " + e))
+                .results();
+            
         // Check if media is audio first.
-        final String ext = preRuns.get(0);
+        final String ext = cmdOuts.get(0);
         final MediaExt mediaExt = MediaExt.parseSafe(ext);
         final boolean audioMedia = (mediaExt != null && attributeType(mediaExt) == TYPE.AUDIO);
         
         // Platform-specific web media attribution.
-        if (preRuns.get(1) != null) {
+        final String platCMDOutput = cmdOuts.get(1);
+        if (platCMDOutput != null) {
             switch (platform) {
-            case X:
-                final String cmdOutput = preRuns.get(1);
-                final String[] lines = cmdOutput.split("\n");
+            case X -> {
+                final String[] lines = platCMDOutput.split("\n");
                 if (lines.length <= 2 && lines[0].contains("error"))
                     break;
                 
@@ -229,21 +235,24 @@ public class PiPMediaAttributor implements PropertyListener {
                     
                     if (platUser != null && platID != null && platDesc != null) break;
                 }
-                System.out.println("Results [user/id/desc]: " + platUser + "/" + platID + "/" + platDesc);
-                break;
-            default:
-                break;
             }
+            default -> {}
+            }
+//                System.out.println("Plat. Pre-Run WMF Results [user/id/desc]: " + platUser + "/" + platID + "/" + platDesc);    //Debug
         }
         
-        System.out.println("Attempting web attribution gets...");
-        // Determine command arguments based on platform and attempt number.
-        final ArrayList<String> cmdOuts = CFExec.runAndGet(
-              () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     audioMedia).toArray(new String[0])),
-              () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, audioMedia).toArray(new String[0])))
-              .excepts((i, e) -> System.err.println("Exception caught from binary (#" + i + ") in web attribution: " + e))
-              .results();
-            
+        // Adjust list to only contain the desired outputs.
+        cmdOuts.remove(0);  // Removes extension output used for audio-only test.
+        cmdOuts.remove(0);  // Removes platform-specific attribution output.
+        if (audioMedia) {   // Removes audio-only outputs.
+            cmdOuts.remove(cmdOuts.size() - 1);
+            cmdOuts.remove(cmdOuts.size() - 1);
+        } else {            // Removes regular, non-audio-only outputs.
+            cmdOuts.remove(0);
+            cmdOuts.remove(0);
+        }
+        // List should now be of size() 2.
+        
         // Execute command and retrieve output, splitting by lines.
         for (int cmd = 0; cmd < cmdOuts.size(); cmd++) {
             final boolean usedYTDLP = (cmd == 0);
