@@ -1,4 +1,4 @@
-package dev.mwhitney.gui;
+package dev.mwhitney.gui.popup;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -15,6 +15,8 @@ import javax.swing.JRootPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import dev.mwhitney.gui.components.BetterPanel;
+import dev.mwhitney.gui.components.BetterTextArea;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
 import net.miginfocom.swing.MigLayout;

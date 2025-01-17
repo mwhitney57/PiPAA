@@ -16,6 +16,7 @@ import dev.mwhitney.listeners.PiPSupplier;
 import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.CFExec;
+import dev.mwhitney.main.PiPEnum;
 import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
@@ -29,6 +30,49 @@ import dev.mwhitney.media.WebMediaFormat.FORMAT;
  * @author mwhitney57
  */
 public class PiPMediaAttributor implements PropertyListener {
+    /**
+     * A flag for attribution which determines how the attributor behaves.
+     * 
+     * @author mwhitney57
+     * @since 0.9.4
+     */
+    public enum Flag implements PiPEnum<Flag> {
+        // Specific attribution parts. Commented out -- not used for now.
+//        EXTENSION,
+//        TITLE,
+//        ID,
+//        TYPE,
+//        SRC_TYPE,
+//        SRC_PLATFORM,
+        
+        /**
+         * A flag representing a typical, full attribution. A full attribution is the
+         * norm, attributing everything it needs or may need so that the application can
+         * use the resulting media to the best of its ability.
+         */
+        FULL,
+        /**
+         * A flag representing a quicker, less-detailed attribution. Since quick
+         * attributions skip over a few time-consuming processes, they save time, but
+         * they may not save important properties of the media. Use this type of
+         * attribution sparingly, when you just need the simple things.
+         * <p>
+         * <b>Note:</b> Quick attributions will likely fail if the source is
+         * {@link SRC_TYPE#WEB_INDIRECT}, since core attributes cannot be determined
+         * quickly.
+         */
+        QUICK,
+        /**
+         * A flag which tells the attributor to attribute the raw media without
+         * converting the source, ignoring the user configuration entirely.
+         * <p>
+         * Therefore, using this flag will prevent
+         * {@link PiPProperty#CONVERT_WEB_INDIRECT} from having any effect, as this
+         * logic will be skipped during attribution.
+         */
+        RAW_ATTRIBUTION;
+    }
+    
     // REGEX PATTERNS -- Saved as member variables and pre-compiled during construction for performance.
     /** The RegEx Pattern for fixing spacing issues. */
     private Pattern rgxSpacer;
@@ -65,30 +109,23 @@ public class PiPMediaAttributor implements PropertyListener {
      * Determines the attributes for the passed {@link PiPMedia}.
      * 
      * @param media - the {@link PiPMedia} to determine attributes for.
+     * @param flags - any {@link Flag} values for the attribution process.
      * @return a set of {@link PiPMediaAttributes} for the passed media.
      * @throws InvalidMediaException if there was an error with the passed media or
      *                               during attribution of it.
      */
-    public PiPMediaAttributes determineAttributes(PiPMedia media) throws InvalidMediaException {
-        return determineAttributes(media, false);
-    }
-    
-    /**
-     * Determines the attributes for the passed {@link PiPMedia}.
-     * 
-     * @param media - the {@link PiPMedia} to determine attributes for.
-     * @param raw   - a boolean which, if <code>true</code>, bypasses user
-     *              configuration and attributes the raw media source.
-     * @return a set of {@link PiPMediaAttributes} for the passed media.
-     * @throws InvalidMediaException if there was an error with the passed media or
-     *                               during attribution of it.
-     */
-    public PiPMediaAttributes determineAttributes(PiPMedia media, boolean raw) throws InvalidMediaException {
+    public PiPMediaAttributes determineAttributes(PiPMedia media, Flag... flags) throws InvalidMediaException {
+        // Set flags default to be a full attribution.
+        if (flags == null || flags.length == 0) flags = new Flag[] { Flag.FULL };
+        
         String mediaSrc = media.getSrc();
         MediaURL murl = null;
-        final PiPMediaAttributes attributes = new PiPMediaAttributes().setSrcType(attributeSrcType(mediaSrc));
+        final PiPMediaAttributes attributes = new PiPMediaAttributes();
         
-        // Attribution
+        // Attribute SRC_TYPE
+        attributes.setSrcType(attributeSrcType(mediaSrc));
+        
+        // Redirect Check for Web Media & Simple Web Direct Extension Attribution
         if (attributes.getSrcType() != SRC_TYPE.LOCAL) {
             murl = genMediaURL(mediaSrc);
             
@@ -108,12 +145,15 @@ public class PiPMediaAttributor implements PropertyListener {
                 attributes.setFileExtension(MediaExt.parse(murl.contentExt()));
             }
         }
-        
+        // Attribute SRC_PLATFORM
         attributes.setSrcPlatform(attributeSrcPlatform(murl, attributes.getSrcType()));
-        // If WEB_INDIRECT source type OR recognized platform, determine attributes differently.
-        if(attributes.isWebIndirect() || (attributes.isWebDirect() && !attributes.isGenericPlatform())) {
+        
+        // If WEB_INDIRECT source type OR recognized platform, determine attributes differently. Not run with quick attributions.
+        if(Flag.QUICK.notIn(flags) && (attributes.isWebIndirect() || (attributes.isWebDirect() && !attributes.isGenericPlatform()))) {
             final MediaURL murl2 = murl;
             final WebMediaFormat mediatorWMF = new WebMediaFormat();
+            
+            // Attribute web media from a known (non-Generic) platform.
             final CompletableFuture<Void> cf = CompletableFuture.runAsync(() -> {
                 System.out.println("Running ASYNC Process of Attribution");
                 try {
@@ -126,7 +166,8 @@ public class PiPMediaAttributor implements PropertyListener {
             });
             
             // Web Indirect to Direct Conversion
-            final Boolean convert = (!raw && propertyState(PiPProperty.CONVERT_WEB_INDIRECT, Boolean.class));
+            // Do not convert if using raw attribution or the user configuration disallows it.
+            final Boolean convert = (Flag.RAW_ATTRIBUTION.notIn(flags) && propertyState(PiPProperty.CONVERT_WEB_INDIRECT, Boolean.class));
             if (convert && attributes.isWebIndirect()) {
                 System.err.println("Converting Link to Direct: -- " + convert + " and " + attributes.isWebIndirect());
                 attributes.setSrcPlatform(attributeSrcPlatform(murl, attributes.getSrcType()));
@@ -150,19 +191,22 @@ public class PiPMediaAttributor implements PropertyListener {
                 System.err.println("AFTER CONVERTING INDIRECT: OG: " + media.getSrc() + " || New: " + mediaSrc);
             }
             
+            // Join the two processes running asynchronously.
             try {
                 cf.join();
             } catch(CompletionException ce) { throw (InvalidMediaException) ce.getCause(); }
+            // If converting indirect to direct found a new source, set it.
             if (mediatorWMF.src() != null)
                 attributes.getWMF().setSrc(mediatorWMF.src());
+            // If still missing a title, attribute it normally.
             if (!attributes.getWMF().hasTitle()) {
                 final String title = attributeTitle(mediaSrc, false, murl);
                 attributes.getWMF().setTitle(title);
                 attributes.setTitle(title);
             }
-                
             System.out.println("End of indirect to recognized direct attribution reached.");
         } else {
+            // Perform standard attribution, typical for local files.
             attributes.setTitle(attributeTitle(mediaSrc, attributes.isLocal(), murl));
             if (attributes.getSrcType() != SRC_TYPE.LOCAL) {
                 attributes.getWMF().setID(attributeID(mediaSrc, murl));
@@ -441,14 +485,16 @@ public class PiPMediaAttributor implements PropertyListener {
     
     /**
      * Performs title attribution given a media's source, whether or not it is
-     * local, and a generated MediaURL. This method immediately get and return the
-     * title using a regular expression if the passed local boolean is
-     * <code>true</code>. Otherwise, it will begin by checking for any valid name
-     * queries in the passed MediaURL. If this fails, the method will attempt to
-     * grab the name from the MediaURL's path. If this also fails, another regular
-     * expression will be used. If none of these attempts succeeded in retrieving a
-     * valid title String, the method will return a placeholder value of
-     * <code>Unknown</code>.
+     * local, and a generated MediaURL.
+     * <p>
+     * This method will immediately get and return the title using a regular
+     * expression if the passed local boolean is <code>true</code>. Otherwise, it
+     * will begin by checking for any valid name queries in the passed MediaURL. If
+     * this fails, the method will attempt to grab the name from the MediaURL's
+     * path. If this also fails, another regular expression will be used.
+     * <p>
+     * If none of these attempts succeeded in retrieving a valid title String, the
+     * method will return a placeholder value of <code>Unknown</code>.
      * 
      * @param src   - the String media source.
      * @param local - a boolean for whether or not the media is local.
@@ -564,7 +610,7 @@ public class PiPMediaAttributor implements PropertyListener {
             // Ensure that the direct regex did not mistake certain web pages with direct media links.
             final String ext = rgxSrcWebDirect.matcher(src).replaceAll("$2");
             System.out.println("Attributing src type found ext: " + ext);
-            if (isAcceptedDirectExt(ext))
+            if (MediaExt.matchesAny(ext))
                 return PiPMediaAttributes.SRC_TYPE.WEB_DIRECT;
             else
                 return PiPMediaAttributes.SRC_TYPE.WEB_INDIRECT;
@@ -703,28 +749,6 @@ public class PiPMediaAttributor implements PropertyListener {
         return URLDecoder.decode(str, StandardCharsets.UTF_8);
     }
     
-    /**
-     * Checks whether the passed String matches any accepted <b>direct</b> media link extension.
-     * A direct media link extension is a file extension for web media linked to directly.
-     * This method will return <code>false</code> if the passed String is <code>null</code>.
-     * 
-     * @param ext - a String with the extension to check.
-     * @return <code>true</code> if the extension is accepted; <code>false</code> otherwise.
-     */
-    private boolean isAcceptedDirectExt(String ext) {
-        if (ext == null) return false;
-        ext = ext.toUpperCase();
-        
-        // Check if extension matches any media extensions.
-        for (final MediaExt mex : MediaExt.values()) {
-            if (mex.toString().equals(ext))
-                return true;
-        }
-        
-        // No match found.
-        return false;
-    }
-
     // Do Nothing Unless Overriden
     @Override
     public void propertyChanged(PiPProperty prop, String value) {}

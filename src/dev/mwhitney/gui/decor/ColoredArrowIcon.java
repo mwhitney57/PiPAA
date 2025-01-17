@@ -1,4 +1,4 @@
-package dev.mwhitney.gui;
+package dev.mwhitney.gui.decor;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

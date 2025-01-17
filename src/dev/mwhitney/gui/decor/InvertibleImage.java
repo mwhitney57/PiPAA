@@ -1,4 +1,4 @@
-package dev.mwhitney.gui;
+package dev.mwhitney.gui.decor;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

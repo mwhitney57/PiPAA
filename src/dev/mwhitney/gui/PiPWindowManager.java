@@ -20,6 +20,7 @@ import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaAttributor;
+import dev.mwhitney.media.PiPMediaAttributor.Flag;
 import dev.mwhitney.util.PiPAAUtils;
 
 /**
@@ -139,9 +140,9 @@ public class PiPWindowManager implements PropertyListener {
             }
             
             @Override
-            public PiPMediaAttributes requestAttributes(PiPMedia media, boolean raw) {
+            public PiPMediaAttributes requestAttributes(PiPMedia media, Flag... flags) {
                 try {
-                    return PiPWindowManager.this.attributor.determineAttributes(media, raw);
+                    return PiPWindowManager.this.attributor.determineAttributes(media, flags);
                 } catch (InvalidMediaException ime) { System.err.println(ime.getMessage()); }
                 return null;
             }

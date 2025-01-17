@@ -16,6 +16,60 @@ import dev.mwhitney.main.RecurringRunnable;
  */
 public class PiPWindowState {
     /**
+     * A class representing a hook into the window state.
+     * 
+     * @author mwhitney57
+     * @since 0.9.4
+     */
+    public class PiPWindowHook {
+        /** The {@link StateProp} being hooked into. */
+        private StateProp prop;
+        /** The corresponding boolean value being hooked into. */
+        private boolean value;
+        /** The {@link Runnable} with the hook code to execute. */
+        private Runnable run;
+        
+        /**
+         * Creates a new hook with the passed information.
+         * 
+         * @param prop  - the {@link StateProp} being hooked into.
+         * @param value - the boolean value being hooked into.
+         * @param run   - the {@link Runnable} with the hook code to execute.
+         */
+        public PiPWindowHook(StateProp prop, boolean value, Runnable run) {
+            this.prop  = prop;
+            this.value = value;
+            this.run   = run;
+        }
+        
+        /**
+         * Gets the {@link StateProp} that this hook connects to.
+         * 
+         * @return the {@link StateProp}.
+         */
+        public StateProp prop() {
+            return this.prop;
+        }
+        
+        /**
+         * Gets the boolean value that this hook connects to.
+         * 
+         * @return the boolean value.
+         */
+        public boolean value() {
+            return this.value;
+        }
+        
+        /**
+         * Gets the {@link Runnable} with the code this hook executes.
+         * 
+         * @return the {@link Runnable}.
+         */
+        public Runnable run() {
+            return this.run;
+        }
+    }
+    /**
      * Properties or fields relating to a window's state.
      */
     public enum StateProp {
@@ -39,6 +93,26 @@ public class PiPWindowState {
          * The internal player choice property only changes when a player is set to be on.
          */
         PLAYER_COMBO,
+        /**
+         * Whether the window's keyboard and mouse controls are enabled.
+         * Use {@link #CONTROLS_KEY} and {@link #CONTROLS_MOUSE} for enabling or disabling
+         * keyboard and mouse controls individually as opposed to a global override.
+         * TODO Implement global controls check.
+         */
+        CONTROLS,
+        /**
+         * Whether the window's keyboard controls are enabled.
+         * {@link #LOCKED_CONTROLS} overrides this value if OFF (false).
+         * Locked attributes cannot be changed.
+         * TODO Implement keyboard controls check.
+         */
+        CONTROLS_KEY,
+        /**
+         * Whether the window's mouse controls are enabled.
+         * {@link #LOCKED_CONTROLS} overrides this value if OFF (false).
+         * TODO Implement mouse controls check.
+         */
+        CONTROLS_MOUSE,
         /**
          * Whether the window's VLC player is configured for hardware acceleration and
          * use of NVIDIA's RTX Video Super Resolution feature.
@@ -96,7 +170,27 @@ public class PiPWindowState {
          * Whether the window is closed.
          * Cannot be turned OFF (false) once set to ON (true).
          */
-        CLOSED;
+        CLOSED,
+        /**
+         * Whether the window's size is locked.
+         * Parts cannot be changed while locked.
+         */
+        LOCKED_SIZE,
+        /**
+         * Whether the window's position is locked.
+         * Parts cannot be changed while locked.
+         */
+        LOCKED_POSITION,
+        /**
+         * Whether the window's media is locked.
+         * Parts cannot be changed while locked.
+         */
+        LOCKED_MEDIA,
+        /**
+         * Whether the window's fullscreen state is locked.
+         * Parts cannot be changed while locked.
+         */
+        LOCKED_FULLSCREEN;
     }
 
     /** A window media player value that represents which player is in use. */
@@ -104,8 +198,26 @@ public class PiPWindowState {
     
     /**
      * An int with a value that represents the current media player set in the window.
+     * Set to {@link #PLAYER_NONE} by default.
      */
-    private int player = 0;
+    private int player = PLAYER_NONE;
+    /**
+     * A boolean for whether or not the window's keyboard and mouse controls are enabled.
+     * Enabled by default.
+     */
+    private boolean controls = true;
+    /**
+     * A boolean for whether or not the window's keyboard controls are enabled.
+     * The global controls overrides this value if disabled.
+     * Enabled by default.
+     */
+    private boolean controlsKey = true;
+    /**
+     * A boolean for whether or not the window's mouse controls are enabled.
+     * The global controls overrides this value if disabled.
+     * Enabled by default.
+     */
+    private boolean controlsMouse = true;
     /**
      * A boolean for whether or not the VLC player uses RTX Video Super Resolution.
      */
@@ -165,13 +277,33 @@ public class PiPWindowState {
     /**
      * A boolean for whether or not the window is closing, which will
      * only and permanently read as true when it has happened once.
-     * In other words, this should never be reset to false;
+     * In other words, this should never be reset to false.
      */
     private boolean closing;
     /**
      * A boolean for whether or not the window has been closed, which is permanent.
      */
     private boolean closed;
+    /**
+     * A boolean for whether or not the window's size is locked.
+     * Locked attributes cannot be changed while on.
+     */
+    private boolean lockedSize;
+    /**
+     * A boolean for whether or not the window's position is locked.
+     * Locked attributes cannot be changed while on.
+     */
+    private boolean lockedPosition;
+    /**
+     * A boolean for whether or not the window's media is locked.
+     * Locked attributes cannot be changed while on.
+     */
+    private boolean lockedMedia;
+    /**
+     * A boolean for whether or not the window's fullscreen state is locked.
+     * Locked attributes cannot be changed while on.
+     */
+    private boolean lockedFullscreen;
     
     /**
      * A map of StateProps which each correspond to a map of added hooks tied to
@@ -281,19 +413,26 @@ public class PiPWindowState {
      */
     public void set(StateProp prop, boolean val) {
         switch(prop) {
-        case PLAYER_NONE      -> this.player = (val ? PLAYER_NONE  : this.player);
-        case PLAYER_VLC       -> this.player = (val ? PLAYER_VLC   : this.player);
-        case PLAYER_SWING     -> this.player = (val ? PLAYER_SWING : this.player);
-        case PLAYER_COMBO     -> this.player = (val ? PLAYER_COMBO : this.player);
-        case FULLSCREEN       -> this.fullscreen      = val;
-        case LOADING          -> this.loading         = val;
-        case READY            -> this.ready           = val;
-        case RESIZING         -> this.resizing        = val;
-        case SAVING_MEDIA     -> this.savingMedia     = val;
-        case CLOSING_MEDIA    -> this.closingMedia    = val;
-        case MANUALLY_PAUSED  -> this.manuallyPaused  = val;
-        case MANUALLY_STOPPED -> this.manuallyStopped = val;
-        case LOCALLY_MUTED    -> this.locallyMuted    = val;
+        case PLAYER_NONE       -> this.player = (val ? PLAYER_NONE  : this.player);
+        case PLAYER_VLC        -> this.player = (val ? PLAYER_VLC   : this.player);
+        case PLAYER_SWING      -> this.player = (val ? PLAYER_SWING : this.player);
+        case PLAYER_COMBO      -> this.player = (val ? PLAYER_COMBO : this.player);
+        case CONTROLS          -> this.controls         = val;
+        case CONTROLS_KEY      -> this.controlsKey      = val;
+        case CONTROLS_MOUSE    -> this.controlsMouse    = val;
+        case FULLSCREEN        -> this.fullscreen       = val;
+        case LOADING           -> this.loading          = val;
+        case READY             -> this.ready            = val;
+        case RESIZING          -> this.resizing         = val;
+        case SAVING_MEDIA      -> this.savingMedia      = val;
+        case CLOSING_MEDIA     -> this.closingMedia     = val;
+        case MANUALLY_PAUSED   -> this.manuallyPaused   = val;
+        case MANUALLY_STOPPED  -> this.manuallyStopped  = val;
+        case LOCALLY_MUTED     -> this.locallyMuted     = val;
+        case LOCKED_SIZE       -> this.lockedSize       = val;
+        case LOCKED_POSITION   -> this.lockedPosition   = val;
+        case LOCKED_MEDIA      -> this.lockedMedia      = val;
+        case LOCKED_FULLSCREEN -> this.lockedFullscreen = val;
         // Permanent State Property Changes
         case RTX_SUPER_RES    -> this.rtxSuperRes = (val ? true : this.rtxSuperRes);
         case CRASHED          -> this.crashed     = (val ? true : this.crashed);
@@ -311,23 +450,30 @@ public class PiPWindowState {
      */
     public boolean is(StateProp prop) {
         return switch(prop) {
-        case PLAYER_NONE      -> (this.player == PLAYER_NONE);
-        case PLAYER_VLC       -> (this.player == PLAYER_VLC);
-        case PLAYER_SWING     -> (this.player == PLAYER_SWING);
-        case PLAYER_COMBO     -> (this.player == PLAYER_COMBO);
-        case RTX_SUPER_RES    ->  this.rtxSuperRes;
-        case FULLSCREEN       ->  this.fullscreen;
-        case LOADING          ->  this.loading;
-        case READY            ->  this.ready;
-        case RESIZING         ->  this.resizing;
-        case SAVING_MEDIA     ->  this.savingMedia;
-        case CLOSING_MEDIA    ->  this.closingMedia;
-        case MANUALLY_PAUSED  ->  this.manuallyPaused;
-        case MANUALLY_STOPPED ->  this.manuallyStopped;
-        case LOCALLY_MUTED    ->  this.locallyMuted;
-        case CRASHED          ->  this.crashed;
-        case CLOSING          ->  this.closing;
-        case CLOSED           ->  this.closed;
+        case PLAYER_NONE       -> (this.player == PLAYER_NONE);
+        case PLAYER_VLC        -> (this.player == PLAYER_VLC);
+        case PLAYER_SWING      -> (this.player == PLAYER_SWING);
+        case PLAYER_COMBO      -> (this.player == PLAYER_COMBO);
+        case CONTROLS          ->  this.controls;
+        case CONTROLS_KEY      ->  this.controlsKey;
+        case CONTROLS_MOUSE    ->  this.controlsMouse;
+        case RTX_SUPER_RES     ->  this.rtxSuperRes;
+        case FULLSCREEN        ->  this.fullscreen;
+        case LOADING           ->  this.loading;
+        case READY             ->  this.ready;
+        case RESIZING          ->  this.resizing;
+        case SAVING_MEDIA      ->  this.savingMedia;
+        case CLOSING_MEDIA     ->  this.closingMedia;
+        case MANUALLY_PAUSED   ->  this.manuallyPaused;
+        case MANUALLY_STOPPED  ->  this.manuallyStopped;
+        case LOCALLY_MUTED     ->  this.locallyMuted;
+        case CRASHED           ->  this.crashed;
+        case CLOSING           ->  this.closing;
+        case CLOSED            ->  this.closed;
+        case LOCKED_SIZE       ->  this.lockedSize;
+        case LOCKED_POSITION   ->  this.lockedPosition;
+        case LOCKED_MEDIA      ->  this.lockedMedia;
+        case LOCKED_FULLSCREEN ->  this.lockedFullscreen;
         };
     }
     
@@ -416,13 +562,15 @@ public class PiPWindowState {
      *             activate.
      * @param run  - a {@link Runnable} with the code to execute when the hook
      *             condition is met.
+     * @return a {@link PiPWindowHook} which contains the data within the new hook.
      * @see {@link RecurringRunnable} for usage in recurring hooks that are not
      *      removed after first execution.
      * @see {@link PermanentRunnable} for usage in permanent hooks that cannot be
      *      removed.
      */
-    public void hook(final StateProp prop, final boolean val, final Runnable run) {
+    public PiPWindowHook hook(final StateProp prop, final boolean val, final Runnable run) {
         this.hooks.get(prop).get(Boolean.valueOf(val)).add(run);
+        return createHook(prop, val, run);
     }
     
     /**
@@ -435,6 +583,7 @@ public class PiPWindowState {
      * typically not be preferred over using an <code>if</code> statement, but will
      * be preferable for readability on occasion.
      * 
+     * @param b    - the boolean to check before applying the hook if <code>true</code>.
      * @param prop - the {@link StateProp} to hook into.
      * @param val  - the boolean value of the {@link StateProp} when the hook should
      *             activate.
@@ -450,6 +599,68 @@ public class PiPWindowState {
     public boolean hookIf(final boolean b, final StateProp prop, final boolean val, final Runnable run) {
         if (b) this.hook(prop, val, run);
         return b;
+    }
+    
+    /**
+     * Checks if the passed {@link PiPWindowHook} is currently hooked in this window state.
+     * 
+     * @param hook - the {@link PiPWindowHook} to check for.
+     * @return <code>true</code> if the exact hook is present; <code>false</code>
+     *         otherwise.
+     */
+    public boolean hooked(final PiPWindowHook hook) {
+        if (hook == null || hook.prop() == null || hook.run() == null) return false;
+        return this.hooks.get(hook.prop()).get(hook.value()).contains(hook.run());
+    }
+    
+    /**
+     * Removes the first found instance of a specified hook. The method internally
+     * determines which hook the passed {@link PiPWindowHook} is referring to based
+     * on its {@link PiPWindowHook#prop()}, {@link PiPWindowHook#value()}, and its
+     * {@link PiPWindowHook#run()}. A match must be found with the hook's
+     * {@link Runnable}; it must pass by the logic of the {@link #equals(Object)}
+     * method.
+     * <p>
+     * If the specified hook is <b>permanent</b>, meaning it uses a
+     * {@link PermanentRunnable}, or it is not found, then this method does nothing.
+     * 
+     * @param hook - the {@link PiPWindowHook} to remove.
+     * @return <code>true</code> if the hook was removed; <code>false</code>
+     *         otherwise.
+     * @see {@link #unhookEvery(PiPWindowHook)} to unhook every found instance of the passed hook.
+     */
+    public boolean unhook(final PiPWindowHook hook) {
+        if (hook == null || hook.prop() == null || hook.run() == null) return false;
+        
+        // Don't unhook if permanent.
+        if (hook.run() instanceof PermanentRunnable) return false;
+        return this.hooks.get(hook.prop()).get(hook.value()).remove(hook.run());
+    }
+    
+    /**
+     * Removes all instances of the specified hook. The method internally determines which hook the
+     * passed {@link PiPWindowHook} is referring to based on its
+     * {@link PiPWindowHook#prop()}, {@link PiPWindowHook#value()}, and its
+     * {@link PiPWindowHook#run()}. A match must be found with the hook's
+     * {@link Runnable}; it must pass by the logic of the {@link #equals(Object)} method.
+     * <p>
+     * If the specified hook is <b>permanent</b>, meaning it uses a
+     * {@link PermanentRunnable}, or it is not found, then this method does nothing.
+     * 
+     * @param hook - the {@link PiPWindowHook} to remove.
+     * @return <code>true</code> if the hook was removed; <code>false</code>
+     *         otherwise.
+     * @see {@link #unhook(PiPWindowHook)} to only unhook the first found instance of the passed hook.
+     */
+    public boolean unhookEvery(final PiPWindowHook hook) {
+        if (hook == null || hook.prop() == null || hook.run() == null) return false;
+        
+        // Continue unhooking so long as there exists an instance of the passed hook.
+        boolean removedAny = false;
+        while (hooked(hook)) {
+            if (unhook(hook)) removedAny = true;
+        }
+        return removedAny;  // Return true if anything was unhooked.
     }
     
     /**
@@ -497,15 +708,33 @@ public class PiPWindowState {
     }
     
     /**
-     * Disables hooks within this PiPWindowState instance by removing and clearing
+     * Creates a {@link PiPWindowHook}, but does not attach it.
+     * This method essentially acts as a constructor.
+     * 
+     * @param prop - the {@link StateProp} to hook into.
+     * @param val  - the boolean value of the {@link StateProp} when the hook should
+     *             activate.
+     * @param run  - a {@link Runnable} with the code to execute when the hook
+     *             condition is met.
+     * @return the new {@link PiPWindowHook}.
+     */
+    public PiPWindowHook createHook(final StateProp prop, final boolean val, final Runnable run) {
+        return new PiPWindowHook(prop, val, run);
+    }
+    
+    /**
+     * Destroys hooks within this PiPWindowState instance by removing and clearing
      * them.
      * <p>
      * <b>This method should only be executed once, and hooks become unusable after
      * calling it, including permanent ones.</b> Therefore, it should only be called
      * when the PiPWindowState is to be disposed of or hooks will certainly no
      * longer be used.
+     * 
+     * @see {@link #unhookAll()} to remove all hooks without making them unusable
+     *      afterwards.
      */
-    public void disableHooks() {
+    public void destroyHooks() {
         unhookAll();
         this.hooks.clear();
         this.hooks = null;

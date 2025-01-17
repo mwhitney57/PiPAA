@@ -1,8 +1,19 @@
 package dev.mwhitney.gui;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
+
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
@@ -53,6 +64,11 @@ public class ComponentResizer extends MouseAdapter
 	 * @author mwhitney57
 	 * */
 	private Dimension aspectRatio;
+	/**
+	 * A Supplier that is registered to check for size locks and returns a boolean.
+	 * @author mwhitney57
+	 */
+	private Supplier<Boolean> lockChecker;
 
 	private Dimension minimumSize = MINIMUM_SIZE;
 	private Dimension maximumSize = MAXIMUM_SIZE;
@@ -288,6 +304,32 @@ public class ComponentResizer extends MouseAdapter
 	    return getAspectRatio() != null;
 	}
 	
+    /**
+     * Sets the lock checker. The lock checker is responsible for ensuring the size
+     * is not locked, which would prevent this class from adjusting it or indicating
+     * to the user that it is capable of doing so.
+     * 
+     * @param checker - a {@link Supplier} that returns a boolean.
+     * @author mwhitney57
+     * @since 0.9.4
+     */
+	public void setLockChecker(final Supplier<Boolean> checker) {
+	    this.lockChecker = checker;
+	}
+	
+    /**
+     * Checks if the size is locked using the internal lock checker.
+     * 
+     * @return <code>true</code> if the size is locked and no adjustments should be
+     *         made to it; <code>false</code> otherwise.
+     * @see {@link #setLockChecker(Supplier)} to set the internal lock checker.
+     * @author mwhitney57
+     * @since 0.9.4
+     */
+	public boolean isSizeLocked() {
+	    return (this.lockChecker.get());
+	}
+	
 	/**
 	 *  When the components minimum size is less than the drag insets then
 	 *	we can't determine which border should be resized so we need to
@@ -311,6 +353,9 @@ public class ComponentResizer extends MouseAdapter
 	@Override
 	public void mouseMoved(MouseEvent e)
 	{
+	    // Cancel if size is locked -- @mwhitney57
+	    if (isSizeLocked()) return;
+	    
 		Component source = e.getComponent();
 		Point location = e.getPoint();
 		direction = 0;
@@ -344,6 +389,9 @@ public class ComponentResizer extends MouseAdapter
 	@Override
 	public void mouseEntered(MouseEvent e)
 	{
+	    // Cancel if size is locked -- @mwhitney57
+        if (isSizeLocked()) return;
+        
 		if (! resizing)
 		{
 			Component source = e.getComponent();
@@ -365,6 +413,9 @@ public class ComponentResizer extends MouseAdapter
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
+	    // Cancel if size is locked -- @mwhitney57
+        if (isSizeLocked()) return;
+        
 		//	The mouseMoved event continually updates this variable
 
 		if (direction == 0) return;
@@ -435,6 +486,9 @@ public class ComponentResizer extends MouseAdapter
 	@Override
 	public void mouseDragged(MouseEvent e)
 	{
+	    // Cancel if size is locked -- @mwhitney57
+        if (isSizeLocked()) return;
+        
 		if (resizing == false) return;
 
 		Component source = e.getComponent();
@@ -452,7 +506,7 @@ public class ComponentResizer extends MouseAdapter
 		int y = bounds.y;
 		int width = bounds.width;
 		int height = bounds.height;
-		// N & W drag amounts for aspect ratio reference -- @Minimunch57
+		// N & W drag amounts for aspect ratio reference -- @mwhitney57
 		int dragN = 0, dragW = 0;
 
 		//  Resizing the West or North border affects the size and location
@@ -463,7 +517,7 @@ public class ComponentResizer extends MouseAdapter
 //			int maximum = Math.min(width + x, maximumSize.width);
 			int maximum = Math.min(width + x - 10, maximumSize.width);
 			drag = getDragBounded(drag, snapSize.width, width, minimumSize.width, maximum);
-			// Save W drag amount for aspect ratio reference -- @Minimunch57
+			// Save W drag amount for aspect ratio reference -- @mwhitney57
 			dragW = drag;
 
 			x -= drag;
@@ -476,7 +530,7 @@ public class ComponentResizer extends MouseAdapter
 //			int maximum = Math.min(height + y, maximumSize.height);
 			int maximum = Math.min(height + y - 10, maximumSize.height);
 			drag = getDragBounded(drag, snapSize.height, height, minimumSize.height, maximum);
-			// Save N drag amount for aspect ratio reference -- @Minimunch57
+			// Save N drag amount for aspect ratio reference -- @mwhitney57
 			dragN = drag;
 			
 			y -= drag;
@@ -503,7 +557,7 @@ public class ComponentResizer extends MouseAdapter
 			height += drag;
 		}
 
-		// Begin modifications by @Minimunch57
+		// Begin modifications by @mwhitney57
 		if(isUsingRatio()) {
 		    // Aspect ratio should be respected...
 		    final float ratio = (float) (getAspectRatio().width) / (float) (getAspectRatio().height);
@@ -539,7 +593,7 @@ public class ComponentResizer extends MouseAdapter
 		} else {
 		    source.setBounds(x, y, width, height);
 		}
-		// End modifications by @Minimunch57
+		// End modifications by @mwhitney57
 		source.validate();
 	}
 

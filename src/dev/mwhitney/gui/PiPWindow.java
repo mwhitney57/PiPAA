@@ -50,6 +50,11 @@ import darrylbu.icon.StretchIcon;
 import dev.mwhitney.exceptions.InvalidMediaException;
 import dev.mwhitney.exceptions.MediaModificationException;
 import dev.mwhitney.gui.PiPWindowSnapshot.SnapshotData;
+import dev.mwhitney.gui.components.BetterTextArea;
+import dev.mwhitney.gui.decor.FadingLineBorder;
+import dev.mwhitney.gui.decor.OffsetRoundedLineBorder;
+import dev.mwhitney.gui.popup.EasyTopDialog;
+import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries;
@@ -69,6 +74,7 @@ import dev.mwhitney.media.MediaExt;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
+import dev.mwhitney.media.PiPMediaAttributor.Flag;
 import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.media.WebMediaFormat;
 import dev.mwhitney.util.PiPAAUtils;
@@ -193,6 +199,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             public void requestPaint() { contentPane.repaint(); }
         };
         
+        // Establish Permanent Locked Hooks
+        state.hook(LOCKED_SIZE, true,  (PermanentRunnable) () -> {
+            SwingUtilities.invokeLater(() -> PiPWindow.this.setResizable(false));
+        });
+        state.hook(LOCKED_SIZE, false, (PermanentRunnable) () -> {
+            SwingUtilities.invokeLater(() -> PiPWindow.this.setResizable(true));
+        });
         // Establish Permanent Full Screen Border Hooks
         state.hook(FULLSCREEN, true,  (PermanentRunnable) () -> {
             if (state.is(PLAYER_SWING))
@@ -256,6 +269,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         cr = new ComponentResizer();
         cr.setMinimumSize(MINIMUM_SIZE);
         cr.setDragInsets(BORDER_RESIZE_INSETS);
+        cr.setLockChecker(() -> state.is(LOCKED_SIZE));
         cr.registerComponent(this);
 
         // Pick Theme Based on Property
@@ -756,7 +770,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     // Standard Method -- Takes slightly longer but results in a more accurate/readable file name.
                     else {
                         final PiPMedia mediaCopy = new PiPMedia(media.getSrc());
-                        if (updateMediaAttributes(mediaCopy, true)) {
+                        if (updateMediaAttributes(mediaCopy, Flag.RAW_ATTRIBUTION)) {
                             titleStatusUpdate("[Caching...]");
                             if (setRemoteMedia(mediaCopy.getSrc(), mediaCopy, true, true) != null) {
                                 flashBorderEDT(BORDER_OK);
@@ -783,7 +797,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         dialog.setAlwaysOnTop(true);
                         dialog.setDirectory("C:\\");
                         dialog.setFile("*.jpg;*.jpeg;*.png");
-//                            dialog.setFilenameFilter((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png"));
+//                        dialog.setFilenameFilter((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png"));
                         dialog.setVisible(true);
                         final File[] files = dialog.getFiles();
                         if (files.length < 1 || files[0] == null || !files[0].exists() ||
@@ -796,33 +810,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                         dialog.dispose();
                     });
                 } catch (InvocationTargetException | InterruptedException ex) { ex.printStackTrace(); }
-                if (imgLoc.isEmpty()) break;
-                /*
-                 * TODO Consider allowing drag and drop of an image on an image window instead
-                 * of using this file chooser dialog. That might be more convenient in some
-                 * cases. Already having it open, dragging and image onto it. Then, getting
-                 * a quick prompt to either add the image as artwork to the audio media or
-                 * open it in a new window. Maybe config option for this: Replace Artwork, Open Window, Ask?
-                 * That last part might be over-complicating things.
-                 * 
-                 * REF: UI-Concept-Dnd-Artwork.png for UI visual.
-                 */
-                // Delete Current Artwork from VLC Art Cache to Prevent Persistence
-                final String currentArt = mediaPlayer.mediaPlayer().media().meta().get(Meta.ARTWORK_URL);
-                if (currentArt != null && !currentArt.isEmpty()) {
-                    try {
-                        final File fileCurr = new File(new URL(currentArt).toURI());
-                        if (fileCurr.exists()) {
-                            fileCurr.delete();
-                            System.err.println("Art for media already in VLC Art Cache, replacing...");
-                        }
-                    } catch (MalformedURLException | URISyntaxException ex) { ex.printStackTrace(); }
-                }
-                // Set Artwork Metadata, Save it to Underlying Media, then Reload to Show Art
-//                System.out.println(mediaPlayer.mediaPlayer().media().meta().get(Meta.ARTWORK_URL));
-                mediaPlayer.mediaPlayer().media().meta().set(Meta.ARTWORK_URL, imgLoc.toString());
-                mediaPlayer.mediaPlayer().media().meta().save();
-                mediaCommand(PiPMediaCMD.RELOAD);
+                if (!imgLoc.isEmpty()) replaceArtwork(imgLoc.toString());
                 break;
             }
         });
@@ -1048,7 +1036,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 SwingUtilities.invokeLater(() -> imgLabel.repaint());
                 break;
             case FULLSCREEN:
-                state.toggle(FULLSCREEN);
+                if (state.not(LOCKED_FULLSCREEN)) state.toggle(FULLSCREEN);
                 break;
             case RELOAD:
                 // Optional Argument: [0]=Preserve Attributes (DEFAULT: false)
@@ -1179,7 +1167,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             contentPane.remove(imgLabel);
             contentPane.remove(mediaPlayer);
             contentPane.add(textField, BorderLayout.CENTER);
-            this.setSize(PiPWindow.DEFAULT_SIZE);
+            changeSize(PiPWindow.DEFAULT_SIZE, true);
             cr.setAspectRatio(null);
             ensureOnScreen();
             this.requestFocus();
@@ -1207,7 +1195,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         // Asynchronously fire the command to set the new media source.
         CompletableFuture.runAsync(() -> {
             // Cancel and return if updating media attributes failed.
-            if (!updateMediaAttributes(mediaNew, false))
+            if (!updateMediaAttributes(mediaNew))
                 return;
             
             // Pick which player to use based on media.
@@ -1225,21 +1213,21 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     
     /**
      * Updates the passed media's attributes by attempting to attribute them. Raw
-     * attribution can be requested, which ignores user configuration and attempts
-     * to attribute the raw media as is (no pre-conversions). This method will
-     * return a boolean value which is only <code>false</code> if media attribution
-     * failed.
+     * attribution can be requested via {@link Flag#RAW_ATTRIBUTION}, which ignores
+     * user configuration and attempts to attribute the raw media as is (no
+     * pre-conversions). This method will return a boolean value which is only
+     * <code>false</code> if media attribution failed.
      * 
      * @param media - the PiPMedia to attribute.
-     * @param raw   - a boolean for whether or not to perform raw attribution.
+     * @param flags - any number of attribution {@link Flag} values.
      * @return <code>true</code> if attribution succeeded; <code>false</code>
      *         otherwise.
      */
-    private boolean updateMediaAttributes(PiPMedia media, boolean raw) {
+    private boolean updateMediaAttributes(PiPMedia media, Flag... flags) {
         if (!media.isAttributed()) {
             // Setup Attribute Listener then Request Attribution of Media.
             media.setAttributeUpdateListener(listeners.attributeListener());
-            media.setAttributes(managerListener.requestAttributes(media, raw));
+            media.setAttributes(managerListener.requestAttributes(media, flags));
             if (!media.hasAttributes()) {
                 // Failed getting attributes. Cancel setting and playing of PiPMedia.
                 System.err.println("Cancelled attempt to set media: Attributor failed or returned invalid data.");
@@ -1341,8 +1329,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
      * @param media - a PiPMedia object with the new media.
      */
     public void setMedia(PiPMedia media) {
+        // Cancel setting media if media is locked.
+        if (state.is(LOCKED_MEDIA) && state.not(CLOSING)) {
+            System.err.println("Warning: Cancelled setting media: Window media is locked.");
+            return;
+        }
         // New media to replace current media -- Close current media first.
-        if(hasMedia() && !mediaCommand(PiPMediaCMD.CLOSE, "true")) {
+        else if(hasMedia() && !mediaCommand(PiPMediaCMD.CLOSE, "true")) {
             System.err.println("Warning: Cancelled setting media: Window's media player has crashed.");
             return;
         }
@@ -1652,6 +1645,41 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     }
     
     /**
+     * Replaces the artwork for the current audio media. If the current media does
+     * not support artwork, this method does nothing.
+     * <p>
+     * The VLC bindings require that, in order for local artwork to load and work,
+     * <code>"file:///"</code> must be prepended to the passed String location. If
+     * this is not already present in the passed String, it will be prepended
+     * automatically.
+     * 
+     * @param artLocation - a String with the file location of the artwork.
+     */
+    public void replaceArtwork(String artLocation) {
+        // Cancel if no attributed media, or media does not support artwork, or media player invalid.
+        if (!hasAttributedMedia() || !MediaExt.supportsArtwork(getMedia().getAttributes().getFileExtension()) || !mediaPlayerValid())
+            return;
+        
+        // Delete Current Artwork from VLC Art Cache to Prevent Persistence
+        final String currentArt = mediaPlayer.mediaPlayer().media().meta().get(Meta.ARTWORK_URL);
+        if (currentArt != null && !currentArt.isEmpty()) {
+            try {
+                final File fileCurr = new File(new URL(currentArt).toURI());
+                if (fileCurr.exists()) {
+                    fileCurr.delete();
+                    System.err.println("Art for media already in VLC Art Cache, replacing...");
+                }
+            } catch (MalformedURLException | URISyntaxException ex) { ex.printStackTrace(); }
+        }
+        // Set Artwork Metadata, Save it to Underlying Media, then Reload to Show Art
+//        System.out.println(mediaPlayer.mediaPlayer().media().meta().get(Meta.ARTWORK_URL));
+        mediaPlayer.mediaPlayer().media().meta().set(Meta.ARTWORK_URL,
+                artLocation.startsWith("file:///") ? artLocation : "file:///" + artLocation);
+        mediaPlayer.mediaPlayer().media().meta().save();
+        mediaCommand(PiPMediaCMD.RELOAD);
+    }
+    
+    /**
      * Briefly flashes and displays the border of the window, then immediately
      * begins to fade it back to transparency.
      */
@@ -1813,7 +1841,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             }
 
             // Remove pending window state hooks.
-            state.disableHooks();
+            state.destroyHooks();
             
             // Run part on EDT.
             SwingUtilities.invokeLater(() -> {

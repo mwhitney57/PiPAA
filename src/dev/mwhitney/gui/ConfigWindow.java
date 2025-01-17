@@ -1,4 +1,4 @@
-package dev.mwhitney.main;
+package dev.mwhitney.gui;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -27,18 +27,20 @@ import javax.swing.SwingConstants;
 
 import org.apache.commons.io.FileUtils;
 
-import dev.mwhitney.gui.BetterButton;
-import dev.mwhitney.gui.BetterCheckbox;
-import dev.mwhitney.gui.BetterComboBox;
-import dev.mwhitney.gui.BetterLabel;
-import dev.mwhitney.gui.BetterPanel;
-import dev.mwhitney.gui.BetterSlider;
-import dev.mwhitney.gui.BetterTabbedPane;
-import dev.mwhitney.gui.BetterTextArea;
-import dev.mwhitney.gui.EasyTopDialog;
-import dev.mwhitney.gui.Themed;
-import dev.mwhitney.gui.TopDialog;
+import dev.mwhitney.gui.components.BetterButton;
+import dev.mwhitney.gui.components.BetterCheckbox;
+import dev.mwhitney.gui.components.BetterComboBox;
+import dev.mwhitney.gui.components.BetterLabel;
+import dev.mwhitney.gui.components.BetterPanel;
+import dev.mwhitney.gui.components.BetterSlider;
+import dev.mwhitney.gui.components.BetterTabbedPane;
+import dev.mwhitney.gui.components.BetterTextArea;
+import dev.mwhitney.gui.popup.EasyTopDialog;
+import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.main.Binaries;
+import dev.mwhitney.main.Initializer;
+import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.PiPProperty.DOWNLOAD_OPTION;
 import dev.mwhitney.main.PiPProperty.FREQUENCY_OPTION;
 import dev.mwhitney.main.PiPProperty.OVERWRITE_OPTION;
@@ -48,6 +50,7 @@ import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
 import dev.mwhitney.main.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.main.PiPPropertyDesc;
 import dev.mwhitney.update.PiPUpdater;
 import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
 import dev.mwhitney.util.PiPAAUtils;
@@ -550,7 +553,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         colorBG    = theme.color(COLOR.BG);
         colorBord  = theme.color(COLOR.BG_ACCENT);
         colorFG    = theme.color(COLOR.TXT);
-        colorBtnFG = Color.WHITE;
+        colorBtnFG = theme.color(COLOR.BTN_TXT);
         colorBtn1  = theme.color(COLOR.BTN);
         colorBtn2  = theme.color(COLOR.BTN_PRESSED);
         colorBtn3  = theme.color(COLOR.BTN_BORDER);

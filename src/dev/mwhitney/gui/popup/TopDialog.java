@@ -1,4 +1,4 @@
-package dev.mwhitney.gui;
+package dev.mwhitney.gui.popup;
 
 import javax.swing.Icon;
 import javax.swing.JDialog;

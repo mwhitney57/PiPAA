@@ -9,7 +9,7 @@ import java.util.Properties;
 
 import javax.swing.JOptionPane;
 
-import dev.mwhitney.gui.TopDialog;
+import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.PropertyListener;
 
 /**

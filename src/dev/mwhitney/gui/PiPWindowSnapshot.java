@@ -146,17 +146,6 @@ public class PiPWindowSnapshot {
         return true;
     }
     
-    //TODO Remove (probably)
-//    @SuppressWarnings("unused")
-//    private boolean capturesAny(SnapshotData... data) {
-//        if (capturesAll()) return true;
-//        for (final SnapshotData dataItem : data) {
-//            if (ArrayUtils.contains(this.data, dataItem))
-//                return true;
-//        }
-//        return false;
-//    }
-    
     /**
      * Checks if this snapshot is configured to capture {@link SnapshotData#ALL}
      * data types.

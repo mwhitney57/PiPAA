@@ -1,4 +1,4 @@
-package dev.mwhitney.gui;
+package dev.mwhitney.gui.components;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -27,6 +27,11 @@ public class BetterButton extends JButton {
     private Color colorBGPressed;
     /** The Color of the button's border. */
     private Color colorBorder;
+    
+    /** The arc for the rounded corners. */
+    private int roundedArc       = -1;
+    /** The arc for the rounded border corners. */
+    private int roundedArcBorder = -1;
     
     /**
      * Creates a BetterButton with the passed label and label font.
@@ -74,7 +79,9 @@ public class BetterButton extends JButton {
             g2d.setColor(colorBGPressed);
         else
             g2d.setColor(colorBG);
-        g2d.fillRoundRect(1, 1, getWidth()-2, getHeight()-2, 40, 40);
+        g2d.fillRoundRect(1, 1, getWidth()-2, getHeight()-2,
+                (roundedArc != -1 ? roundedArc : 40),
+                (roundedArc != -1 ? roundedArc : 40));
         
         // Dispose of the Graphics2D Object
         g2d.dispose();
@@ -91,7 +98,9 @@ public class BetterButton extends JButton {
         // Draws the Rounded Border
         g2d.setColor(colorBorder);
         g2d.setStroke(new BasicStroke(4.0f));
-        g2d.drawRoundRect(2, 2, getWidth()-5, getHeight()-5, 25, 25);
+        g2d.drawRoundRect(2, 2, getWidth()-5, getHeight()-5,
+                (roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25),
+                (roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25));
         
         // Dispose of the Graphics2D Object
         g2d.dispose();
@@ -109,5 +118,26 @@ public class BetterButton extends JButton {
         this.colorBG = bg;
         this.colorBGPressed = bgPressed;
         this.colorBorder = border;
+        this.repaint(); // Repaint to ensure new colors are being displayed.
+    }
+    
+    /**
+     * Sets the rounded arc amount for the button's corners.
+     * Any value <code>>=0</code> is acceptable.
+     * 
+     * @param arc - an int with the amount.
+     */
+    public void setRoundedArc(int arc) {
+        this.roundedArc = arc;
+    }
+    
+    /**
+     * Sets the rounded arc amount for the corners on the button's border.
+     * Any value <code>>=0</code> is acceptable.
+     * 
+     * @param arc - an int with the amount.
+     */
+    public void setBorderRoundedArc(int arc) {
+        this.roundedArcBorder = arc;
     }
 }

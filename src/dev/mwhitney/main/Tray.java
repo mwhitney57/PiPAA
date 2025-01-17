@@ -23,10 +23,11 @@ import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.PopupMenuUI;
 import javax.swing.plaf.SeparatorUI;
 
-import dev.mwhitney.gui.ColoredArrowIcon;
-import dev.mwhitney.gui.InvertibleImage;
+import dev.mwhitney.gui.ConfigWindow;
 import dev.mwhitney.gui.PiPWindowManager;
-import dev.mwhitney.gui.TopDialog;
+import dev.mwhitney.gui.decor.ColoredArrowIcon;
+import dev.mwhitney.gui.decor.InvertibleImage;
+import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.PiPTrayAdapter;
 import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries.Bin;

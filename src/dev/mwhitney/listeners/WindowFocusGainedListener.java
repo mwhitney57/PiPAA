@@ -16,7 +16,7 @@ import java.awt.event.WindowFocusListener;
 @FunctionalInterface
 public interface WindowFocusGainedListener extends WindowFocusListener {
     // The functional interface method becomes WindowFocusListener#windowGainedFocus(WindowEvent).
-    // Override lost focus method and make it do nothing by default.
+    // Override the lost focus method and make it do nothing by default.
     @Override
     public default void windowLostFocus(WindowEvent e) {}
 }

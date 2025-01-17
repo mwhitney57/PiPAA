@@ -64,6 +64,35 @@ public interface PiPEnum<E extends Enum<E>> {
         return (s != null) && s.equalsIgnoreCase(this.toString());
     }
     /**
+     * Checks if this enum exists within the passed array.
+     * Internally uses this enum's {@link #is(Enum)} method.
+     * Overriding and changing that method may affect this method's behavior.
+     * 
+     * @param array - {@link E} array to check against.
+     * @return <code>true</code> if this enum exists in the passed array; <code>false</code> otherwise.
+     * @see {@link #in(Enum[])} to check if it does not exist instead.
+     */
+    public default boolean in(E[] array) {
+        if (array == null) return false;
+        
+        for (final E e : array) {
+            if (is(e)) return true;
+        }
+        return false;
+    }
+    /**
+     * Checks if this enum <b>does not</b> exist within the passed array.
+     * Internally uses this enum's {@link #in(Enum[])} method.
+     * Overriding and changing that method may affect this method's behavior.
+     * 
+     * @param array - {@link E} array to check against.
+     * @return <code>true</code> if this enum does not exist in the passed array; <code>false</code> otherwise.
+     * @see {@link #in(Enum[])} to check if it exists instead.
+     */
+    public default boolean notIn(E[] array) {
+        return !in(array);
+    }
+    /**
      * Gets the index of this enum within its internal <code>values()</code> array.
      * This method will return <code>-1</code> if no match is found, but <b>this
      * should never happen</b>. This enum has to be non-<code>null</code> to execute

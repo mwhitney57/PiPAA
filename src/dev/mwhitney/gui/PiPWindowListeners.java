@@ -4,9 +4,13 @@ import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING_MEDIA;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.FULLSCREEN;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOADING;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.READY;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_FULLSCREEN;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_MEDIA;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_POSITION;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_SIZE;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_COMBO;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_SWING;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.READY;
 import static dev.mwhitney.media.MediaFlavorPicker.MediaFlavor.FILE;
 import static dev.mwhitney.media.MediaFlavorPicker.MediaFlavor.IMAGE;
 import static dev.mwhitney.media.MediaFlavorPicker.MediaFlavor.STRING;
@@ -46,6 +50,10 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import dev.mwhitney.exceptions.InvalidTransferMediaException;
+import dev.mwhitney.gui.components.BetterTextArea;
+import dev.mwhitney.gui.popup.ArtSelectionPopup;
+import dev.mwhitney.gui.popup.LockSelectionPopup;
+import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.AttributeUpdateListener;
 import dev.mwhitney.listeners.PiPAttributeRequestListener;
 import dev.mwhitney.listeners.PiPCommandListener;
@@ -54,13 +62,17 @@ import dev.mwhitney.listeners.PiPMediaTransferListener;
 import dev.mwhitney.listeners.PiPWindowListener;
 import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.PiPProperty;
+import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PropertiesManager;
+import dev.mwhitney.media.MediaExt;
 import dev.mwhitney.media.MediaFlavorPicker;
 import dev.mwhitney.media.MediaFlavorPicker.MediaFlavor;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
+import dev.mwhitney.media.PiPMediaAttributor.Flag;
 import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.util.PiPAAUtils;
+import dev.mwhitney.util.UnsetBool;
 
 /**
  * The listeners for PiPWindows and their components, especially those relating
@@ -122,12 +134,23 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                 final int keyCode = e.getKeyCode();
                 final boolean shiftDown = (e.getModifiersEx() & KeyEvent.SHIFT_DOWN_MASK) != 0;
                 final boolean ctrlDown  = (e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK)  != 0;
-//                final boolean altDown = (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK)   != 0;
+                final boolean altDown   = (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK)   != 0;
 
                 switch (keyCode) {
                 // RELOCATE WINDOW ON SCREEN IF OFF
                 case KeyEvent.VK_L:
-                    get().ensureOnScreen();
+                    if (ctrlDown) {
+                        // Enable size & pos locks. TODO Allow customization instead for this option in config. User can check select each they want to be able to enable.
+                        if (shiftDown)
+                            get().state().on(LOCKED_SIZE, LOCKED_POSITION);
+                        // Disable all locks.
+                        else if (altDown)
+                            get().state().off(LOCKED_SIZE, LOCKED_POSITION, LOCKED_FULLSCREEN, LOCKED_MEDIA);
+                        // Pop-up with lock selection options for user to decide.
+                        else new LockSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class)),
+                                get().state()).moveRelTo(get()).display();
+                    }
+                    else get().ensureOnScreen();
                     break;
                 // SHOW KEYBOARD SHORTCUTS
                 case KeyEvent.VK_K:
@@ -371,7 +394,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             @Override
             public void mouseDragged(MouseEvent e) {
                 // Only Drag if a Drag Origin is Saved (RMB is Pressed)
-                if (dragOrigin != null && get().state().not(FULLSCREEN))
+                if (dragOrigin != null && get().state().not(FULLSCREEN, LOCKED_POSITION))
                     get().setLocation(e.getXOnScreen() - dragOrigin.x, e.getYOnScreen() - dragOrigin.y);
                 else if (dragOriginLMB != null)
                     sendMediaCMD(PiPMediaCMD.PAN, Integer.toString(e.getXOnScreen() - dragOriginLMB.x),
@@ -475,13 +498,17 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     }
 
     /**
-     * Handles the transfer of media from a drag and drop event or the system clipboard to a window.
+     * Handles the transfer of media from a drag and drop event or the system
+     * clipboard to a window.
      * 
-     * @param t - the Transferable potentially containing media.
-     * @param clipboardSrc - a boolean for whether or not the transfer source was the clipboard.
-     * @param handoff - a boolean for whether or not this media should be handed off to a new window instead of the current one.
-     * @throws IOException when there are input/output errors with the potential media.
-     * @throws UnsupportedFlavorException when there are transferable contents, but it is not in an acceptable format.
+     * @param t               - the {@link Transferable} potentially containing media.
+     * @param clipboardSrc    - a boolean for whether or not the transfer originated from the clipboard.
+     * @param flavorOverrides - any {@link MediaFlavor} values which should override and take precedence
+     *                          over the typical order.
+     * @throws IOException                   when there are input/output errors with
+     *                                       the potential media.
+     * @throws UnsupportedFlavorException    when there are transferable contents,
+     *                                       but it is not in an acceptable format.
      * @throws InvalidTransferMediaException when the transfer media is not valid.
      */
     @SuppressWarnings("unchecked")
@@ -492,7 +519,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         }
         
         // Handoff the media to another window if current window already has media.
-        final boolean HANDOFF = get().hasMedia();
+        final boolean OCCUPIED = get().hasMedia();
         // Get Prefer Link Configuration Status
         final boolean PREFER_LINK = get().propertyState(PiPProperty.DND_PREFER_LINK, Boolean.class);
         
@@ -526,18 +553,18 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                 System.err.println("##### Handling Media -- MediaFlavor Pick: " + pick);
                 try {
                     switch (pick) {
-                    case FILE    -> handleFileListDrop(dataFile, HANDOFF);
-                    case IMAGE   -> handleImageDrop(dataImage, HANDOFF);
+                    case FILE    -> handleFileListDrop(dataFile, OCCUPIED);
+                    case IMAGE   -> handleImageDrop(dataImage, OCCUPIED);
                     case STRING  -> {
                         /* String flavored media should not require a complex approach as seen with WEB_URL...for now.
                          * If flavor order preference becomes customizable via the configuration, that should change. */
-                        if (HANDOFF) handoff(new PiPMedia(dataString));
+                        if (OCCUPIED) handoff(new PiPMedia(dataString));
                         else  setWindowMedia(new PiPMedia(dataString));
                     }
                     case WEB_URL -> {
                         final URL url = dataWebURL;
                         
-                        if (HANDOFF) {
+                        if (OCCUPIED) {
                             // Attempt loading of media in new window.
                             // If the window has no media, confirmed failed loading attempt. Close window and throw error to try another flavor in a new window.
                             final PiPWindow win = handoff(null);
@@ -578,23 +605,36 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
      * Handles the transfer of raw images.
      * 
      * @param img - the BufferedImage containing the raw image.
-     * @param handoff - a boolean for whether or not this media should be handed off to a new window instead of the current one.
+     * @param occupied - a boolean for whether or not this media should be handed off to a new window instead of the current one.
      * @throws IOException when there are input/output errors with the image.
      */
-    private void handleImageDrop(BufferedImage img, boolean handoff) throws IOException {
+    private void handleImageDrop(BufferedImage img, boolean occupied) throws IOException {
         // Try as IMAGE FLAVOR
         String name = null;
-        File outfile = null;
-        while (outfile == null || outfile.exists()) {
+        File outFile = null;
+        while (outFile == null || outFile.exists()) {
             name = "/cachedImg" + (int) (Math.random() * 100000) + ".png";
-            outfile = new File(Initializer.APP_CLIPBOARD_FOLDER + name);
+            outFile = new File(Initializer.APP_CLIPBOARD_FOLDER + name);
         }
-        outfile.mkdirs();
-        ImageIO.write(img, "png", outfile);
+        outFile.mkdirs();
+        ImageIO.write(img, "png", outFile);
         img.flush();
         img = null;
-        if (handoff) handoff(possiblyMarkedMedia(outfile.getPath()));
-        else  setWindowMedia(possiblyMarkedMedia(outfile.getPath()));
+        final String outPath = outFile.getPath();
+        if (occupied) {
+            if (get().hasAttributedMedia() && MediaExt.supportsArtwork(get().getMedia().getAttributes().getFileExtension())) {
+                // Prompt user to either replace artwork or open media.
+                new ArtSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class))).moveRelTo(get())
+                    .setReceiver((i) -> {
+                        switch (i) {
+                        case 0 -> get().replaceArtwork(outPath);
+                        case 1 -> handoff(possiblyMarkedMedia(outPath));
+                        }
+                    }).display();
+            }
+            else handoff(possiblyMarkedMedia(outPath));
+        }
+        else setWindowMedia(possiblyMarkedMedia(outPath));
 //        System.err.println("image copied to: " + outfile.getAbsolutePath());  // Debug
     }
     
@@ -602,10 +642,10 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
      * Handles the transfer of one or more media files.
      * 
      * @param files - a List of File objects connected to potential media sources.
-     * @param handoff - a boolean for whether or not this media should be handed off to a new window instead of the current one.
+     * @param occupied - a boolean for whether or not this media should be handed off to a new window instead of the current one.
      * @throws InvalidTransferMediaException when one or more media file(s) is not valid.
      */
-    private void handleFileListDrop(List<File> files, boolean handoff) throws InvalidTransferMediaException {
+    private void handleFileListDrop(List<File> files, boolean occupied) throws InvalidTransferMediaException {
         // Loop through each file 
         for (int f = 0; f < files.size(); f++) {
             final File droppedFile = files.get(f);
@@ -618,6 +658,34 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             /* Since 0.9.4-SNAPSHOT, it is assumed that temporary directory files have already been moved to the cache prior to calling this method. */
             final boolean fileInTemp = droppedFile.getPath().startsWith(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath());
             
+            // Only prompt the user for artwork replacement if on the first file and the window has attributed, artwork-supporting media. 
+            if (f == 0 && get().hasAttributedMedia() && MediaExt.supportsArtwork(get().getMedia().getAttributes().getFileExtension())) {
+                // Perform quick attribution and only continue if the file media is supported as artwork.
+                final PiPMediaAttributes attributes = get().getListener().requestAttributes(getMediaFromFile(droppedFile, fileInTemp), Flag.QUICK);
+                if (MediaExt.supportedAsArtwork(attributes.getFileExtension())) {
+                    // Prompt user to either replace artwork or open media.
+                    final UnsetBool replaceArtwork = new UnsetBool();
+                    new ArtSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class))).moveRelTo(get())
+                        .setReceiver((i) -> {
+                            switch (i) {
+                            case 0 -> { // Replace Artwork
+                                replaceArtwork.set(true);
+                                get().replaceArtwork(droppedFile.getPath());
+                            }
+                            case 1 -> { // Open Media
+                                replaceArtwork.set(false);
+                                handoff(getMediaFromFile(droppedFile, fileInTemp));
+                            }
+                            }
+                        }).display().block(10);
+                    
+                    // Opened media. Read next files in loop.
+                    if (replaceArtwork.isFalse()) continue;     // False:       Continue to handle next files.
+                    // Replaced artwork or canceled action.
+                    else                          break;        // True/Unset:  End loop early. Ignore other files.
+                }
+            }
+            
             // If multiple files were dropped, pass them off to open another PiPWindow for each.
             if (f > 0) {
                 System.out.println("Extra File " + (f+1));
@@ -626,7 +694,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             }
             
             // Finally, set the window media.
-            if (handoff) handoff(getMediaFromFile(droppedFile, fileInTemp));
+            if (occupied) handoff(getMediaFromFile(droppedFile, fileInTemp));
             else  setWindowMedia(getMediaFromFile(droppedFile, fileInTemp));
         }
     }
@@ -815,5 +883,5 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     @Override
     public PiPWindow handoff(PiPMedia media)    { return get().getListener().handoff(media); }
     @Override
-    public PiPMediaAttributes requestAttributes(PiPMedia media, boolean raw) { return get().getListener().requestAttributes(media, raw); }
+    public PiPMediaAttributes requestAttributes(PiPMedia media, Flag... flags) { return get().getListener().requestAttributes(media, flags); }
 }

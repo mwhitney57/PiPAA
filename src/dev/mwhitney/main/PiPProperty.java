@@ -179,6 +179,8 @@ public enum PiPProperty {
             BTN_PRESSED,
             /** The color of button borders. */
             BTN_BORDER,
+            /** The color of the button text. */
+            BTN_TXT,
             /** The color of the filled/progressed space in a slider. */
             SLIDER,
             /** The color of the knob or thumb in a slider. */
@@ -194,6 +196,7 @@ public enum PiPProperty {
         public static final Color LIGHT_BTN          = new Color(0, 120, 215);
         public static final Color LIGHT_BTN_PRESSED  = new Color(0, 84, 150);
         public static final Color LIGHT_BTN_BORDER   = new Color(0, 60, 107);
+        public static final Color LIGHT_BTN_TXT      = Color.WHITE;
         public static final Color LIGHT_SLIDER       = LIGHT_BTN.brighter();
         public static final Color LIGHT_SLIDER_KNOB  = LIGHT_BTN;
         public static final Color LIGHT_SLIDER_EMPTY = LIGHT_BTN_BORDER.darker().darker().darker();
@@ -204,6 +207,7 @@ public enum PiPProperty {
         public static final Color DARK_BTN          = new Color(35, 35, 35);
         public static final Color DARK_BTN_PRESSED  = DARK_BTN.darker();
         public static final Color DARK_BTN_BORDER   = Color.BLACK;
+        public static final Color DARK_BTN_TXT      = Color.WHITE;
         public static final Color DARK_SLIDER       = DARK_BG_ACCENT;
         public static final Color DARK_SLIDER_KNOB  = DARK_BTN;
         public static final Color DARK_SLIDER_EMPTY = Color.BLACK;
@@ -214,6 +218,7 @@ public enum PiPProperty {
         public static final Color PINK_BTN          = new Color(172, 193, 138);
         public static final Color PINK_BTN_PRESSED  = PINK_BTN.darker();
         public static final Color PINK_BTN_BORDER   = PINK_BTN_PRESSED.darker();
+        public static final Color PINK_BTN_TXT      = Color.WHITE;
         public static final Color PINK_SLIDER       = PINK_BTN_PRESSED;
         public static final Color PINK_SLIDER_KNOB  = PINK_BTN;
         public static final Color PINK_SLIDER_EMPTY = Color.WHITE;
@@ -224,6 +229,7 @@ public enum PiPProperty {
         public static final Color SUBNAUTICA_BTN          = new Color(11, 153, 255);
         public static final Color SUBNAUTICA_BTN_PRESSED  = new Color(9, 122, 204);
         public static final Color SUBNAUTICA_BTN_BORDER   = new Color(8, 107, 179);
+        public static final Color SUBNAUTICA_BTN_TXT      = Color.WHITE;
         public static final Color SUBNAUTICA_SLIDER       = SUBNAUTICA_BTN_PRESSED;
         public static final Color SUBNAUTICA_SLIDER_KNOB  = SUBNAUTICA_BTN;
         public static final Color SUBNAUTICA_SLIDER_EMPTY = SUBNAUTICA_BTN_BORDER.darker().darker().darker();
@@ -234,6 +240,7 @@ public enum PiPProperty {
         public static final Color OCEAN_BTN          = new Color(0, 26, 51);
         public static final Color OCEAN_BTN_PRESSED  = OCEAN_BTN.darker();
         public static final Color OCEAN_BTN_BORDER   = OCEAN_BTN_PRESSED.darker();
+        public static final Color OCEAN_BTN_TXT      = Color.WHITE;
         public static final Color OCEAN_SLIDER       = new Color(0, 51, 102).darker();
         public static final Color OCEAN_SLIDER_KNOB  = OCEAN_SLIDER.darker();
         public static final Color OCEAN_SLIDER_EMPTY = OCEAN_SLIDER_KNOB.darker().darker().darker();
@@ -244,6 +251,7 @@ public enum PiPProperty {
         public static final Color FIRE_BTN          = new Color(127,0,0);
         public static final Color FIRE_BTN_PRESSED  = FIRE_BTN.darker();
         public static final Color FIRE_BTN_BORDER   = FIRE_BTN_PRESSED.darker();
+        public static final Color FIRE_BTN_TXT      = Color.WHITE;
         public static final Color FIRE_SLIDER       = new Color (255,47,24).darker();
         public static final Color FIRE_SLIDER_KNOB  = FIRE_SLIDER.darker();
         public static final Color FIRE_SLIDER_EMPTY = FIRE_SLIDER_KNOB.darker().darker().darker();
@@ -265,6 +273,7 @@ public enum PiPProperty {
                 case BTN          -> LIGHT_BTN;
                 case BTN_BORDER   -> LIGHT_BTN_BORDER;
                 case BTN_PRESSED  -> LIGHT_BTN_PRESSED;
+                case BTN_TXT      -> LIGHT_BTN_TXT;
                 case SLIDER       -> LIGHT_SLIDER;
                 case SLIDER_KNOB  -> LIGHT_SLIDER_KNOB;
                 case SLIDER_EMPTY -> LIGHT_SLIDER_EMPTY;
@@ -276,6 +285,7 @@ public enum PiPProperty {
                 case BTN          -> DARK_BTN;
                 case BTN_BORDER   -> DARK_BTN_BORDER;
                 case BTN_PRESSED  -> DARK_BTN_PRESSED;
+                case BTN_TXT      -> DARK_BTN_TXT;
                 case SLIDER       -> DARK_SLIDER;
                 case SLIDER_KNOB  -> DARK_SLIDER_KNOB;
                 case SLIDER_EMPTY -> DARK_SLIDER_EMPTY;
@@ -287,6 +297,7 @@ public enum PiPProperty {
                 case BTN          -> PINK_BTN;
                 case BTN_BORDER   -> PINK_BTN_BORDER;
                 case BTN_PRESSED  -> PINK_BTN_PRESSED;
+                case BTN_TXT      -> PINK_BTN_TXT;
                 case SLIDER       -> PINK_SLIDER;
                 case SLIDER_KNOB  -> PINK_SLIDER_KNOB;
                 case SLIDER_EMPTY -> PINK_SLIDER_EMPTY;
@@ -298,6 +309,7 @@ public enum PiPProperty {
                 case BTN          -> SUBNAUTICA_BTN;
                 case BTN_BORDER   -> SUBNAUTICA_BTN_BORDER;
                 case BTN_PRESSED  -> SUBNAUTICA_BTN_PRESSED;
+                case BTN_TXT      -> SUBNAUTICA_BTN_TXT;
                 case SLIDER       -> SUBNAUTICA_SLIDER;
                 case SLIDER_KNOB  -> SUBNAUTICA_SLIDER_KNOB;
                 case SLIDER_EMPTY -> SUBNAUTICA_SLIDER_EMPTY;
@@ -309,6 +321,7 @@ public enum PiPProperty {
                 case BTN          -> OCEAN_BTN;
                 case BTN_BORDER   -> OCEAN_BTN_BORDER;
                 case BTN_PRESSED  -> OCEAN_BTN_PRESSED;
+                case BTN_TXT      -> OCEAN_BTN_TXT;
                 case SLIDER       -> OCEAN_SLIDER;
                 case SLIDER_KNOB  -> OCEAN_SLIDER_KNOB;
                 case SLIDER_EMPTY -> OCEAN_SLIDER_EMPTY;
@@ -320,6 +333,7 @@ public enum PiPProperty {
                 case BTN          -> FIRE_BTN;
                 case BTN_BORDER   -> FIRE_BTN_BORDER;
                 case BTN_PRESSED  -> FIRE_BTN_PRESSED;
+                case BTN_TXT      -> FIRE_BTN_TXT;
                 case SLIDER       -> FIRE_SLIDER;
                 case SLIDER_KNOB  -> FIRE_SLIDER_KNOB;
                 case SLIDER_EMPTY -> FIRE_SLIDER_EMPTY;

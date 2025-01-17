@@ -19,7 +19,7 @@ import com.sun.jna.NativeLibrary;
 
 import dev.mwhitney.exceptions.ExtractionException;
 import dev.mwhitney.gui.PiPWindowManager;
-import dev.mwhitney.gui.TopDialog;
+import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.BinRunnable;
 import dev.mwhitney.listeners.PiPTrayAdapter;
 import dev.mwhitney.listeners.PropertyListener;
@@ -111,6 +111,9 @@ public class Initializer {
     SHIFT + Escape   -> Close All Windows                              | Triple-Click RMB (Empty Window) -> Close Window
     SHIFT + A        -> Add a Window                                   |
     SHIFT + D        -> Duplicate Window                               |
+    SHIFT + L        -> Enable Size and Position Locks                 |
+    ALT + L          -> Disable All Locks                              |
+    CTRL + L         -> Open Lock Menu                                 |
     CTRL + C         -> Close Media in Window                          |
     CTRL + SHIFT + D -> Close then Delete Media from Cache (if cached) |
     CTRL + H         -> Hide Window                                    |
