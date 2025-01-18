@@ -3,6 +3,7 @@ package dev.mwhitney.main;
 import java.awt.Insets;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -26,6 +27,7 @@ import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.resources.PiPAARes;
 import dev.mwhitney.update.PiPUpdater;
 import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
 import dev.mwhitney.update.api.Build;
@@ -111,13 +113,13 @@ public class Initializer {
     SHIFT + Escape   -> Close All Windows                              | Triple-Click RMB (Empty Window) -> Close Window
     SHIFT + A        -> Add a Window                                   |
     SHIFT + D        -> Duplicate Window                               |
-    SHIFT + L        -> Enable Size and Position Locks                 |
-    ALT + L          -> Disable All Locks                              |
-    CTRL + L         -> Open Lock Menu                                 |
     CTRL + C         -> Close Media in Window                          |
     CTRL + SHIFT + D -> Close then Delete Media from Cache (if cached) |
     CTRL + H         -> Hide Window                                    |
     CTRL + SHIFT + H -> Hide All Windows                               |
+    CTRL + L         -> Open Window Lock Menu                          |
+    CTRL + SHIFT + L -> Enable Window Size and Position Locks          |
+    CTRL + ALT + L   -> Disable All Window Locks                       |
     CTRL + SHIFT + M -> Global Mute ON/OFF                             |
     CTRL + O         -> Open Cache Folder or Media's Folder Location   |
     CTRL + R         -> Reload Media                                   |
@@ -366,20 +368,31 @@ public class Initializer {
         // System VLC installation is not to be used and OS is Windows.
         if (!vlcReady && System.getProperty("os.name").startsWith("Windows")) {
             // Ensure that VLC files are extracted and present.
-            final boolean vlcFilesPresent = (new File(APP_BIN_FOLDER + "/libvlc.dll").exists()
-                             && new File(APP_BIN_FOLDER + "/libvlccore.dll").exists()
+            final boolean vlcFilesPresent = (new File(APP_BIN_FOLDER + "/" + PiPAARes.NAME_LIBVLC).exists()
+                             && new File(APP_BIN_FOLDER + "/" + PiPAARes.NAME_LIBVLCCORE).exists()
                              && new File(VLC_PLUGINS_FOLDER).exists());
             // VLC version not in configuration, or the versions don't match, or the required VLC files do not exist.
             if (vlcVersion == null || !vlcVersion.equals(VLC_VERSION) || !vlcFilesPresent) {
                 // Extract Windows LibVlc DLLs to Bin Folder
                 System.out.println("<!> Extracting VLC libraries...");
-                CFExec.run((BinRunnable) () -> Files.copy(Initializer.class.getResourceAsStream("/dev/mwhitney/resources/bin/libvlc.dll"),
-                                   Paths.get(APP_BIN_FOLDER + "/libvlc.dll"), StandardCopyOption.REPLACE_EXISTING),
-                           (BinRunnable) () -> Files.copy(Initializer.class.getResourceAsStream("/dev/mwhitney/resources/bin/libvlccore.dll"),
-                                   Paths.get(APP_BIN_FOLDER + "/libvlccore.dll"), StandardCopyOption.REPLACE_EXISTING),
-                           (BinRunnable) () -> UnzipUtility.unzip(Initializer.class.getResourceAsStream("/dev/mwhitney/resources/bin/plugins.zip"), VLC_PLUGINS_FOLDER))
-                      .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting LibVlc libraries."));
-                propsManager.set("LibVlc_BIN", VLC_VERSION);
+                // Use try-with-resources to ensure closing of streams.
+                try (final InputStream libvlc     = Initializer.class.getResourceAsStream(PiPAARes.FILE_LIBVLC);
+                     final InputStream libvlccore = Initializer.class.getResourceAsStream(PiPAARes.FILE_LIBVLCCORE);
+                     final InputStream plugins    = Initializer.class.getResourceAsStream(PiPAARes.FILE_LIBVLCPLUGINS)) {
+                    
+                    // Attempt to copy and unzip all LibVlc-related files. Throw extraction exception if any had errors.
+                    CFExec.run(
+                            (BinRunnable) () -> Files.copy(libvlc,
+                                    Paths.get(APP_BIN_FOLDER + "/" + PiPAARes.NAME_LIBVLC),
+                                    StandardCopyOption.REPLACE_EXISTING),
+                            (BinRunnable) () -> Files.copy(libvlccore,
+                                    Paths.get(APP_BIN_FOLDER + "/" + PiPAARes.NAME_LIBVLCCORE),
+                                    StandardCopyOption.REPLACE_EXISTING),
+                            (BinRunnable) () -> UnzipUtility.unzip(plugins, VLC_PLUGINS_FOLDER))
+                        .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting LibVlc libraries."));
+                    propsManager.set("LibVlc_BIN", VLC_VERSION);
+                } catch (IOException ioe) { /* Thrown while closing streams. Ignore. */
+                } catch (ExtractionException ee) { throw ee; } // Forward exception throw.
             }
             // Change NativeLibrary search path to app bin folder, check if extracted already.
             NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), PiPAAUtils.slashFix(APP_BIN_FOLDER));

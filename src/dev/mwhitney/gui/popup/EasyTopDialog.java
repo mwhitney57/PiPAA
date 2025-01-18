@@ -2,12 +2,6 @@ package dev.mwhitney.gui.popup;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -17,6 +11,9 @@ import javax.swing.Timer;
 
 import dev.mwhitney.gui.components.BetterPanel;
 import dev.mwhitney.gui.components.BetterTextArea;
+import dev.mwhitney.listeners.simplified.KeyPressListener;
+import dev.mwhitney.listeners.simplified.MousePressListener;
+import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
 import net.miginfocom.swing.MigLayout;
@@ -59,19 +56,10 @@ public class EasyTopDialog {
 //        parent.setFocusable(false);
 //        parent.setFocusableWindowState(false);
         parent.setBackground(new Color(0, 0, 0, 0));
-        parent.addWindowFocusListener(new WindowAdapter() {
-            @Override
-            public void windowLostFocus(WindowEvent e) { close(parent); }
-        });
-        parent.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e)         { close(parent); }
-        });
-        final MouseAdapter mouseAdapter = new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e)     { close(parent); }
-        };
-        parent.addMouseListener(mouseAdapter);
+        parent.addWindowFocusListener((WindowFocusLostListener) (e) -> close(parent));
+        parent.addKeyListener((KeyPressListener) (e) -> close(parent));
+        final MousePressListener mouseListener = (e) -> close(parent);
+        parent.addMouseListener(mouseListener);
         
         final BetterPanel panel = new BetterPanel(new MigLayout("fill, insets 5 10 5 10")).useDropShadow();
         panel.setBackground(theme.color(COLOR.BG));
@@ -82,7 +70,7 @@ public class EasyTopDialog {
         text.setBackground(theme.color(COLOR.BG));
         text.setForeground(theme.color(COLOR.TXT));
         text.setFont(new Font("Dialog", Font.BOLD, 16));
-        text.addMouseListener(mouseAdapter);
+        text.addMouseListener(mouseListener);
         panel.add(text);
         
         parent.setContentPane(panel);

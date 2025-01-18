@@ -3,12 +3,7 @@ package dev.mwhitney.gui.popup;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +15,9 @@ import dev.mwhitney.gui.PiPWindowState;
 import dev.mwhitney.gui.components.BetterButton;
 import dev.mwhitney.gui.components.BetterLabel;
 import dev.mwhitney.gui.components.BetterPanel;
+import dev.mwhitney.listeners.simplified.KeyPressListener;
+import dev.mwhitney.listeners.simplified.MouseClickListener;
+import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
 import net.miginfocom.swing.MigLayout;
@@ -124,21 +122,12 @@ public abstract class SelectionPopup extends JDialog {
      * necessary.
      */
     protected void setupListeners() {
-        this.getContentPane().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // Close pop-up on RMB click.
-                if (e.getButton() == MouseEvent.BUTTON3) close();
-            }
+        this.getContentPane().addMouseListener((MouseClickListener) (e) -> {
+            // Close pop-up on RMB click.
+            if (e.getButton() == MouseEvent.BUTTON3) close();
         });
-        this.addWindowFocusListener(new WindowAdapter() {
-            @Override
-            public void windowLostFocus(WindowEvent e) { close(); }
-        });
-        this.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) { close(); }
-        });
+        this.addWindowFocusListener((WindowFocusLostListener) (e) -> close());
+        this.addKeyListener((KeyPressListener) (e) -> close());
     }
     
     /**

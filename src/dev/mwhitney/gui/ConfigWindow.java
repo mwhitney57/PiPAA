@@ -6,10 +6,7 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.font.TextAttribute;
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +35,8 @@ import dev.mwhitney.gui.components.BetterTextArea;
 import dev.mwhitney.gui.popup.EasyTopDialog;
 import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.listeners.simplified.MouseReleaseListener;
+import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.PiPProperty;
@@ -140,10 +139,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         setResizable(false);
         setBackground(new Color(0, 0, 0, 0));
         setBounds(Math.max(0, screen.width - 530), Math.max(0, screen.height - 650), 520, 600);
-        addWindowFocusListener(new WindowAdapter() {
-            @Override
-            public void windowLostFocus(WindowEvent e) { setVisible(false); }
-        });
+        addWindowFocusListener((WindowFocusLostListener) (e) -> setVisible(false));
         
         // Component Setup
         final Font textFont = new Font(null, Font.PLAIN, 12);
@@ -207,15 +203,13 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         sliderDefVol = new BetterSlider(0, 100, 50);
         sliderDefVol.setMinorTickSpacing(1);
         sliderDefVol.setMajorTickSpacing(5);
-        sliderDefVol.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON3) {
-                    propertyChanged(PiPProperty.DEFAULT_VOLUME, Integer.toString(50));
-                    handlePropertyChange(PiPProperty.DEFAULT_VOLUME);
-                } else
-                    propertyChanged(PiPProperty.DEFAULT_VOLUME, Integer.toString(((JSlider) e.getSource()).getValue()));
-            }
+        sliderDefVol.addMouseListener((MouseReleaseListener) (e) -> {
+            // On RMB, reset to default. Otherwise, adjust based on new slider value.
+            if (e.getButton() == MouseEvent.BUTTON3) {
+                propertyChanged(PiPProperty.DEFAULT_VOLUME, Integer.toString(50));
+                handlePropertyChange(PiPProperty.DEFAULT_VOLUME);
+            } else
+                propertyChanged(PiPProperty.DEFAULT_VOLUME, Integer.toString(((JSlider) e.getSource()).getValue()));
         });
         sliderDefVol.addChangeListener((e) -> lblDefVolTitle.setText(volTitleTxt()));
         final BetterLabel lblDefVol = new BetterLabel(PiPPropertyDesc.DEFAULT_VOLUME, textFont);
@@ -223,15 +217,13 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         sliderDefRate = new BetterSlider(10, 400, 100);
         sliderDefRate.setMinorTickSpacing(2);
         sliderDefRate.setMajorTickSpacing(50);
-        sliderDefRate.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON3) {
-                    propertyChanged(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.toString(1.00f));
-                    handlePropertyChange(PiPProperty.DEFAULT_PLAYBACK_RATE);
-                } else
-                    propertyChanged(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.toString(((JSlider) e.getSource()).getValue() / 100.0f));
-            }
+        sliderDefRate.addMouseListener((MouseReleaseListener) (e) -> {
+            // On RMB, reset to default. Otherwise, adjust based on new slider value.
+            if (e.getButton() == MouseEvent.BUTTON3) {
+                propertyChanged(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.toString(1.00f));
+                handlePropertyChange(PiPProperty.DEFAULT_PLAYBACK_RATE);
+            } else
+                propertyChanged(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.toString(((JSlider) e.getSource()).getValue() / 100.0f));
         });
         sliderDefRate.addChangeListener((e) -> lblDefRateTitle.setText(rateTitleTxt()));
         final BetterLabel lblDefRate = new BetterLabel(PiPPropertyDesc.DEFAULT_PLAYBACK_RATE, textFont);

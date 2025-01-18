@@ -13,7 +13,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Point;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -57,6 +56,7 @@ import dev.mwhitney.gui.popup.EasyTopDialog;
 import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.listeners.simplified.KeyPressListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.Initializer;
@@ -77,6 +77,7 @@ import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
 import dev.mwhitney.media.PiPMediaAttributor.Flag;
 import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.media.WebMediaFormat;
+import dev.mwhitney.resources.PiPAARes;
 import dev.mwhitney.util.PiPAAUtils;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
@@ -122,13 +123,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     public static final Color BORDER_ERROR    = new Color(247, 64,  66,  200);
     
     /** The normal icon for each PiPWindow. */
-    private static final Image ICON_NORMAL   = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney/images/icon32.png")).getImage();
+    private static final Image ICON_NORMAL   = new ImageIcon(PiPWindow.class.getResource(PiPAARes.ICON_APP_32)).getImage();
     /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_WORK     = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney/images/icon32Working.png")).getImage();
+    private static final Image ICON_WORK     = new ImageIcon(PiPWindow.class.getResource(PiPAARes.ICON_APP_32_WORKING)).getImage();
     /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_DOWNLOAD = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney/images/icon32Downloading.png")).getImage();
+    private static final Image ICON_DOWNLOAD = new ImageIcon(PiPWindow.class.getResource(PiPAARes.ICON_APP_32_DOWNLOADING)).getImage();
     /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_TRIM     = new ImageIcon(PiPWindow.class.getResource("/dev/mwhitney/images/icon32Trimming.png")).getImage();
+    private static final Image ICON_TRIM     = new ImageIcon(PiPWindow.class.getResource(PiPAARes.ICON_APP_32_TRIMMING)).getImage();
 
     /** Manages user resizing of this window, despite its undecorated state. */
     private ComponentResizer cr;
@@ -237,14 +238,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         imgLabel.addMouseMotionListener(listeners.mouseDrag());
         imgLabel.addMouseListener(listeners.mouseAdapter());
         imgLabel.addMouseWheelListener(listeners.mouseAdapter());
-        imgLabel.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                handleKeyControl(e);
-
-                // Forward key press event to window in case its a global control.
-                PiPWindow.this.dispatchEvent(e);
-            }
+        imgLabel.addKeyListener((KeyPressListener) (e) -> {
+            // Handle key press locally (with media)first.
+            handleKeyControl(e);
+            // Forward key press event to window-wide listener in case its a global control.
+            PiPWindow.this.dispatchEvent(e);
         });
 
         // Text Field (with Drag and Drop)
@@ -263,7 +261,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         textResetTimer.setRepeats(false);
 
         // Window-wide Key Listener
-        this.addKeyListener(listeners.keyAdapter());
+        this.addKeyListener(listeners.keyListener());
 
         // ComponentResizer (With Modifications)
         cr = new ComponentResizer();
@@ -457,7 +455,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                                 file = new File(new URL(mediaPlayer.media().meta().get(Meta.ARTWORK_URL)).toURI());
                         } catch (Exception e) { System.err.println("Warning: Couldn't load media artwork, it may not exist. Using default..."); }
                         try {
-                            setImgViewerSrc((file != null ? file.getPath() : null), PiPWindow.class.getResource("/dev/mwhitney/resources/audio128.png"));
+                            setImgViewerSrc((file != null ? file.getPath() : null), PiPWindow.class.getResource(PiPAARes.ICON_AUDIO_128));
                             if (file == null) PiPWindow.this.cr.setMaximumSize(MAXIMUM_AUDIO_SIZE);
                         } catch (InvalidMediaException e) { e.printStackTrace(); }
                         
@@ -484,11 +482,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         mediaPlayer.videoSurfaceComponent().addMouseMotionListener(listeners.mouseDrag());
         mediaPlayer.videoSurfaceComponent().addMouseListener(listeners.mouseAdapter());
         mediaPlayer.videoSurfaceComponent().addMouseWheelListener(listeners.mouseAdapter());
-        mediaPlayer.videoSurfaceComponent().addKeyListener(listeners.keyAdapter());
+        mediaPlayer.videoSurfaceComponent().addKeyListener(listeners.keyListener());
         mediaPlayer.mediaPlayer().events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
             @Override
             public void paused(MediaPlayer mediaPlayer) {
-//                System.out.println("PAUSED");
+//                System.out.println("PAUSED");     // Debug
                 if(state.not(MANUALLY_PAUSED)) {
                     mediaCommand(PiPMediaCMD.SEEK, "SET", "0.00f");
                     mediaCommand(PiPMediaCMD.PLAY);
@@ -496,16 +494,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             }
             @Override
             public void stopped(MediaPlayer mediaPlayer) {
-//                System.out.println("STOPPED");
+//                System.out.println("STOPPED");    // Debug
                 // Only attempt to play stopped media again if window is not closing/closed.
                 if(state.not(CLOSING, MANUALLY_STOPPED))
                     mediaCommand(PiPMediaCMD.PLAY);
             }
         });
-        mediaPlayer.videoSurfaceComponent().addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) { handleKeyControl(e); }
-        });
+        mediaPlayer.videoSurfaceComponent().addKeyListener((KeyPressListener) (e) -> handleKeyControl(e));
     }
     
     /**

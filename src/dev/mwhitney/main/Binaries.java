@@ -3,6 +3,7 @@ package dev.mwhitney.main;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
 import dev.mwhitney.exceptions.UnsupportedBinActionException;
 import dev.mwhitney.listeners.BinRunnable;
 import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.resources.PiPAARes;
 import dev.mwhitney.util.PiPAAUtils;
 import net.codejava.utility.UnzipUtility;
 
@@ -34,13 +36,13 @@ public class Binaries {
     /** The set of binaries used by PiPAA. */
     public enum Bin {
         /** The yt-dlp executable for downloading media, typically videos. */
-        YT_DLP("yt-dlp.exe", "stable@2024-12-23"),
+        YT_DLP(PiPAARes.NAME_YTDLP, PiPAARes.VERS_YTDLP),
         /** The gallery-dl executable for downloading media, typically images. */
-        GALLERY_DL("gallery-dl.exe", "1.28.3"),
+        GALLERY_DL(PiPAARes.NAME_GALLERYDL, PiPAARes.VERS_GALLERYDL),
         /** The ffmpeg executable for media conversions. */
-        FFMPEG("ffmpeg/bin/", "ffmpeg.exe", "7.1-120"),
+        FFMPEG(PiPAARes.PATH_SUB_FFMPEG, PiPAARes.NAME_FFMPEG, PiPAARes.VERS_FFMPEG),
         /** The ImageMagick executable for image/GIF conversions. */
-        IMGMAGICK("imagemagick/", "magick.exe", "7.1.1-43");
+        IMGMAGICK(PiPAARes.PATH_SUB_IMAGEMAGICK, PiPAARes.NAME_IMAGEMAGICK, PiPAARes.VERS_IMAGEMAGICK);
         
         /** The path within the bin folder to the binary. */
         private String path;
@@ -294,7 +296,7 @@ public class Binaries {
      */
     public static boolean extract(Bin b) throws IOException {
         System.out.println("<!> Extracting bin: " + b.exeless() + "...");
-        final StringBuilder pathIn  = new StringBuilder("/dev/mwhitney/resources/bin/");
+        final StringBuilder pathIn  = new StringBuilder(PiPAARes.PATH_BIN).append("/");
         final StringBuilder pathOut = new StringBuilder(Initializer.APP_BIN_FOLDER).append("/");
         
         // Binary extraction
@@ -311,21 +313,35 @@ public class Binaries {
             break;
         }
         
-        PiPAAUtils.ensureExistence(pathOut.toString());
+        final String binIn  = pathIn.toString();
+        final String binOut = pathOut.toString();
+        PiPAAUtils.ensureExistence(binOut);
         
         // License and more -- return if N/A
         switch(b) {
-        case FFMPEG    -> UnzipUtility.unzip(Initializer.class.getResourceAsStream(pathIn.toString()), pathOut.toString());
-        case IMGMAGICK -> {
-            Files.copy(Initializer.class.getResourceAsStream(pathIn.toString() + b),
-                    Paths.get(Binaries.binned(b)), StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(Initializer.class.getResourceAsStream(pathIn.toString() + "LICENSE.txt"),
-                    Paths.get(pathOut.toString() + "LICENSE.txt"), StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(Initializer.class.getResourceAsStream(pathIn.toString() + "NOTICE.txt"),
-                    Paths.get(pathOut.toString() + "NOTICE.txt"), StandardCopyOption.REPLACE_EXISTING);
+        case FFMPEG    -> {
+            // Use try-with-resources to ensure closing of streams.
+            try (final InputStream main = Initializer.class.getResourceAsStream(binIn)) {
+                UnzipUtility.unzip(main, binOut);
+            } catch (IOException ioe) { throw ioe; }
         }
-        default -> Files.copy(Initializer.class.getResourceAsStream(pathIn.toString() + b),
-                Paths.get(Binaries.binned(b)), StandardCopyOption.REPLACE_EXISTING);
+        case IMGMAGICK -> {
+            // Use try-with-resources to ensure closing of streams.
+            try (final InputStream main    = Initializer.class.getResourceAsStream(binIn + b);
+                 final InputStream license = Initializer.class.getResourceAsStream(binIn + PiPAARes.NAME_IMAGEMAGICKLICENSE);
+                 final InputStream notice  = Initializer.class.getResourceAsStream(binIn + PiPAARes.NAME_IMAGEMAGICKNOTICE)) {
+                
+                Files.copy(main,    Paths.get(Binaries.binned(b)), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(license, Paths.get(binOut + PiPAARes.NAME_IMAGEMAGICKLICENSE), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(notice,  Paths.get(binOut + PiPAARes.NAME_IMAGEMAGICKNOTICE), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ioe) { throw ioe; }
+        }
+        default -> {
+            // Use try-with-resources to ensure closing of streams.
+            try (final InputStream main = Initializer.class.getResourceAsStream(binIn + b)) {
+                Files.copy(main, Paths.get(Binaries.binned(b)), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ioe) { throw ioe; }
+        }
         }
         return exists(b);
     }

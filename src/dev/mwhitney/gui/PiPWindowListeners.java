@@ -25,8 +25,8 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -60,6 +60,7 @@ import dev.mwhitney.listeners.PiPCommandListener;
 import dev.mwhitney.listeners.PiPHandoffListener;
 import dev.mwhitney.listeners.PiPMediaTransferListener;
 import dev.mwhitney.listeners.PiPWindowListener;
+import dev.mwhitney.listeners.simplified.KeyPressListener;
 import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.PiPProperty.PropDefault;
@@ -88,8 +89,8 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     private DropTarget dndTarget;
     /** A DropTarget for drag 'n drop or clipboard media transfers that should be handed off to a new window. */
     private DropTarget dndTargetSecondary;
-    /** The KeyAdapter for all windows. */
-    private KeyAdapter keyAdapter;
+    /** The KeyListener for all windows. */
+    private KeyListener keyListener;
     /** The AttributeUpdateListener which listens for updates to each window's media's attributes. */
     private AttributeUpdateListener attributeListener;
     
@@ -109,7 +110,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     public PiPWindowListeners() {
         // Create custom flavor(s).
         try {
-            flavorWebURL   = new DataFlavor("application/x-java-url;class=java.net.URL");
+            flavorWebURL = new DataFlavor("application/x-java-url;class=java.net.URL");
         } catch (ClassNotFoundException e) {
             System.err.println("Error creating custom data flavors for drag and drop/copy and paste.");
         }
@@ -128,129 +129,126 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             public synchronized void drop(DropTargetDropEvent evt) { dropReceived(evt); }
         };
 
-        keyAdapter = new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                final int keyCode = e.getKeyCode();
-                final boolean shiftDown = (e.getModifiersEx() & KeyEvent.SHIFT_DOWN_MASK) != 0;
-                final boolean ctrlDown  = (e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK)  != 0;
-                final boolean altDown   = (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK)   != 0;
+        keyListener = (KeyPressListener) (e) -> {
+            final int keyCode = e.getKeyCode();
+            final boolean shiftDown = (e.getModifiersEx() & KeyEvent.SHIFT_DOWN_MASK) != 0;
+            final boolean ctrlDown  = (e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK)  != 0;
+            final boolean altDown   = (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK)   != 0;
 
-                switch (keyCode) {
-                // RELOCATE WINDOW ON SCREEN IF OFF
-                case KeyEvent.VK_L:
-                    if (ctrlDown) {
-                        // Enable size & pos locks. TODO Allow customization instead for this option in config. User can check select each they want to be able to enable.
-                        if (shiftDown)
-                            get().state().on(LOCKED_SIZE, LOCKED_POSITION);
-                        // Disable all locks.
-                        else if (altDown)
-                            get().state().off(LOCKED_SIZE, LOCKED_POSITION, LOCKED_FULLSCREEN, LOCKED_MEDIA);
-                        // Pop-up with lock selection options for user to decide.
-                        else new LockSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class)),
-                                get().state()).moveRelTo(get()).display();
-                    }
-                    else get().ensureOnScreen();
-                    break;
-                // SHOW KEYBOARD SHORTCUTS
-                case KeyEvent.VK_K:
-                    final BetterTextArea shortcutsComp = new BetterTextArea(Initializer.SHORTCUTS);
-                    TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
-                    break;
-                // SHOW WINDOW BORDERS
-                case KeyEvent.VK_B:
-                    get().flashBorder(null);
-                    break;
-                // OPEN LOCAL/CACHED FILE DIRECTORY
-                case KeyEvent.VK_O:
-                    if (!ctrlDown) break;
+            switch (keyCode) {
+            // RELOCATE WINDOW ON SCREEN IF OFF
+            case KeyEvent.VK_L:
+                if (ctrlDown) {
+                    // Enable size & pos locks. TODO Allow customization instead for this option in config. User can check select each they want to be able to enable.
+                    if (shiftDown)
+                        get().state().on(LOCKED_SIZE, LOCKED_POSITION);
+                    // Disable all locks.
+                    else if (altDown)
+                        get().state().off(LOCKED_SIZE, LOCKED_POSITION, LOCKED_FULLSCREEN, LOCKED_MEDIA);
+                    // Pop-up with lock selection options for user to decide.
+                    else new LockSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class)),
+                            get().state()).moveRelTo(get()).display();
+                }
+                else get().ensureOnScreen();
+                break;
+            // SHOW KEYBOARD SHORTCUTS
+            case KeyEvent.VK_K:
+                final BetterTextArea shortcutsComp = new BetterTextArea(Initializer.SHORTCUTS);
+                TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
+                break;
+            // SHOW WINDOW BORDERS
+            case KeyEvent.VK_B:
+                get().flashBorder(null);
+                break;
+            // OPEN LOCAL/CACHED FILE DIRECTORY
+            case KeyEvent.VK_O:
+                if (!ctrlDown) break;
 
-                    // Default to cache folder.
-                    String openSrc = Initializer.APP_CACHE_FOLDER;
-                    if (get().hasAttributedMedia()) {
-                        // Determine local media location (if any)
-                        if (get().getMedia().isCached())
-                            openSrc = get().getMedia().getCacheSrc();
-                        else if (get().getMedia().getAttributes().isLocal())
-                            openSrc = get().getMedia().getSrc();
-                    }
-                    // Open the cache folder or parent folder containing the media file.
+                // Default to cache folder.
+                String openSrc = Initializer.APP_CACHE_FOLDER;
+                if (get().hasAttributedMedia()) {
+                    // Determine local media location (if any)
+                    if (get().getMedia().isCached())
+                        openSrc = get().getMedia().getCacheSrc();
+                    else if (get().getMedia().getAttributes().isLocal())
+                        openSrc = get().getMedia().getSrc();
+                }
+                // Open the cache folder or parent folder containing the media file.
+                try {
+                    File openFile = new File(openSrc);
+                    if (openSrc.equals(Initializer.APP_CACHE_FOLDER))
+                        openFile.mkdirs();
+                    else
+                        openFile = openFile.getParentFile();
+                    Desktop.getDesktop().open(openFile);
+                } catch (IOException ioe) { ioe.printStackTrace(); }
+                break;
+            // PASTE MEDIA
+            case KeyEvent.VK_V:
+                if (ctrlDown) {
                     try {
-                        File openFile = new File(openSrc);
-                        if (openSrc.equals(Initializer.APP_CACHE_FOLDER))
-                            openFile.mkdirs();
-                        else
-                            openFile = openFile.getParentFile();
-                        Desktop.getDesktop().open(openFile);
-                    } catch (IOException ioe) { ioe.printStackTrace(); }
+                        clipboardPasted();
+                    } catch (InvalidTransferMediaException itme) { System.err.println(itme.getMessage()); }
+                }
+                break;
+            // GLOBAL MUTE
+            case KeyEvent.VK_M:
+                if (ctrlDown && shiftDown)
+                    PropertiesManager.mediator.propertyChanged(PiPProperty.GLOBAL_MUTED,
+                            String.valueOf(!PropertiesManager.mediator.propertyState(PiPProperty.GLOBAL_MUTED, Boolean.class)));
+                break;
+            // ADD NEW WINDOW
+            case KeyEvent.VK_A:
+                if (shiftDown) handoff(null);
+                break;
+            // RESTART/RELOAD
+            case KeyEvent.VK_R:
+                if (ctrlDown) {
+                    get().flashBorderEDT(PiPWindow.BORDER_OK);
+                    sendMediaCMD(PiPMediaCMD.RELOAD, (shiftDown ? "true" : "false"));
+                }
+                break;
+            // DELETE & CONTINUE (CLOSE MEDIA) OR DUPLICATE WINDOW
+            case KeyEvent.VK_D:
+                // All actions below require shift, return if not pressed.
+                if (!shiftDown || !get().hasMedia())
                     break;
-                // PASTE MEDIA
-                case KeyEvent.VK_V:
-                    if (ctrlDown) {
-                        try {
-                            clipboardPasted();
-                        } catch (InvalidTransferMediaException itme) { System.err.println(itme.getMessage()); }
-                    }
-                    break;
-                // GLOBAL MUTE
-                case KeyEvent.VK_M:
-                    if (ctrlDown && shiftDown)
-                        PropertiesManager.mediator.propertyChanged(PiPProperty.GLOBAL_MUTED,
-                                String.valueOf(!PropertiesManager.mediator.propertyState(PiPProperty.GLOBAL_MUTED, Boolean.class)));
-                    break;
-                // ADD NEW WINDOW
-                case KeyEvent.VK_A:
-                    if (shiftDown) handoff(null);
-                    break;
-                // RESTART/RELOAD
-                case KeyEvent.VK_R:
-                    if (ctrlDown) {
-                        get().flashBorderEDT(PiPWindow.BORDER_OK);
-                        sendMediaCMD(PiPMediaCMD.RELOAD, (shiftDown ? "true" : "false"));
-                    }
-                    break;
-                // DELETE & CONTINUE (CLOSE MEDIA) OR DUPLICATE WINDOW
-                case KeyEvent.VK_D:
-                    // All actions below require shift, return if not pressed.
-                    if (!shiftDown || !get().hasMedia())
-                        break;
-                    
-                    // Mark the media for deletion and continue to next case to close.
-                    if (ctrlDown)
-                        get().getMedia().markForDeletion();
-                    // Duplicate the window.
-                    else {
-                        // Create a new window.
-                        final PiPWindow dupeWindow = handoff(null);
-                        // Create READY hook and adjust size and location relative to current window.
-                        dupeWindow.state().hook(READY, true, () -> {
-                            dupeWindow.changeSize(get().getSize(), true);
-                            dupeWindow.setLocation(get().getX() + 40, get().getY() + 25);
-                            dupeWindow.ensureOnScreen();
-                        });
-                        // Set media, which eventually executes the above hook or unhooks it if the window fails to load.
-                        dupeWindow.setMedia(new PiPMedia(get().getMedia()));
-                        break;
-                    }
-                // CLOSE MEDIA
-                case KeyEvent.VK_C:
-                    if (ctrlDown) setWindowMedia(null);
-                    break;
-                // HIDE WINDOW
-                case KeyEvent.VK_H:
-                    if (ctrlDown && shiftDown)
-                        get().getListener().hideWindows();
-                    else if (ctrlDown && get().state().not(CLOSED))
-                        get().setVisible(false);
-                    break;
-                // CLOSE WINDOW(S)
-                case KeyEvent.VK_ESCAPE:
-                    if (shiftDown && TopDialog.showConfirm("Are you sure you want to close all windows?", "Clear Windows", JOptionPane.YES_NO_OPTION) == 0)
-                        get().getListener().clearWindows();
-                    else if (!shiftDown)
-                        get().requestClose();
+                
+                // Mark the media for deletion and continue to next case to close.
+                if (ctrlDown)
+                    get().getMedia().markForDeletion();
+                // Duplicate the window.
+                else {
+                    // Create a new window.
+                    final PiPWindow dupeWindow = handoff(null);
+                    // Create READY hook and adjust size and location relative to current window.
+                    dupeWindow.state().hook(READY, true, () -> {
+                        dupeWindow.changeSize(get().getSize(), true);
+                        dupeWindow.setLocation(get().getX() + 40, get().getY() + 25);
+                        dupeWindow.ensureOnScreen();
+                    });
+                    // Set media, which eventually executes the above hook or unhooks it if the window fails to load.
+                    dupeWindow.setMedia(new PiPMedia(get().getMedia()));
                     break;
                 }
+            // CLOSE MEDIA
+            case KeyEvent.VK_C:
+                if (ctrlDown) setWindowMedia(null);
+                break;
+            // HIDE WINDOW
+            case KeyEvent.VK_H:
+                if (ctrlDown && shiftDown)
+                    get().getListener().hideWindows();
+                else if (ctrlDown && get().state().not(CLOSED))
+                    get().setVisible(false);
+                break;
+            // CLOSE WINDOW(S)
+            case KeyEvent.VK_ESCAPE:
+                if (shiftDown && TopDialog.showConfirm("Are you sure you want to close all windows?", "Clear Windows", JOptionPane.YES_NO_OPTION) == 0)
+                    get().getListener().clearWindows();
+                else if (!shiftDown)
+                    get().requestClose();
+                break;
             }
         };
 
@@ -837,12 +835,12 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     }
     
     /**
-     * Retrieves the KeyAdapter listener used for keyboard inputs.
+     * Retrieves the {@link KeyListener} used for keyboard inputs.
      * 
-     * @return the KeyAdapter listener.
+     * @return the window-wide KeyListener.
      */
-    public KeyAdapter keyAdapter() {
-        return this.keyAdapter;
+    public KeyListener keyListener() {
+        return this.keyListener;
     }
     
     /**

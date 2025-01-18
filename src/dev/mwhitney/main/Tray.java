@@ -34,6 +34,7 @@ import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.resources.PiPAARes;
 import dorkbox.systemTray.Checkbox;
 import dorkbox.systemTray.Entry;
 import dorkbox.systemTray.Menu;
@@ -157,8 +158,8 @@ public class Tray implements PropertyListener {
         if (tray == null) throw new RuntimeException("Unable to get the system tray!");
         
         // Create Tray Images
-        trayImage   = Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/icon16.png"));
-        trayImage32 = Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/icon32.png"));
+        trayImage   = Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_APP_16));
+        trayImage32 = Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_APP_32));
         
         // Create Context Menu
         menu = tray.getMenu();
@@ -243,23 +244,23 @@ public class Tray implements PropertyListener {
         // Context Menu Item Configuration
         // Context Menu Item Icon Mappings
         imgMap = new HashMap<Entry, InvertibleImage>();
-        imgMap.put(aboutItem,          new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconInfo24.png"))));
-        imgMap.put(configItem,         new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconConfig32.png"))));
-        imgMap.put(globalItem,         new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconGlobe24.png"))));
-        imgMap.put(setAllPauseItem,    new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconPause24.png"))));
-        imgMap.put(setAllPlayItem,     new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconPlay24.png"))));
-        imgMap.put(setAllMuteItem,     new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconMute32.png"))));
-        imgMap.put(setAllUnmuteItem,   new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconUnmute32.png"))));
-        imgMap.put(setAllVolumeItem,   new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconAudio32.png"))));
-        imgMap.put(setAllPlaybackItem, new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconPlayback32.png"))));
-        imgMap.put(minAllWindowsItem,  new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconMinimize24.png"))));
-        imgMap.put(restAllWindowsItem, new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconRestore24.png"))));
-        imgMap.put(hideAllWindowsItem, new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconHide24.png"))));
-        imgMap.put(showAllWindowsItem, new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconShow24.png"))));
-        imgMap.put(addItem,            new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconAdd24.png"))));
-        imgMap.put(removeItem,         new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconRemove24.png"))));
-        imgMap.put(clearItem,          new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconClear24.png"))));
-        imgMap.put(exitItem,           new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource("/dev/mwhitney/images/iconExit24.png"))));
+        imgMap.put(aboutItem,          new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_INFO))));
+        imgMap.put(configItem,         new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_CONFIG))));
+        imgMap.put(globalItem,         new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_GLOBE))));
+        imgMap.put(setAllPauseItem,    new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_PAUSE))));
+        imgMap.put(setAllPlayItem,     new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_PLAY))));
+        imgMap.put(setAllMuteItem,     new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_MUTE))));
+        imgMap.put(setAllUnmuteItem,   new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_UNMUTE))));
+        imgMap.put(setAllVolumeItem,   new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_AUDIO))));
+        imgMap.put(setAllPlaybackItem, new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_PLAYBACK))));
+        imgMap.put(minAllWindowsItem,  new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_MINIMIZE))));
+        imgMap.put(restAllWindowsItem, new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_RESTORE))));
+        imgMap.put(hideAllWindowsItem, new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_HIDE))));
+        imgMap.put(showAllWindowsItem, new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_SHOW))));
+        imgMap.put(addItem,            new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_ADD))));
+        imgMap.put(removeItem,         new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_REMOVE))));
+        imgMap.put(clearItem,          new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_CLEAR))));
+        imgMap.put(exitItem,           new InvertibleImage(Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(PiPAARes.ICON_TRAY_EXIT))));
         refreshUIThemeIcons();
         
         // Add Menu Items to Global Menu within the Context Menu

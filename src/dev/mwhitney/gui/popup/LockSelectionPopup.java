@@ -8,15 +8,14 @@ import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_SIZE;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import dev.mwhitney.gui.PiPWindowState;
 import dev.mwhitney.gui.components.BetterButton;
+import dev.mwhitney.listeners.simplified.KeyPressListener;
+import dev.mwhitney.listeners.simplified.MouseClickListener;
+import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 
 /**
@@ -77,38 +76,29 @@ public class LockSelectionPopup extends StatedSelectionPopup {
     
     @Override
     protected void setupListeners() {
-        this.getContentPane().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // Close pop-up on RMB click.
-                if (e.getButton() == MouseEvent.BUTTON3) close();
-            }
+        this.getContentPane().addMouseListener((MouseClickListener) (e) -> {
+            // Close pop-up on RMB click.
+            if (e.getButton() == MouseEvent.BUTTON3) close();
         });
-        this.addWindowFocusListener(new WindowAdapter() {
-            @Override
-            public void windowLostFocus(WindowEvent e) { close(); }
-        });
-        this.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e)         {
-                // Determine which button the key press corresponds to.
-                final int button = switch (e.getKeyCode()) {
-                case KeyEvent.VK_1, KeyEvent.VK_S -> 0;
-                case KeyEvent.VK_2, KeyEvent.VK_P -> 1;
-                case KeyEvent.VK_3, KeyEvent.VK_F -> 2;
-                case KeyEvent.VK_4, KeyEvent.VK_M -> 3;
-                // Ignore other numbers -- More likely to be hit by mistake while interacting; it shouldn't close the window.
-                case KeyEvent.VK_5, KeyEvent.VK_6, KeyEvent.VK_7, KeyEvent.VK_8, KeyEvent.VK_9, KeyEvent.VK_0 -> -2;
-                default -> -1;
-                };
-                
-                // Should get called from the button, unless key doesn't correspond to a button.
-                if (button == -1) close();
-                else if (button >= 0) {
-                    // Fire action listeners. ActionEvent cannot be null here due to listener logic.
-                    for (final ActionListener al : buttons[button].getActionListeners())
-                        al.actionPerformed(new ActionEvent(buttons[button], ActionEvent.ACTION_PERFORMED, null));
-                }
+        this.addWindowFocusListener((WindowFocusLostListener) (e) -> close());
+        this.addKeyListener((KeyPressListener) (e) -> {
+            // Determine which button the key press corresponds to.
+            final int button = switch (e.getKeyCode()) {
+            case KeyEvent.VK_1, KeyEvent.VK_S -> 0;
+            case KeyEvent.VK_2, KeyEvent.VK_P -> 1;
+            case KeyEvent.VK_3, KeyEvent.VK_F -> 2;
+            case KeyEvent.VK_4, KeyEvent.VK_M -> 3;
+            // Ignore other numbers -- More likely to be hit by mistake while interacting; it shouldn't close the window.
+            case KeyEvent.VK_5, KeyEvent.VK_6, KeyEvent.VK_7, KeyEvent.VK_8, KeyEvent.VK_9, KeyEvent.VK_0 -> -2;
+            default -> -1;
+            };
+            
+            // Should get called from the button, unless key doesn't correspond to a button.
+            if (button == -1) close();
+            else if (button >= 0) {
+                // Fire action listeners. ActionEvent cannot be null here due to listener logic.
+                for (final ActionListener al : buttons[button].getActionListeners())
+                    al.actionPerformed(new ActionEvent(buttons[button], ActionEvent.ACTION_PERFORMED, null));
             }
         });
     }
