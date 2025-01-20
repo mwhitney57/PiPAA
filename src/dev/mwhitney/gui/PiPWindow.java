@@ -1540,7 +1540,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         
         // Download Media Using Passed Arguments.
         try {
-            System.out.println("Media DL CMD executing...");
+            System.out.println("Media DL CMD Executing:\n---> " + String.join(" ", args) + "\n");
             Binaries.exec(args);
             System.out.println("Media DL CMD should be done.");
         } catch (IOException | InterruptedException e) { e.printStackTrace(); return null; }

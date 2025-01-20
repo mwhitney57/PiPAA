@@ -288,12 +288,12 @@ public class PiPMediaAttributor implements PropertyListener {
         // Adjust list to only contain the desired outputs.
         cmdOuts.remove(0);  // Removes extension output used for audio-only test.
         cmdOuts.remove(0);  // Removes platform-specific attribution output.
-        if (audioMedia) {   // Removes audio-only outputs.
-            cmdOuts.remove(cmdOuts.size() - 1);
-            cmdOuts.remove(cmdOuts.size() - 1);
-        } else {            // Removes regular, non-audio-only outputs.
+        if (audioMedia) {   // Removes regular, non-audio-only outputs.
             cmdOuts.remove(0);
             cmdOuts.remove(0);
+        } else {            // Removes audio-only outputs.
+            cmdOuts.remove(cmdOuts.size() - 1);
+            cmdOuts.remove(cmdOuts.size() - 1);
         }
         // List should now be of size() 2.
         
@@ -437,8 +437,8 @@ public class PiPMediaAttributor implements PropertyListener {
                     webArgs.add("-S");
                     webArgs.add("aext");
                 }
-//                platformArgs.add("--ffmpeg-location");
-//                platformArgs.add(Binaries.FFMPEG_LOC_ARG);
+                webArgs.add("--ffmpeg-location");       // yt-dlp can use to help select the best format.
+                webArgs.add(Binaries.FFMPEG_LOC_ARG);
                 webArgs.add("--no-playlist");
                 webArgs.add("-I");
                 webArgs.add("1");
@@ -457,6 +457,7 @@ public class PiPMediaAttributor implements PropertyListener {
             break;
         }
         
+//        System.out.println("Media Attribution Web Args:\n---> " + String.join(" ", webArgs) + "\n");    // Debug
         return webArgs;
     }
     

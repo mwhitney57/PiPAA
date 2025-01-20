@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import dev.mwhitney.exceptions.InvalidMediaExtensionException;
 import dev.mwhitney.main.PiPEnum;
+import dev.mwhitney.util.PiPAAUtils;
 
 /**
  * File extensions for different media types and containers. All extensions
@@ -109,21 +110,28 @@ public enum MediaExt implements PiPEnum<MediaExt> {
     }
     
     /**
-     * Gets the MediaExt values as a single String, separated by the passed character.
+     * Gets the MediaExt values as a single String, separated by the passed
+     * {@link CharSequence}.
+     * 
+     * @param separator - the {@link CharSequence} to separate each MediaExt value.
+     * @return a String with the values, separated by the passed
+     *         {@link CharSequence}.
+     * @since 0.9.4
+     */
+    public static String values(final CharSequence separator) {
+        return String.join(separator, PiPAAUtils.toStringArray(MediaExt.class));
+    }
+    
+    /**
+     * Gets the MediaExt values as a single String, separated by the passed
+     * character.
      * 
      * @param separator - the char to separate each MediaExt value.
      * @return a String with the values, separated by the passed char.
      * @since 0.9.4
+     * @see {@link #values(CharSequence)} for using multiple separation characters.
      */
-    public static String values(char separator) {
-        final MediaExt[] exts = MediaExt.values();
-        final StringBuilder vals = new StringBuilder();
-        for (int i = 0; i < exts.length; i++) {
-            vals.append(exts[i]);
-            // Only append separator afterward if not last element.
-            if (i < exts.length - 1)
-                vals.append(separator);
-        }
-        return vals.toString();
+    public static String values(final char separator) {
+        return values(String.valueOf(separator));
     }
 }

@@ -2,6 +2,7 @@ package dev.mwhitney.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -41,6 +42,15 @@ public class PiPAAUtils {
      */
     public static String slashFix(final String path) {
         return path.replace('/', '\\');
+    }
+    
+    /**
+     * Gets an array this enum's values as String objects.
+     * 
+     * @return a String[] of this enum's values.
+     */
+    public static String[] toStringArray(final Class<? extends Enum<?>> e) {
+        return Arrays.stream(e.getEnumConstants()).map(Enum::toString).toArray(String[]::new);
     }
     
     /**
