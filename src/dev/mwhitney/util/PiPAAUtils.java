@@ -54,6 +54,35 @@ public class PiPAAUtils {
     }
     
     /**
+     * Checks to see if the passed value is present in the passed array.
+     * <p>
+     * Since this method performs an <code>==</code> comparison, only the same
+     * objects in memory will output <code>true</code> for this method. Therefore,
+     * it is good for comparing primitive types or static final types such as enums.
+     * <p>
+     * This method will return <code>false</code> if either of the passed arguments
+     * is <code>null</code>.
+     * 
+     * @param <A>   - the type of the passed object and object array.
+     * @param value - the value to check for in the passed array.
+     * @param array - the array to check for the value in.
+     * @return <code>true</code> if the value is in the array; <code>false</code>
+     *         otherwise.
+     * @see {@link org.apache.commons.lang3.ArrayUtils#contains(Object[], Object)}
+     *      for similar logic.
+     */
+    public static <A> boolean inArray(final A value, final A[] array) {
+        // Return false if either argument is null.
+        if (array == null || value == null) return false;
+        
+        // Return true for the first match found, if any.
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) return true;
+        }
+        return false;
+    }
+    
+    /**
      * Returns a "human readable" representation of the passed byte count long.
      * This method was discovered as a replacement for Apache Commons IO's
      * <code>FileUtils.byteCountToDisplaySize(long)</code>, since that

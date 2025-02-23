@@ -74,6 +74,7 @@ import dev.mwhitney.media.PiPMediaAttributor.Flag;
 import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.util.UnsetBool;
+import dev.mwhitney.util.selection.ReloadSelection.ReloadSelections;
 
 /**
  * The listeners for PiPWindows and their components, especially those relating
@@ -205,7 +206,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             case KeyEvent.VK_R:
                 if (ctrlDown) {
                     get().flashBorderEDT(PiPWindow.BORDER_OK);
-                    sendMediaCMD(PiPMediaCMD.RELOAD, (shiftDown ? "true" : "false"));
+                    sendMediaCMD(PiPMediaCMD.RELOAD, (shiftDown ? ReloadSelections.QUICK : ReloadSelections.REGULAR));
                 }
                 break;
             // DELETE & CONTINUE (CLOSE MEDIA) OR DUPLICATE WINDOW

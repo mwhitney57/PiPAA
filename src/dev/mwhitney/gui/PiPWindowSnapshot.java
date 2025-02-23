@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import dev.mwhitney.main.PiPEnum;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
@@ -29,7 +30,7 @@ public class PiPWindowSnapshot {
      * Data available for capture within a snapshot.
      * The value {@link SnapshotData#ALL} includes all available snapshot data.
      */
-    public enum SnapshotData {
+    public enum SnapshotData implements PiPEnum<SnapshotData> {
         /**
          * All available snapshot data.
          * Does not refer to a specific piece of data itself.
@@ -55,9 +56,18 @@ public class PiPWindowSnapshot {
 
     /**
      * The internal snapshot data array which dictates what data types are captured
-     * by this snapshot
+     * by this snapshot.
      */
     private SnapshotData[] data;
+    /**
+     * The internal snapshot data array which dictates what data types were captured
+     * by this snapshot after {@link #capture(PiPWindow)} was called.
+     * <p>
+     * This may differ from {@link #data}, which simply designates what data
+     * <i>can</i> be captured. If certain data was not able to be captured, it will
+     * not be present here.
+     */
+    private SnapshotData[] captured;
     /** The position of the media player. */
     private float   playerPosition;
     /** The playback rate of the media player. */
@@ -156,6 +166,33 @@ public class PiPWindowSnapshot {
     private boolean capturesAll() {
         return ArrayUtils.contains(this.data, SnapshotData.ALL);
     }
+    
+    /**
+     * Checks if this snapshot has captured all of the passed {@link SnapshotData}
+     * types.
+     * 
+     * @param data - one or more {@link SnapshotData} types to check.
+     * @return <code>true</code> if this snapshot has captured all of the passed
+     *         types.
+     */
+    private boolean captured(final SnapshotData... data) {
+        if (capturedAll()) return true;
+        for (final SnapshotData dataItem : data) {
+            if (!ArrayUtils.contains(this.captured, dataItem))
+                return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Checks if this snapshot has captured {@link SnapshotData#ALL} data types.
+     * 
+     * @return <code>true</code> if this snapshot captured {@link SnapshotData#ALL}
+     *         data types.
+     */
+    private boolean capturedAll() {
+        return ArrayUtils.contains(this.captured, SnapshotData.ALL);
+    }
 
     /**
      * Takes a snapshot of the passed {@link PiPWindow}, capturing available data of
@@ -165,11 +202,13 @@ public class PiPWindowSnapshot {
      * @return this PiPWindowSnapshot instance.
      */
     public PiPWindowSnapshot capture(final PiPWindow window) {
+        final ArrayList<SnapshotData> capped = new ArrayList<>();
         if (this.captures(SnapshotData.WINDOW)) {
             setWindowX(window.getX());
             setWindowY(window.getY());
             setWindowWidth(window.getInnerWidth());
             setWindowHeight(window.getInnerHeight());
+            capped.add(SnapshotData.WINDOW);
         }
         final PiPMedia media = window.getMedia();
         if (this.captures(SnapshotData.MEDIA_SOURCES) && window.hasMedia()) {
@@ -177,9 +216,11 @@ public class PiPWindowSnapshot {
             setMediaCacheSrc(media.getCacheSrc());
             setMediaTrimSrc(media.getTrimSrc());
             setMediaConvertSrc(media.getConvertSrc());
+            capped.add(SnapshotData.MEDIA_SOURCES);
         }
         if (this.captures(SnapshotData.MEDIA_ATTRIBUTES) && window.hasAttributedMedia()) {
             setMediaAttributes(media.getAttributes());
+            capped.add(SnapshotData.MEDIA_ATTRIBUTES);
         }
         final MediaPlayer mediaPlayer = window.getMediaPlayer();
         if (this.captures(SnapshotData.PLAYER) && mediaPlayer != null) {
@@ -188,13 +229,20 @@ public class PiPWindowSnapshot {
             setPlayerVolume(mediaPlayer.audio().volume());
             setPlayerMuted(mediaPlayer.audio().isMute());
             setPlayerPlaying(mediaPlayer.status().isPlaying());
+            capped.add(SnapshotData.PLAYER);
         }
+        
+        // Update internal captured array to reflect what succeeded.
+        this.captured = capped.toArray(new SnapshotData[0]);
         return this;
     }
 
     /**
      * Applies the captured data within this snapshot to the passed
      * {@link PiPWindow}.
+     * <p>
+     * Will not apply anything if this snapshot failed to capture the corresponding
+     * data type, regardless of how this snapshot was configured.
      * <p>
      * <b>Important:</b> Since this method makes Swing calls, it <b>should be called
      * from the EDT</b>.
@@ -204,51 +252,65 @@ public class PiPWindowSnapshot {
      */
     public PiPWindowSnapshot apply(final PiPWindow window) {
         Objects.requireNonNull(window, "Cannot apply window snapshot to <null> window.");
-        window.setLocation(this.windowX, this.windowY);
-        window.changeSize(new Dimension(this.windowWidth, this.windowHeight));
+        if (this.captured(SnapshotData.WINDOW)) {
+            window.setLocation(this.windowX, this.windowY);
+            window.changeSize(new Dimension(this.windowWidth, this.windowHeight));
+        }
         return this;
     }
     /**
      * Applies the captured data within this snapshot to the passed
      * {@link PiPMedia}.
+     * <p>
+     * Will not apply anything if this snapshot failed to capture the corresponding
+     * data type, regardless of how this snapshot was configured.
      * 
      * @param media - the {@link PiPMedia} to apply this snapshot to.
      * @return this PiPWindowSnapshot instance.
      */
     public PiPWindowSnapshot apply(final PiPMedia media) {
         Objects.requireNonNull(media, "Cannot apply window snapshot to <null> window media.");
-        if (this.captures(SnapshotData.MEDIA_SOURCES)) {
+        if (this.captured(SnapshotData.MEDIA_SOURCES)) {
             media.setSrc(this.mediaSrc);
             media.setCacheSrc(this.mediaCacheSrc);
             media.setTrimSrc(this.mediaTrimSrc);
             media.setConvSrc(this.mediaConvertSrc);
         }
-        if (this.captures(SnapshotData.MEDIA_ATTRIBUTES)) {
+        if (this.captured(SnapshotData.MEDIA_ATTRIBUTES)) {
             media.setAttributes(this.mediaAttributes);
             if (this.mediaAttributes != null) media.setAttributed();
         }
         return this;
     }
+
     /**
      * Applies the captured data within this snapshot to the passed
      * {@link MediaPlayer}.
+     * <p>
+     * Will not apply anything if this snapshot failed to capture the corresponding
+     * data type, regardless of how this snapshot was configured.
      * 
      * @param mediaPlayer - the {@link MediaPlayer} to apply this snapshot to.
      * @return this PiPWindowSnapshot instance.
      */
     public PiPWindowSnapshot apply(final MediaPlayer mediaPlayer) {
         Objects.requireNonNull(mediaPlayer, "Cannot apply window snapshot to <null> window media player.");
-        mediaPlayer.controls().setPosition(this.playerPosition);
-        mediaPlayer.controls().setRate(this.playerRate);
-        mediaPlayer.audio().setVolume(this.playerVolume);
-        mediaPlayer.audio().setMute(this.playerMuted);
-        mediaPlayer.controls().setPause(!this.playerPlaying);
+        if (this.captured(SnapshotData.PLAYER)) {
+            mediaPlayer.controls().setPosition(this.playerPosition);
+            mediaPlayer.controls().setRate(this.playerRate);
+            mediaPlayer.audio().setVolume(this.playerVolume);
+            mediaPlayer.audio().setMute(this.playerMuted);
+            mediaPlayer.controls().setPause(!this.playerPlaying);
+        }
         return this;
     }
 
     /**
      * Applies all types of available capture data within this snapshot to the
      * passed {@link PiPWindow} and its individual parts.
+     * <p>
+     * Will not apply certain data if this snapshot failed to capture that data
+     * type, regardless of how this snapshot was configured.
      * 
      * @param window - the {@link PiPWindow} to apply this snapshot to.
      */

@@ -76,9 +76,13 @@ import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
 import dev.mwhitney.media.PiPMediaAttributor.Flag;
 import dev.mwhitney.media.PiPMediaCMD;
+import dev.mwhitney.media.PiPMediaCMDArgs;
 import dev.mwhitney.media.WebMediaFormat;
 import dev.mwhitney.resources.PiPAARes;
 import dev.mwhitney.util.PiPAAUtils;
+import dev.mwhitney.util.selection.ReloadSelection;
+import dev.mwhitney.util.selection.ReloadSelection.ReloadSelections;
+import dev.mwhitney.util.selection.Selector;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
 import uk.co.caprica.vlcj.media.AudioTrackInfo;
@@ -183,7 +187,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             @Override
             public PiPWindow get() { return PiPWindow.this; }
             @Override
-            public void sendMediaCMD(PiPMediaCMD cmd, String... args) {
+            public <C> void sendMediaCMD(PiPMediaCMD cmd, @SuppressWarnings("unchecked") C... args) {
                 if (cmd != null) mediaCommand(cmd, args);
             }
         };
@@ -209,15 +213,19 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         });
         // Establish Permanent Full Screen Border Hooks
         state.hook(FULLSCREEN, true,  (PermanentRunnable) () -> {
-            if (state.is(PLAYER_SWING))
-                SwingUtilities.invokeLater(() -> setExtendedState(JFrame.MAXIMIZED_BOTH));
-            else mediaPlayer.mediaPlayer().fullScreen().set(true);
+            // Only use media player to set fullscreen if VLC video.
+            if (state.is(PLAYER_VLC))
+                mediaPlayer.mediaPlayer().fullScreen().set(true);
+            // Use standard fullscreen approach for other players, even combo player.
+            else SwingUtilities.invokeLater(() -> setExtendedState(JFrame.MAXIMIZED_BOTH));
             SwingUtilities.invokeLater(() -> contentPane.setBorder(null));  // Must be placed after mediaPlayer call to prevent occasional failure.
         });
         state.hook(FULLSCREEN, false, (PermanentRunnable) () -> {
-            if (state.is(PLAYER_SWING))
-                SwingUtilities.invokeLater(() -> setExtendedState(JFrame.NORMAL));
-            else mediaPlayer.mediaPlayer().fullScreen().set(false);
+            // Only use media player to set fullscreen if VLC video.
+            if (state.is(PLAYER_VLC))
+                mediaPlayer.mediaPlayer().fullScreen().set(false);
+            // Use standard fullscreen approach for other players, even combo player.
+            else SwingUtilities.invokeLater(() -> setExtendedState(JFrame.NORMAL));
             SwingUtilities.invokeLater(() -> contentPane.setBorder(fadingBorder));
         });
 
@@ -770,7 +778,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                             if (setRemoteMedia(mediaCopy.getSrc(), mediaCopy, true, true) != null) {
                                 flashBorderEDT(BORDER_OK);
                                 media.setCacheSrc(mediaCopy.getCacheSrc());
-                                mediaCommand(PiPMediaCMD.RELOAD, "true");
+                                mediaCommand(PiPMediaCMD.RELOAD, ReloadSelections.QUICK);
                             }
                         }
                     }
@@ -812,22 +820,49 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
     }
 
     /**
-     * Executes a media command based on the passed PiPMediaCMD.
-     * This method will return a boolean value which is
-     * dependent upon the success of the command execution.
-     * If this method is called from the EDT, it will automatically
-     * return <code>true</code>, since it would otherwise require
-     * halting the EDT and awaiting the execution of the command in order
-     * to know if it succeeded. Therefore, <b>to know if the command executed
-     * successfully, call this method off of the EDT</b>.
+     * Executes a media command based on the passed PiPMediaCMD. Shorthand for
+     * wrapping the arguments in an {@link PiPMediaCMDArgs} instance and calling
+     * {@link #mediaCommand(PiPMediaCMD, PiPMediaCMDArgs)}. Check out that method
+     * for full documentation.
      * 
-     * @param cmd  - a PiPMediaCMD to execute.
-     * @param args - a String[] of arguments to go with the command.
-     * @return <code>true</code> if the command executed successfully; <code>false</code> otherwise.
+     * @param <C>  - the type of the argument(s).
+     * @param cmd  - a {@link PiPMediaCMD} to execute.
+     * @param args - one or more arguments to go with the command.
+     * @return <code>true</code> if the command executed successfully;
+     *         <code>false</code> otherwise.
+     * @see {@link #mediaCommand(PiPMediaCMD, PiPMediaCMDArgs)} for full method
+     *      documentation.
      */
-    private boolean mediaCommand(PiPMediaCMD cmd, String... args) {
+    @SafeVarargs
+    private <C> boolean mediaCommand(PiPMediaCMD cmd, C... args) {
+        return mediaCommand(cmd, new PiPMediaCMDArgs<>(args));
+    }
+    
+    /**
+     * Executes a media command based on the passed PiPMediaCMD. This method will
+     * return a boolean value which is dependent upon the success of the command
+     * execution. If this method is called from the EDT, it will automatically
+     * return <code>true</code>, since it would otherwise require halting the EDT
+     * and awaiting the execution of the command in order to know if it succeeded.
+     * Therefore, <b>to know if the command executed successfully, call this method
+     * off of the EDT</b>.
+     * 
+     * @param cmd     - a {@link PiPMediaCMD} to execute.
+     * @param cmdArgs - a {@link PiPMediaCMDArgs} object containing any arguments
+     *                that go with the command.
+     * @return <code>true</code> if the command executed successfully;
+     *         <code>false</code> otherwise.
+     * @see {@link #mediaCommand(PiPMediaCMD, Object...)} for an easy way to pass
+     *      arguments without needing to explicitly call the {@link PiPMediaCMDArgs}
+     *      constructor.
+     */
+    private boolean mediaCommand(PiPMediaCMD cmd, PiPMediaCMDArgs<?> cmdArgs) {
         final Supplier<Boolean> cmdCode = () -> {
-            final boolean anyArgs = (args != null && args.length > 0);
+//            System.out.println(Objects.toString(cmdArgs, "<null cmd args>"));   //Debug - Print arguments.
+            // Determine if there are any arguments and if they are Strings.
+            final boolean anyArgs   = cmdArgs != null && !cmdArgs.isEmpty();
+            final String[] args     = (anyArgs && cmdArgs.isOfType(String.class) ? cmdArgs.raw().toArray(new String[0]) : null);
+            final boolean strArgs   = args != null;
             
             switch (cmd) {
             case SET_SRC: {
@@ -933,7 +968,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 break;
             case PLAY:
                 // Option Arguments (T/F): [0]=Flash Borders (DEFAULT: false)
-                if (anyArgs && args[0] != null && Boolean.valueOf(args[0]))
+                if (strArgs && args[0] != null && Boolean.valueOf(args[0]))
                     flashBorderEDT(BORDER_OK);
                 
                 state.off(MANUALLY_STOPPED, MANUALLY_PAUSED);
@@ -941,9 +976,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 break;
             case PAUSE:
                 // Option Arguments (T/F): [0]=Flash Borders (DEFAULT: false), [1]=Manual (NO DEFAULT)
-                if (anyArgs && args[0] != null && Boolean.valueOf(args[0]))
+                if (strArgs && args[0] != null && Boolean.valueOf(args[0]))
                     flashBorderEDT(BORDER_ERROR);
-                if (anyArgs && args.length > 1 && args[1] != null)
+                if (strArgs && args.length > 1 && args[1] != null)
                     state.set(MANUALLY_PAUSED, Boolean.valueOf(args[1]));
                 
                 // Using setPause(boolean), as pause() inverts the current pause state.
@@ -973,7 +1008,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             case MUTE:
                 // Optional Argument: [0]=Locally Called (DEFAULT: true)
                 // No Argument Provided or Argument is true.
-                if (!anyArgs || Boolean.valueOf(args[0]))
+                if (!strArgs || Boolean.valueOf(args[0]))
                     state.on(LOCALLY_MUTED);
                 
                 mediaPlayer.mediaPlayer().audio().setMute(true);
@@ -981,7 +1016,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             case UNMUTE:
                 // Optional Argument: [0]=Locally Called (DEFAULT: true)
                 // No Argument Provided or Argument is true.
-                if (!anyArgs || Boolean.valueOf(args[0]))
+                if (!strArgs || Boolean.valueOf(args[0]))
                     state.off(LOCALLY_MUTED);
                 
                 if (state.not(LOCALLY_MUTED) && !propertyState(PiPProperty.GLOBAL_MUTED, Boolean.class))
@@ -1023,7 +1058,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     return false;
                 
                 // Expected Arguments: [0]=Mouse PositionX, [1]=Mouse PositionY, [2]=Mouse PositionXRel, [3]=Mouse PositionYRel
-                if (!anyArgs) {
+                if (!strArgs) {
                     ((StretchIcon) imgLabel.getIcon()).stoppedPan();
                 } else {
                     ((StretchIcon) imgLabel.getIcon()).pan(Integer.valueOf(args[0]), Integer.valueOf(args[1]));
@@ -1034,35 +1069,46 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 if (state.not(LOCKED_FULLSCREEN)) state.toggle(FULLSCREEN);
                 break;
             case RELOAD:
-                // Optional Argument: [0]=Preserve Attributes (DEFAULT: false)
-                final boolean preserve = (anyArgs && Boolean.valueOf(args[0]));
+                // Optional Argument: [0+]=ReloadSelections OR SnapshotData -- Check for valid argument types.
+                final boolean selectionsArgs = anyArgs && cmdArgs.isOfType(ReloadSelections.class);
+                final boolean dataArgs       = anyArgs && cmdArgs.isOfType(SnapshotData.class);
+                // Create Selector -- Default to REGULAR, but change depending on argument type.
+                final Selector<ReloadSelections> selector = Selector.from(ReloadSelections.REGULAR);
+                if (selectionsArgs) selector.select(cmdArgs.arg(0, ReloadSelections.class));
+                if (dataArgs) selector.select(ReloadSelections.CUSTOM);
                 
-                // Temporarily store parts of media before they get cleared.
+                // Using VLC media player?
                 final boolean vlc = (state.not(PLAYER_SWING) && mediaPlayerValid());
-                final PiPWindowSnapshot snapshot = new PiPWindowSnapshot(!vlc, (vlc ? SnapshotData.ALL : SnapshotData.PLAYER)).capture(this);
+                
+                // Determine final ReloadSelection using selector.
+                final ReloadSelection selection = (selector.selected(ReloadSelections.CUSTOM)
+                        ? new ReloadSelection(cmdArgs.argsAs(new SnapshotData[0]))
+                        : new ReloadSelection(selector.selection()));
+                // Capture snapshot -- Use Data Args if Present, Otherwise Default to Regular/String Arguments
+                final PiPWindowSnapshot snapshot = new PiPWindowSnapshot(selection.filteredData(vlc)).capture(this);
                 
                 // Close media before setting it again.
                 mediaCommand(PiPMediaCMD.CLOSE);
                 
-                // Create new media and potentially preserve previous attributes.
+                // Create new media and potentially preserve previous attributes. Preserve regular media source at a minimum since it's a reload.
                 final PiPMedia relMedia = new PiPMedia(snapshot.getMediaSrc());
-                if (preserve) {
+                if (selection.shouldApplyMedia()) {
                     snapshot.apply(relMedia);
                     // Mark Media for Deletion Upon Close if Cache is Disabled
-                    if (!relMedia.getAttributes().isLocal() && relMedia.isCached() && propertyState(PiPProperty.DISABLE_CACHE, Boolean.class))
+                    if (relMedia.isCached() && propertyState(PiPProperty.DISABLE_CACHE, Boolean.class))
                         relMedia.markForDeletion();
                 }
                 // Only set source again if entire window is NOT Closing/Crashed.
                 if (state.not(CLOSING, CRASHED)) {
                     // Setup Hook Before Setting Media
                     // Preserve aspects of media player and window after ready.
-                    state.hookIf(preserve, READY, true, () -> {
+                    state.hookIf(selection.shouldApplyHook(), READY, true, () -> {
                         System.out.println("Executing ready hook.");
                         // Ensure window is not closing media, though this shouldn't be an issue.
                         if (state.not(CLOSING_MEDIA)) {
                             // Run after window ready.
                             SwingUtilities.invokeLater(() -> snapshot.apply(this));
-                            if (vlc) snapshot.apply(getMediaPlayer());
+                            if (vlc) snapshot.apply(getMediaPlayer());  // Only apply if using VLC player.
                         }
                     });
                     
@@ -1073,7 +1119,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             case CLOSE:
                 System.out.println("Got req to close media.");
                 titleStatusUpdate("[Closing...]");
-                final boolean replacing = (anyArgs    ? Boolean.valueOf(args[0])    : false);
+                final boolean replacing = (strArgs    ? Boolean.valueOf(args[0])    : false);
                 final boolean marked    = (hasMedia() ? media.isMarkedForDeletion() : false);
                 final PiPWindowSnapshot srcSnap = new PiPWindowSnapshot(SnapshotData.MEDIA_SOURCES).capture(this);
                 final boolean hasCacheSrc = srcSnap.hasMediaCacheSrc(),
@@ -1670,8 +1716,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
 //        System.out.println(mediaPlayer.mediaPlayer().media().meta().get(Meta.ARTWORK_URL));
         mediaPlayer.mediaPlayer().media().meta().set(Meta.ARTWORK_URL,
                 artLocation.startsWith("file:///") ? artLocation : "file:///" + artLocation);
-        mediaPlayer.mediaPlayer().media().meta().save();
-        mediaCommand(PiPMediaCMD.RELOAD);
+        if (mediaPlayer.mediaPlayer().media().meta().save())
+            mediaCommand(PiPMediaCMD.RELOAD, SnapshotData.PLAYER, SnapshotData.MEDIA_SOURCES, SnapshotData.MEDIA_ATTRIBUTES);
+        else
+            EasyTopDialog.showMsg(this, "Could not save artwork to media.",
+                    PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), true);
     }
     
     /**
