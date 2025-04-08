@@ -114,6 +114,11 @@ public class PiPWindowState {
          */
         CONTROLS_MOUSE,
         /**
+         * Whether the window's VLC player is configured for hardware acceleration.
+         * Cannot be turned OFF (false) once set to ON (true).
+         */
+        HW_ACCELERATION,
+        /**
          * Whether the window's VLC player is configured for hardware acceleration and
          * use of NVIDIA's RTX Video Super Resolution feature.
          * Cannot be turned OFF (false) once set to ON (true).
@@ -218,6 +223,10 @@ public class PiPWindowState {
      * Enabled by default.
      */
     private boolean controlsMouse = true;
+    /**
+     * A boolean for whether or not the VLC player uses hardware acceleration.
+     */
+    private boolean hwAcceleration;
     /**
      * A boolean for whether or not the VLC player uses RTX Video Super Resolution.
      */
@@ -434,10 +443,11 @@ public class PiPWindowState {
         case LOCKED_MEDIA      -> this.lockedMedia      = val;
         case LOCKED_FULLSCREEN -> this.lockedFullscreen = val;
         // Permanent State Property Changes
-        case RTX_SUPER_RES    -> this.rtxSuperRes = (val ? true : this.rtxSuperRes);
-        case CRASHED          -> this.crashed     = (val ? true : this.crashed);
-        case CLOSING          -> this.closing     = (val ? true : this.closing);
-        case CLOSED           -> this.closed      = (val ? true : this.closed);
+        case HW_ACCELERATION  -> this.hwAcceleration = (val ? true : this.hwAcceleration);
+        case RTX_SUPER_RES    -> this.rtxSuperRes    = (val ? true : this.rtxSuperRes);
+        case CRASHED          -> this.crashed        = (val ? true : this.crashed);
+        case CLOSING          -> this.closing        = (val ? true : this.closing);
+        case CLOSED           -> this.closed         = (val ? true : this.closed);
         }
         CompletableFuture.runAsync(() -> runHooks(prop, val));
     }
@@ -457,6 +467,7 @@ public class PiPWindowState {
         case CONTROLS          ->  this.controls;
         case CONTROLS_KEY      ->  this.controlsKey;
         case CONTROLS_MOUSE    ->  this.controlsMouse;
+        case HW_ACCELERATION   ->  this.hwAcceleration;
         case RTX_SUPER_RES     ->  this.rtxSuperRes;
         case FULLSCREEN        ->  this.fullscreen;
         case LOADING           ->  this.loading;

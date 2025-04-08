@@ -1,5 +1,9 @@
 package dev.mwhitney.main;
 
+import static dev.mwhitney.resources.PiPAARes.APP_BIN_FOLDER;
+import static dev.mwhitney.resources.PiPAARes.APP_BUILD;
+import static dev.mwhitney.resources.PiPAARes.VLC_PLUGINS_FOLDER;
+
 import java.awt.Insets;
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +24,7 @@ import com.sun.jna.NativeLibrary;
 
 import dev.mwhitney.exceptions.ExtractionException;
 import dev.mwhitney.gui.PiPWindowManager;
+import dev.mwhitney.gui.binds.BindController;
 import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.BinRunnable;
 import dev.mwhitney.listeners.PiPTrayAdapter;
@@ -43,94 +48,10 @@ import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
  * @author mwhitney57
  */
 public class Initializer {
-
-    // Public Static Final Application Variables
-    /** The current version of the application. */
-    public static final Build  APP_BUILD = new Build(new Version(0,9,4), TYPE_OPTION.SNAPSHOT);
-    /** The application name, but shortened to an acronym. */
-    public static final String APP_NAME_SHORT = "PiPAA";
-    /** The application name. */
-    public static final String APP_NAME = "PiP Anything Anywhere";
-    /** The application name, but in full. */
-    public static final String APP_NAME_FULL = "Picture-in-Picture Anything Anywhere";
-    /** A <tt>String</tt> with the application folder location. */
-    public static final String APP_FOLDER = System.getProperty("user.home") + "/AppData/Roaming/PiPAA";
-    /** A <tt>String</tt> with the application's bin folder location. */
-    public static final String APP_BIN_FOLDER = APP_FOLDER + "/bin";
-    /** A <tt>String</tt> with the application's cache folder location. */
-    public static final String APP_CACHE_FOLDER = APP_FOLDER + "/cache";
-    /** A <tt>String</tt> with the application's GIF folder location in the cache. */
-    public static final String APP_CONVERTED_FOLDER = APP_CACHE_FOLDER + "/converted";
-    /** A <tt>String</tt> with the application's clipboard folder location in the cache. */
-    public static final String APP_CLIPBOARD_FOLDER = APP_CACHE_FOLDER + "/clipboard";
-    /** A <tt>String</tt> with the application's trimmed folder location in the cache. */
-    public static final String APP_TRIMMED_FOLDER = APP_CACHE_FOLDER + "/trimmed";
-    /** A <tt>String</tt> with the LibVlc version shipped with the application. */
-    public static final String VLC_VERSION = "3.0.21 Vetinari";
-    /** A <tt>String</tt> with the LibVlc plugins folder. */
-    public static final String VLC_PLUGINS_FOLDER = APP_BIN_FOLDER + "/plugins";
-    /** A <tt>String</tt> with the VLC artwork cache folder. */
-    public static final String VLC_ART_CACHE_FOLDER = System.getProperty("user.home") + "/AppData/Roaming/vlc/art";
-    /** The keyboard and mouse shortcuts guide for PiPAA. */
-    public static final String SHORTCUTS = """
-                                                       PiPAA Keyboard and Mouse Controls
-                                     _____________________________________________________________________
-                                              LMB / MMB / RMB = Left, Middle, Right Mouse Button
-                                                *Controls that respect the following modifiers:
-                                        (Hold CTRL = More | Hold SHIFT = Less | Hold BOTH = Max Amount)
-    
-    Keyboard (Video/Audio/Adv. GIF):                                   | Mouse (Video/Audio/Adv. GIF):
-    -------------------------------------------------------------------|-------------------------------------------------------------------
-    Spacebar         -> Play/Pause                                     | LMB Click                       -> Play/Pause
-    L-Arrow        * -> Seek Backwards                                 | MMB (Hold) then LMB Click       -> Seek Backwards
-    R-Arrow        * -> Seek Forwards                                  | MMB (Hold) then RMB Click       -> Seek Forwards
-    Up-Arrow       * -> Volume Up                                      | Scroll Up/Down                  -> Volume Adjust
-    Down-Arrow     * -> Volume Down                                    | RMB (Hold) then Scroll Up/Down  -> Playback Rate Adjust
-    Minus (-)      * -> Slower Playback Rate                           | RMB (Hold) then MMB Click       -> Playback Rate Reset
-    Plus (+)       * -> Faster Playback Rate                           |
-    Period (.)       -> Frame-by-Frame Forward                         |
-    M                -> Mute/Unmute                                    |
-    CTRL + SHIFT + M -> Global Mute/Unmute                             |
-    0-9              -> Seek to 0%, 10%, ... 90% Through Video         |
-    S                -> Cycle Subtitle Track                           |
-    CTRL + S         -> Save Current Media to Cache                    | Mouse (Image/GIF):
-    CTRL + ALT + S   -> Quick-Save Current Media to Cache (Inaccurate) |-------------------------------------------------------------------
-    T                -> Cycle Audio Track                              | Scroll Up/Down                  -> Zoom
-                                                                       | CTRL + MMB Click                -> Reset Zoom
-                                                                       | LMB (Hold) & Drag               -> Pan (while zoomed)
-    Keyboard (Audio):                                                  |
-    -------------------------------------------------------------------|
-    A                -> Add Artwork to Audio File                      |
-                                                                       |
-                                                                       |
-    Keyboard (All):                                                    | Mouse (All):
-    -------------------------------------------------------------------|-------------------------------------------------------------------
-    B                -> Flash Borders of Window                        | RMB on Window & Drag            -> Move Window
-    F                -> Fullscreen ON/OFF                              | Double-Click LMB                -> Fullscreen ON/OFF
-    I                -> Show Window/Media Information                  | Double-Click LMB (Empty Window) -> Paste Shortcut
-    L                -> Relocate Window In-Screen (if off-screen)      | Double-Click MMB                -> Add a Window
-    Escape           -> Close Window                                   | Triple-Click RMB                -> Close Media in Window
-    SHIFT + Escape   -> Close All Windows                              | Triple-Click RMB (Empty Window) -> Close Window
-    SHIFT + A        -> Add a Window                                   |
-    SHIFT + D        -> Duplicate Window                               |
-    CTRL + C         -> Close Media in Window                          |
-    CTRL + SHIFT + D -> Close then Delete Media from Cache (if cached) |
-    CTRL + H         -> Hide Window                                    |
-    CTRL + SHIFT + H -> Hide All Windows                               |
-    CTRL + L         -> Open Window Lock Menu                          |
-    CTRL + SHIFT + L -> Enable Window Size and Position Locks          |
-    CTRL + ALT + L   -> Disable All Window Locks                       |
-    CTRL + SHIFT + M -> Global Mute ON/OFF                             |
-    CTRL + O         -> Open Cache Folder or Media's Folder Location   |
-    CTRL + R         -> Reload Media                                   |
-    CTRL + SHIFT + R -> Quick-Reload Media                             |
-    """;
-    
-    /** A boolean for whether or not the backup LibVlc solution should be used. */
-    public static boolean USING_BACKUP_LIBVLC = false;
-    
+    // Main Method
     public static void main(String[] args) {
         final PropertiesManager propsManager = new PropertiesManager();
+        final BindController bindController = new BindController();
         
         // L&F
         setLookAndFeel();
@@ -177,6 +98,8 @@ public class Initializer {
         final PiPWindowManager windowManager = new PiPWindowManager() {
             @Override
             public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return propListener.propertyState(prop, rtnType); }
+            @Override
+            public BindController getController() { return bindController; }
         };
 
         // Create the Tray object.
@@ -321,7 +244,7 @@ public class Initializer {
      */
     private static void extractLibResources(PropertiesManager propsManager) throws ExtractionException {
         // Ensure bin and plugins folders exists.
-        PiPAAUtils.ensureExistence(APP_BIN_FOLDER, Binaries.YTDLP_PLUGINS_FOLDER);
+        PiPAAUtils.ensureExistence(APP_BIN_FOLDER, PiPAARes.YTDLP_PLUGINS_FOLDER);
         
         // Check if each binary exists within the application bin folder.
         final String useSysVLC      = propsManager.get(PiPProperty.USE_SYS_VLC);
@@ -351,7 +274,7 @@ public class Initializer {
         final PiPUpdateResult result = PiPUpdater.updateApp(frequencyApp, lastCheckApp, PropDefault.TYPE.matchAny(appUpdateType), false);
         if (result.checked()) propsManager.set(PiPProperty.APP_LAST_UPDATE_CHECK, LocalDateTime.now().toString());
         if (result.updated()) {
-            propsManager.set(PiPProperty.APP_UPDATING_FROM, Initializer.APP_BUILD.toString());
+            propsManager.set(PiPProperty.APP_UPDATING_FROM, APP_BUILD.toString());
             System.exit(0);
         }
         if (result.hasException()) System.err.println("Warning, app update process failed: " + result.exception().getTotalMessage());
@@ -372,7 +295,7 @@ public class Initializer {
                              && new File(APP_BIN_FOLDER + "/" + PiPAARes.NAME_LIBVLCCORE).exists()
                              && new File(VLC_PLUGINS_FOLDER).exists());
             // VLC version not in configuration, or the versions don't match, or the required VLC files do not exist.
-            if (vlcVersion == null || !vlcVersion.equals(VLC_VERSION) || !vlcFilesPresent) {
+            if (vlcVersion == null || !vlcVersion.equals(PiPAARes.VERS_VLC) || !vlcFilesPresent) {
                 // Extract Windows LibVlc DLLs to Bin Folder
                 System.out.println("<!> Extracting VLC libraries...");
                 // Use try-with-resources to ensure closing of streams.
@@ -390,14 +313,14 @@ public class Initializer {
                                     StandardCopyOption.REPLACE_EXISTING),
                             (BinRunnable) () -> UnzipUtility.unzip(plugins, VLC_PLUGINS_FOLDER))
                         .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting LibVlc libraries."));
-                    propsManager.set("LibVlc_BIN", VLC_VERSION);
+                    propsManager.set("LibVlc_BIN", PiPAARes.VERS_VLC);
                 } catch (IOException ioe) { /* Thrown while closing streams. Ignore. */
                 } catch (ExtractionException ee) { throw ee; } // Forward exception throw.
             }
             // Change NativeLibrary search path to app bin folder, check if extracted already.
             NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), PiPAAUtils.slashFix(APP_BIN_FOLDER));
             vlcReady = true;
-            USING_BACKUP_LIBVLC = true;
+            PiPAARes.USING_BACKUP_LIBVLC = true;
         }
         // VLC Installation Doesn't Exist and Windows LibVlc DLLs Cannot Be Used
         if (!vlcReady) throw new ExtractionException("Could not find or extract a LibVlc installation.");

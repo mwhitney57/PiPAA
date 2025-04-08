@@ -49,17 +49,21 @@ import darrylbu.icon.StretchIcon;
 import dev.mwhitney.exceptions.InvalidMediaException;
 import dev.mwhitney.exceptions.MediaModificationException;
 import dev.mwhitney.gui.PiPWindowSnapshot.SnapshotData;
+import dev.mwhitney.gui.binds.Shortcut;
+import dev.mwhitney.gui.binds.BindDetails;
+import dev.mwhitney.gui.binds.BindHandler;
+import dev.mwhitney.gui.binds.MouseInput;
 import dev.mwhitney.gui.components.BetterTextArea;
 import dev.mwhitney.gui.decor.FadingLineBorder;
 import dev.mwhitney.gui.decor.OffsetRoundedLineBorder;
 import dev.mwhitney.gui.popup.EasyTopDialog;
 import dev.mwhitney.gui.popup.TopDialog;
+import dev.mwhitney.listeners.ManagerFetcher;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
-import dev.mwhitney.listeners.simplified.KeyPressListener;
+import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
-import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.Loop;
 import dev.mwhitney.main.PermanentRunnable;
 import dev.mwhitney.main.PiPProperty;
@@ -101,7 +105,7 @@ import uk.co.caprica.vlcj.player.embedded.fullscreen.windows.Win32FullScreenStra
  * 
  * @author mwhitney57
  */
-public class PiPWindow extends JFrame implements PropertyListener, Themed {
+public class PiPWindow extends JFrame implements PropertyListener, Themed, ManagerFetcher<PiPWindowManager>, BindHandler {
     /** The randomly-generated serial UID for the PiPWindow class. */
     private static final long serialVersionUID = 6508277241367437180L;
     
@@ -191,6 +195,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 if (cmd != null) mediaCommand(cmd, args);
             }
         };
+        
+        // Warn if manager is not valid for some reason.
+        if (!hasManager()) System.err.println("<!> Critical error: Window doesn't have accessible manager during construction.");
 
         // Media Player -- Start with MediaPlayerFactory to provide audio separation fix option.
         setupMediaPlayer();
@@ -243,15 +250,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         imgLabel.setHorizontalAlignment(JLabel.CENTER);
         imgLabel.setBorder(null);
         imgLabel.setDropTarget(listeners.dndTarget());
-        imgLabel.addMouseMotionListener(listeners.mouseDrag());
-        imgLabel.addMouseListener(listeners.mouseAdapter());
-        imgLabel.addMouseWheelListener(listeners.mouseAdapter());
-        imgLabel.addKeyListener((KeyPressListener) (e) -> {
-            // Handle key press locally (with media)first.
-            handleKeyControl(e);
-            // Forward key press event to window-wide listener in case its a global control.
-            PiPWindow.this.dispatchEvent(e);
-        });
+        imgLabel.addMouseMotionListener(listeners.kbmHook());
+        imgLabel.addMouseListener(listeners.kbmHook());
+        imgLabel.addMouseWheelListener(listeners.kbmHook());
+        imgLabel.addKeyListener(listeners.kbmHook());
 
         // Text Field (with Drag and Drop)
         textField = new JTextField(DEFAULT_FIELD_TXT);
@@ -262,14 +264,14 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         textField.setHorizontalAlignment(JTextField.CENTER);
         textField.setBorder(null);
         textField.setDropTarget(listeners.dndTarget());
-        textField.addMouseMotionListener(listeners.mouseDrag());
-        textField.addMouseListener(listeners.mouseAdapter());
+        textField.addMouseMotionListener(listeners.kbmHook());
+        textField.addMouseListener(listeners.kbmHook());
         // Text Field-Related Objects
         textResetTimer = new Timer(3000, (e) -> PiPWindow.this.textField.setText(DEFAULT_FIELD_TXT));
         textResetTimer.setRepeats(false);
 
         // Window-wide Key Listener
-        this.addKeyListener(listeners.keyListener());
+        this.addKeyListener(listeners.kbmHook());
 
         // ComponentResizer (With Modifications)
         cr = new ComponentResizer();
@@ -293,6 +295,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 if (state.not(CLOSING)) requestClose();
             }
         });
+        // Clear Key/Mouse Inputs When Focus is Lost -- Prevents Lingering Inputs from Lack of "Released" Calls.
+        this.addWindowFocusListener((WindowFocusLostListener) (e) -> PiPWindow.this.managerListener.get().getController().clearAllInputs());
 
         // Add Text Field (not Media Player yet), then Set Content Pane and Show
         contentPane.add(textField, BorderLayout.CENTER);
@@ -358,16 +362,26 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         final ArrayList<String> playerArgs = new ArrayList<>();
         playerArgs.add("--aout=directsound");
         playerArgs.add("--rate=" + propertyState(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.class));
-        // NVIDIA RTX Video Super Resolution Configuration -- Uses Hardware Decoding/Direct3D11
-        if (propertyState(PiPProperty.USE_SUPER_RES, Boolean.class)) {
-            state.on(RTX_SUPER_RES);
+        // Hardware-Accelerated Decoding (Acceleration)
+        if (propertyState(PiPProperty.USE_HW_DECODING, Boolean.class)) {
+            state.on(HW_ACCELERATION);
             playerArgs.add("--avcodec-hw=d3d11va");
             playerArgs.add("--vout=direct3d11");
-            playerArgs.add("--d3d11-upscale-mode=super");   // Even if using old VLC version, this argument will not break the player.
+            
+            // NVIDIA RTX Video Super Resolution Configuration -- Uses Hardware Decoding/Direct3D11
+            if (propertyState(PiPProperty.USE_SUPER_RES, Boolean.class)) {
+                state.on(RTX_SUPER_RES);
+                playerArgs.add("--d3d11-upscale-mode=super");   // Even if using old VLC version, this argument will not break the player.
+            }
+        }
+        else {
+            // Hardware-Accelerated Decoding (Acceleration) OFF
+            state.off(HW_ACCELERATION);
+            playerArgs.add("--avcodec-hw=none");
         }
         
         // Create player with arguments.
-        final MediaPlayerFactory fac = (Initializer.USING_BACKUP_LIBVLC
+        final MediaPlayerFactory fac = (PiPAARes.USING_BACKUP_LIBVLC
                 ? new MediaPlayerFactory((NativeDiscovery) null, playerArgs.toArray(new String[0]))
                 : new MediaPlayerFactory(playerArgs.toArray(new String[0])));
         this.mediaPlayer = new EmbeddedMediaPlayerComponent(fac, null, new Win32FullScreenStrategy(this), null, null) {
@@ -487,10 +501,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         };
         mediaPlayer.mediaPlayer().controls().setRepeat(false);
         mediaPlayer.videoSurfaceComponent().setDropTarget(listeners.dndTarget());
-        mediaPlayer.videoSurfaceComponent().addMouseMotionListener(listeners.mouseDrag());
-        mediaPlayer.videoSurfaceComponent().addMouseListener(listeners.mouseAdapter());
-        mediaPlayer.videoSurfaceComponent().addMouseWheelListener(listeners.mouseAdapter());
-        mediaPlayer.videoSurfaceComponent().addKeyListener(listeners.keyListener());
+        mediaPlayer.videoSurfaceComponent().addMouseMotionListener(listeners.kbmHook());
+        mediaPlayer.videoSurfaceComponent().addMouseListener(listeners.kbmHook());
+        mediaPlayer.videoSurfaceComponent().addMouseWheelListener(listeners.kbmHook());
+        mediaPlayer.videoSurfaceComponent().addKeyListener(listeners.kbmHook());
         mediaPlayer.mediaPlayer().events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
             @Override
             public void paused(MediaPlayer mediaPlayer) {
@@ -508,7 +522,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     mediaCommand(PiPMediaCMD.PLAY);
             }
         });
-        mediaPlayer.videoSurfaceComponent().addKeyListener((KeyPressListener) (e) -> handleKeyControl(e));
     }
     
     /**
@@ -521,28 +534,32 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         return (this.mediaPlayer != null);
     }
     
-    /**
-     * Handles media-related keyboard controls from the user.
-     * 
-     * @param e - the KeyEvent with the keyboard control/input information.
-     */
-    private void handleKeyControl(KeyEvent e) {
+    @Override
+    public void handleShortcutBind(final BindDetails<?> bind) {
+        // Null safety check.
+        if (bind == null) {
+            System.err.println("<!> Received null BindDetails when handling key control in window.");
+            return;
+        }
         // Run media player key controls code asynchronously (OFF of EDT).
         CompletableFuture.runAsync(() -> {
-//            System.out.println("KEY PRESSED");
-            final int keyCode = e.getKeyCode();
-            final boolean shiftDown = (e.getModifiersEx() & KeyEvent.SHIFT_DOWN_MASK) != 0;
-            final boolean ctrlDown  = (e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK)  != 0;
-            final boolean altDown   = (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK)   != 0;
+            // Debug
+            // System.out.println("Handling Shortcut Bind in Window: " + bind);
+            
+            // Modifiers
+            final boolean ctrlDown  = bind.input().maskDown(KeyEvent.CTRL_DOWN_MASK);
+
+            // Grab Shortcut from details.
+            final Shortcut shortcut = bind.shortcut();
             
             // Controls For Either Player
-            switch (keyCode) {
+            switch (shortcut) {
             // FULLSCREEN
-            case KeyEvent.VK_F:
-                mediaCommand(PiPMediaCMD.FULLSCREEN);
+            case FULLSCREEN:
+                if (hasMedia()) mediaCommand(PiPMediaCMD.FULLSCREEN);
                 break;
             // DEBUG INFO PRINTS
-            case KeyEvent.VK_I:
+            case DEBUG_INFO:
                 if (!hasAttributedMedia()) {
                     System.out.println("Cancelling request to print info: Window is missing attributed media.");
                     flashBorderEDT(BORDER_WARNING);
@@ -553,165 +570,197 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 final BetterTextArea infoTxt = new BetterTextArea(this.toString(ctrlDown));
                 TopDialog.showMsg(infoTxt, "Window Information", JOptionPane.PLAIN_MESSAGE);
                 break;
-            }
-            
-            if (state.is(PLAYER_SWING))
-                return;
-            
-            // Controls for Media Player
-            switch (keyCode) {
             // PLAY/PAUSE
-            case KeyEvent.VK_SPACE:
+            case PLAY_PAUSE:
+                // Indicate play/pause was manual either way.
+                // Only flash borders with audio media for a visual indicator.
                 if (state().is(PLAYER_COMBO))
                     mediaCommand(PiPMediaCMD.PLAYPAUSE, "true", "true");
-                else
+                else if (state().is(PLAYER_VLC))
                     mediaCommand(PiPMediaCMD.PLAYPAUSE, "false", "true");
                 break;
             // SEEK BY PERCENTAGE
-            case KeyEvent.VK_0:
-            case KeyEvent.VK_NUMPAD0:
+            case SEEK_0:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.0f");
                 break;
-            case KeyEvent.VK_1:
-            case KeyEvent.VK_NUMPAD1:
+            case SEEK_1:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.1f");
                 break;
-            case KeyEvent.VK_2:
-            case KeyEvent.VK_NUMPAD2:
+            case SEEK_2:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.2f");
                 break;
-            case KeyEvent.VK_3:
-            case KeyEvent.VK_NUMPAD3:
+            case SEEK_3:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.3f");
                 break;
-            case KeyEvent.VK_4:
-            case KeyEvent.VK_NUMPAD4:
+            case SEEK_4:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.4f");
                 break;
-            case KeyEvent.VK_5:
-            case KeyEvent.VK_NUMPAD5:
+            case SEEK_5:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.5f");
                 break;
-            case KeyEvent.VK_6:
-            case KeyEvent.VK_NUMPAD6:
+            case SEEK_6:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.6f");
                 break;
-            case KeyEvent.VK_7:
-            case KeyEvent.VK_NUMPAD7:
+            case SEEK_7:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.7f");
                 break;
-            case KeyEvent.VK_8:
-            case KeyEvent.VK_NUMPAD8:
+            case SEEK_8:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.8f");
                 break;
-            case KeyEvent.VK_9:
-            case KeyEvent.VK_NUMPAD9:
+            case SEEK_9:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.9f");
                 break;
             // SEEK BACKWARD
-            case KeyEvent.VK_LEFT: {
-                String type = "SKIP";
-                String amount = "-5000";
-                if (shiftDown && ctrlDown) {
-                    type = "SET";
-                    amount = "0.0f";
-                } else if (ctrlDown) {
-                    amount = "-10000";
-                } else if (shiftDown) {
-                    amount = "-2000";
-                }
-                mediaCommand(PiPMediaCMD.SEEK, type, amount);
+            case SEEK_BACKWARD_LESS:
+                mediaCommand(PiPMediaCMD.SEEK, "SKIP", "-2000");
                 break;
-            }
+            case SEEK_BACKWARD:
+                mediaCommand(PiPMediaCMD.SEEK, "SKIP", "-5000");
+                break;
+            case SEEK_BACKWARD_MORE:
+                mediaCommand(PiPMediaCMD.SEEK, "SKIP", "-10000");
+                break;
+            case SEEK_BACKWARD_MAX:
+                mediaCommand(PiPMediaCMD.SEEK, "SET", "0.0f");
+                break;
             // SEEK FORWARD
-            case KeyEvent.VK_RIGHT: {
-                String type = "SKIP";
-                String amount = "5000";
-                if (shiftDown && ctrlDown) {
-                    type = "SET";
-                    amount = "1.0f";
-                } else if (ctrlDown) {
-                    amount = "10000";
-                } else if (shiftDown) {
-                    amount = "2000";
-                } else if (altDown) {
-                    // SEEK FRAME Alternative Binding
-                    mediaCommand(PiPMediaCMD.SEEK_FRAME);
-                    break;
-                }
-                mediaCommand(PiPMediaCMD.SEEK, type, amount);
+            case SEEK_FORWARD_LESS:
+                mediaCommand(PiPMediaCMD.SEEK, "SKIP", "2000");
                 break;
-            }
+            case SEEK_FORWARD:
+                mediaCommand(PiPMediaCMD.SEEK, "SKIP", "5000");
+                break;
+            case SEEK_FORWARD_MORE:
+                mediaCommand(PiPMediaCMD.SEEK, "SKIP", "10000");
+                break;
+            case SEEK_FORWARD_MAX:
+                mediaCommand(PiPMediaCMD.SEEK, "SET", "1.0f");
+                break;
+            // PLAYBACK RATE BY PERCENTAGE
+            case PLAYBACK_RATE_0:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "0.0f");
+                break;
+            case PLAYBACK_RATE_1:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "1.0f");
+                break;
+            case PLAYBACK_RATE_2:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "2.0f");
+                break;
+            case PLAYBACK_RATE_3:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "3.0f");
+                break;
+            case PLAYBACK_RATE_4:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "4.0f");
+                break;
+            case PLAYBACK_RATE_5:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "5.0f");
+                break;
+            case PLAYBACK_RATE_6:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "6.0f");
+                break;
+            case PLAYBACK_RATE_7:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "7.0f");
+                break;
+            case PLAYBACK_RATE_8:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "8.0f");
+                break;
+            case PLAYBACK_RATE_9:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "9.0f");
+                break;
             // PLAYBACK RATE DECREASE
-            case KeyEvent.VK_MINUS: {
-                String type = "SKIP";
-                String amount = "-0.5f";
-                if (shiftDown && ctrlDown) {
-                    type = "SET";
-                    amount = "0.0f";
-                } else if (ctrlDown) {
-                    amount = "-1.0f";
-                } else if (shiftDown) {
-                    amount = "-0.2f";
-                }
-                mediaCommand(PiPMediaCMD.SPEED_ADJUST, type, amount);
+            case PLAYBACK_RATE_DOWN_LESS:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SKIP", "-0.1f");
                 break;
-            }
+            case PLAYBACK_RATE_DOWN:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SKIP", "-0.2f");
+                break;
+            case PLAYBACK_RATE_DOWN_MORE:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SKIP", "-0.5f");
+                break;
+            case PLAYBACK_RATE_DOWN_MAX:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "0.0f");
+                break;
             // PLAYBACK RATE INCREASE
-            case KeyEvent.VK_EQUALS: {
-                String type = "SKIP";
-                String amount = "0.5f";
-                if (shiftDown && ctrlDown) {
-                    type = "SET";
-                    amount = "1.0f";
-                } else if (ctrlDown) {
-                    amount = "1.0f";
-                } else if (shiftDown) {
-                    amount = "0.2f";
-                }
-                mediaCommand(PiPMediaCMD.SPEED_ADJUST, type, amount);
+            case PLAYBACK_RATE_UP_LESS:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SKIP", "0.1f");
                 break;
-            }
+            case PLAYBACK_RATE_UP:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SKIP", "0.2f");
+                break;
+            case PLAYBACK_RATE_UP_MORE:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SKIP", "0.5f");
+                break;
+            case PLAYBACK_RATE_UP_MAX:
+                mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "1.0f");
+                break;
             // SEEK FRAME
-            case KeyEvent.VK_PERIOD:
+            case SEEK_FRAME:
                 mediaCommand(PiPMediaCMD.SEEK_FRAME);
                 break;
+            // VOLUME BY PERCENTAGE
+            case VOLUME_0:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "0");
+                break;
+            case VOLUME_1:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "10");
+                break;
+            case VOLUME_2:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "20");
+                break;
+            case VOLUME_3:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "30");
+                break;
+            case VOLUME_4:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "40");
+                break;
+            case VOLUME_5:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "50");
+                break;
+            case VOLUME_6:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "60");
+                break;
+            case VOLUME_7:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "70");
+                break;
+            case VOLUME_8:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "80");
+                break;
+            case VOLUME_9:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "90");
+                break;
             // VOLUME DOWN
-            case KeyEvent.VK_DOWN: {
-                String amount = "-5";
-                if (shiftDown && ctrlDown) {
-                    amount = "-100";
-                } else if (ctrlDown) {
-                    amount = "-10";
-                } else if (shiftDown) {
-                    amount = "-1";
-                }
-                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", amount);
+            case VOLUME_DOWN_LESS:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", "-1");
                 break;
-            }
+            case VOLUME_DOWN:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", "-3");
+                break;
+            case VOLUME_DOWN_MORE:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", "-10");
+                break;
+            case VOLUME_DOWN_MAX:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", "-100");
+                break;
             // VOLUME UP
-            case KeyEvent.VK_UP: {
-                String amount = "5";
-                if (shiftDown && ctrlDown) {
-                    amount = "100";
-                } else if (ctrlDown) {
-                    amount = "10";
-                } else if (shiftDown) {
-                    amount = "1";
-                }
-                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", amount);
+            case VOLUME_UP_LESS:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", "1");
                 break;
-            }
+            case VOLUME_UP:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", "3");
+                break;
+            case VOLUME_UP_MORE:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", "10");
+                break;
+            case VOLUME_UP_MAX:
+                mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", "100");
+                break;
             // MUTE/UNMUTE
-            case KeyEvent.VK_M:
-                // Don't mute/unmute if intended to global mute, which is handled in window-wide listener.
-                if (!(ctrlDown && shiftDown)) {
-                    flashBorderEDT(state.is(LOCALLY_MUTED) ? BORDER_OK : BORDER_ERROR);
-                    mediaCommand(PiPMediaCMD.MUTEUNMUTE);
-                }
+            case VOLUME_MUTE_UNMUTE:
+                flashBorderEDT(state.is(LOCALLY_MUTED) ? BORDER_OK : BORDER_ERROR);
+                mediaCommand(PiPMediaCMD.MUTEUNMUTE);
                 break;
             // CYCLE AUDIO TRACKS
-            case KeyEvent.VK_T:
+            case CYCLE_AUDIO_TRACKS:
                 if (mediaPlayer.mediaPlayer().audio().trackCount() > 1) {
                     // Determine starting index for loop, then find next track in cycle.
                     final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().audio().trackDescriptions();
@@ -730,26 +779,27 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     EasyTopDialog.showMsg(this, "No audio tracks.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
                 }
                 break;
-            // SUBTITLES and SAVE TO CACHE
-            case KeyEvent.VK_S:
-                // Subtitles
-                if (!ctrlDown && !shiftDown && !altDown) {
-                    if (mediaPlayer.mediaPlayer().subpictures().trackCount() > 1) {
-                        // Determine starting index for loop, then find next track in cycle.
-                        final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().subpictures().trackDescriptions();
-                        final List<Integer> trackIDs = tracks.stream().map(t -> t.id()).toList();
-                        final int index = trackIDs.indexOf(mediaPlayer.mediaPlayer().subpictures().track());
-                        final Loop<TrackDescription> trackLoop = new Loop<>(tracks.toArray(TrackDescription[]::new), index);
-                        
-                        // Set new subtitle track selection and notify user.
-                        mediaPlayer.mediaPlayer().subpictures().setTrack(trackLoop.next().id());
-                        EasyTopDialog.showMsg(this, "Subtitle Track: " + trackLoop.current().description(), PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
-                    } else {
-                        EasyTopDialog.showMsg(this, "No subtitle tracks.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
-                    }
+            // SUBTITLES
+            case CYCLE_SUBTITLE_TRACKS:
+                if (mediaPlayer.mediaPlayer().subpictures().trackCount() > 1) {
+                    // Determine starting index for loop, then find next track in cycle.
+                    final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().subpictures().trackDescriptions();
+                    final List<Integer> trackIDs = tracks.stream().map(t -> t.id()).toList();
+                    final int index = trackIDs.indexOf(mediaPlayer.mediaPlayer().subpictures().track());
+                    final Loop<TrackDescription> trackLoop = new Loop<>(tracks.toArray(TrackDescription[]::new), index);
+                    
+                    // Set new subtitle track selection and notify user.
+                    mediaPlayer.mediaPlayer().subpictures().setTrack(trackLoop.next().id());
+                    EasyTopDialog.showMsg(this, "Subtitle Track: " + trackLoop.current().description(), PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
+                } else {
+                    EasyTopDialog.showMsg(this, "No subtitle tracks.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
                 }
+                break;
+            // SAVE TO CACHE
+            case SAVE_MEDIA:
+            case SAVE_MEDIA_ALT:
                 // Save to Cache
-                else if (ctrlDown && state.not(SAVING_MEDIA) && hasAttributedMedia() && !media.getAttributes().isLocal()) {
+                if (state.not(SAVING_MEDIA) && hasAttributedMedia() && !media.getAttributes().isLocal()) {
                     // Cancel if media is already cached.
                     if (media.isCached()) {
                         flashBorderEDT(BORDER_WARNING);
@@ -763,7 +813,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     titleStatusUpdate("[Attempting to Cache...]");
                     
                     // Alternative Method -- Uses current media and attributes, sometimes resulting in a generic file name.
-                    if (altDown) {
+                    if (shortcut == Shortcut.SAVE_MEDIA_ALT) {
                         titleStatusUpdate("[Caching...]");
                         if (setRemoteMedia(media.getSrc(), media, true, false) != null) {
                             flashBorderEDT(BORDER_OK);
@@ -789,9 +839,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 }
                 break;
             // ADD ARTWORK
-            case KeyEvent.VK_A:
-                if (state().not(PLAYER_COMBO) || shiftDown || ctrlDown || altDown)
-                    break;
+            case ADD_MEDIA_ARTWORK:
+                if (state().not(PLAYER_COMBO)) break;
                 
                 final StringBuilder imgLoc = new StringBuilder();
                 try {
@@ -815,6 +864,39 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 } catch (InvocationTargetException | InterruptedException ex) { ex.printStackTrace(); }
                 if (!imgLoc.isEmpty()) replaceArtwork(imgLoc.toString());
                 break;
+            case RESET_ZOOM:
+                if (state.is(PLAYER_SWING)) mediaCommand(PiPMediaCMD.ZOOM, "SET", "1.00f", "0", "0");
+                break;
+            // ZOOM -- Combined logic simplifies casting to MouseInput and usage of coordinates.
+            case ZOOM_IN_LESS:
+            case ZOOM_IN:
+            case ZOOM_IN_MORE:
+            case ZOOM_OUT_LESS:
+            case ZOOM_OUT:
+            case ZOOM_OUT_MORE:
+                // Player must be SWING.
+                if (state.not(PLAYER_SWING)) break;
+                
+                // Determine Zoom Amount.
+                final float zoomAmount = switch (shortcut) {
+                case ZOOM_IN_LESS  ->  0.05f;
+                case ZOOM_IN       ->  0.10f;
+                case ZOOM_IN_MORE  ->  0.25f;
+                case ZOOM_OUT_LESS -> -0.05f;
+                case ZOOM_OUT      -> -0.10f;
+                case ZOOM_OUT_MORE -> -0.25f;
+                default -> 0.10f; // Should not occur.
+                };
+                
+                // If the input came from the mouse, consider the coordinates.
+                if (bind.input() instanceof MouseInput in)
+                    mediaCommand(PiPMediaCMD.ZOOM, "SKIP", Float.toString(zoomAmount),
+                            Integer.toString(in.getX() - (this.getInnerWidth()  / 2)),
+                            Integer.toString(in.getY() - (this.getInnerHeight() / 2)));
+                else
+                    mediaCommand(PiPMediaCMD.ZOOM, "SKIP", Float.toString(zoomAmount));
+                break;
+            default: break;  // Do nothing for the rest. Some actions handled elsewhere, such as PiPWindowListners.
             }
         });
     }
@@ -927,7 +1009,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     titleStatusUpdate("[Converting...]");
                     iconUpdate(ICON_WORK);
                     final String mediaNameID = media.getAttributes().getFileTitleID();
-                    final String result = convertGIFToVideo(args[0], Initializer.APP_CONVERTED_FOLDER + "/" + mediaNameID + ".mp4");
+                    final String result = convertGIFToVideo(args[0], PiPAARes.APP_CONVERTED_FOLDER + "/" + mediaNameID + ".mp4");
                     if (result == null) {
                         // Unable to Convert Media -- Use Fallback Method
                         System.err.println("RESULT IS NULL !_-1--11- RESULT IS NULL using fallback and setting adv playback to false");
@@ -1046,11 +1128,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                 
                 // Expected Arguments: [0]=Type (Set or Adjust), [1]=Amount, [2]=Mouse PositionX, [3]=Mouse PositionY
                 float newZoom = Float.valueOf(args[1]);
-                if (args[0].equals("SKIP")) {
-                    ((StretchIcon) imgLabel.getIcon()).incZoom(newZoom, new Point(Integer.valueOf(args[2]), Integer.valueOf(args[3])));
-                } else {
-                    ((StretchIcon) imgLabel.getIcon()).setZoom(newZoom, new Point(Integer.valueOf(args[2]), Integer.valueOf(args[3])));
-                }
+                // If no point arguments were specified, use a default of x=0, y=0. That will zoom centrally.
+                final boolean hasPointArgs = args.length == 4; 
+                final Point point = hasPointArgs ? new Point(Integer.valueOf(args[2]), Integer.valueOf(args[3])) : new Point(0, 0);
+                if (args[0].equals("SKIP")) ((StretchIcon) imgLabel.getIcon()).incZoom(newZoom, point);
+                else                        ((StretchIcon) imgLabel.getIcon()).setZoom(newZoom, point);
                 SwingUtilities.invokeLater(() -> imgLabel.repaint());
                 break;
             case PAN:
@@ -1444,7 +1526,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             platformArgs.add(useYTDLP ? "--force-overwrites" : "--no-skip");
             if (useCookies) {
                 platformArgs.add("--cookies");
-                platformArgs.add(Binaries.COOKIES_PATH_ARG);
+                platformArgs.add(PiPAARes.COOKIES_PATH_ARG);
             }
             
             // Platform-Specific Intermediate Arguments
@@ -1479,7 +1561,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
                     platformArgs.add("aext");
                 }
                 platformArgs.add("--ffmpeg-location");
-                platformArgs.add(Binaries.FFMPEG_LOC_ARG);
+                platformArgs.add(PiPAARes.FFMPEG_LOC_ARG);
                 platformArgs.add("--no-playlist");
                 platformArgs.add("-I");
                 platformArgs.add(multiMedia ? "" + wmf.item() : "1");
@@ -1524,7 +1606,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
             return src;
         
         // Prepare Media Information, Cache Folder, and Arguments for Commands
-        final StringBuilder cacheFolder = new StringBuilder(Initializer.APP_CACHE_FOLDER + "/web");
+        final StringBuilder cacheFolder = new StringBuilder(PiPAARes.APP_CACHE_FOLDER + "/web");
         // Update the Specific Location Within the Cache Folder Based on Platform and Media Type
         if (!attributes.isGenericPlatform())
             cacheFolder.append("/").append(attributes.getSrcPlatform().toString().toLowerCase());
@@ -1965,10 +2047,20 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed {
         }
     }
     
-    // To Be Overriden
+    // To Be Overridden
     @Override
     public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return null; }
-    
+    @Override
+    public PiPWindowManager getManager() { return null; }
+
+    /**
+     * A custom version of {@link #toString()} which allows specification of whether
+     * or not to include debug printouts.
+     * 
+     * @param debug - a boolean for whether or not to include debug information in
+     *              the final string.
+     * @return a String representation of this window.
+     */
     public String toString(boolean debug) {
         final boolean hasAttrMedia = hasAttributedMedia();
         

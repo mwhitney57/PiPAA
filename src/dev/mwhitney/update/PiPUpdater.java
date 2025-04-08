@@ -12,12 +12,13 @@ import org.jetbrains.annotations.NotNull;
 
 import dev.mwhitney.exceptions.PiPUpdateException;
 import dev.mwhitney.main.Binaries;
-import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.PiPProperty.FREQUENCY_OPTION;
 import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.resources.PiPAARes;
 import dev.mwhitney.update.api.APICommunicator;
 import dev.mwhitney.update.api.APICommunicator.UpdatePayload;
+import dev.mwhitney.update.api.Build;
 import dev.mwhitney.update.api.Version;
 
 /**
@@ -191,19 +192,19 @@ public class PiPUpdater {
             if (!update.hasLink()) return result.setException(new PiPUpdateException("Latest update contains no download link with current file extension."));
             
             // Compare Current Version to Version from API -- Get User Confirmation Before Proceeding
-            final Version currVersion = Initializer.APP_BUILD.version();
+            final Version currVersion = PiPAARes.APP_BUILD.version();
             final StringBuilder prompt = new StringBuilder();
             final boolean updVerNewer =  update.build().version().newerThan(currVersion),
                     updVerSameOrNewer = !update.build().version().olderThan(currVersion);
             
             // Only update to a less stable type if the version is newer and the type configuration covers it.
-            if (update.build().lessStableThan(Initializer.APP_BUILD) && updVerNewer && type.covers(update.build().type()))
+            if (update.build().lessStableThan(PiPAARes.APP_BUILD) && updVerNewer && type.covers(update.build().type()))
                 prompt.append("A newer, but less stable update is available!");
             // Always update to a more stable type, except when the new version is older and the current type isn't covered by type configuration.
-            else if (update.build().moreStableThan(Initializer.APP_BUILD) && (updVerSameOrNewer || !type.covers(Initializer.APP_BUILD.type())))
+            else if (update.build().moreStableThan(PiPAARes.APP_BUILD) && (updVerSameOrNewer || !type.covers(PiPAARes.APP_BUILD.type())))
                 prompt.append("An older, but more stable update is available!");
             // Only update when the version is newer and the type is the same.
-            else if (update.build().type() == Initializer.APP_BUILD.type() && updVerNewer)
+            else if (update.build().type() == PiPAARes.APP_BUILD.type() && updVerNewer)
                 prompt.append("A new update is available!");
             // Prompt anyway if forced by passed boolean.
             else if (force)
@@ -212,7 +213,7 @@ public class PiPUpdater {
             // Set user prompted and prompt user.
             final BooleanSupplier userConfirm = () -> {
                 result.setUserPrompted(true);
-                return JOptionPane.showConfirmDialog(null, prompt.toString() + "\nCurrent: " + Initializer.APP_BUILD + "\nLatest: " + update.build()
+                return JOptionPane.showConfirmDialog(null, prompt.toString() + "\nCurrent: " + PiPAARes.APP_BUILD + "\nLatest: " + update.build()
                 + "\n\nWould you like to update? PiPAA will restart automatically.", "PiPAA Update Available", JOptionPane.YES_NO_OPTION) == 0;
             };
             // Only process the update if the prompt was given a value and the user confirmed.

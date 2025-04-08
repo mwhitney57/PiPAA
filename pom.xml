@@ -6,7 +6,7 @@
 
   <groupId>dev.mwhitney</groupId>
   <artifactId>PiPAA</artifactId>
-  <version>0.9.4-SNAPSHOT</version>
+  <version>0.9.5-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Picture-in-Picture Anything Anywhere</name>
@@ -36,7 +36,7 @@
 	<dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
-        <version>2.0.16</version>
+        <version>2.0.17</version>
     </dependency>
 	<!-- This library is for having a modern tray look and feel, compared to the default Java SystemTray which looks a bit dated. -->
 	<!-- GitHub: https://github.com/dorkbox/SystemTray -->
@@ -68,7 +68,7 @@
     <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
-      <version>20241224</version>
+      <version>20250107</version>
     </dependency>
   </dependencies>
 

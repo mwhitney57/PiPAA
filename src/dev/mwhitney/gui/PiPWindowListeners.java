@@ -8,7 +8,6 @@ import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_FULLSCREEN;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_MEDIA;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_POSITION;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_SIZE;
-import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_COMBO;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.PLAYER_SWING;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.READY;
 import static dev.mwhitney.media.MediaFlavorPicker.MediaFlavor.FILE;
@@ -26,11 +25,7 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,6 +45,13 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import dev.mwhitney.exceptions.InvalidTransferMediaException;
+import dev.mwhitney.gui.binds.BindDetails;
+import dev.mwhitney.gui.binds.BindHandler;
+import dev.mwhitney.gui.binds.BindHook;
+import dev.mwhitney.gui.binds.HSMBTracker;
+import dev.mwhitney.gui.binds.KeyInput;
+import dev.mwhitney.gui.binds.MouseInput;
+import dev.mwhitney.gui.binds.Shortcut;
 import dev.mwhitney.gui.components.BetterTextArea;
 import dev.mwhitney.gui.popup.ArtSelectionPopup;
 import dev.mwhitney.gui.popup.LockSelectionPopup;
@@ -60,8 +62,6 @@ import dev.mwhitney.listeners.PiPCommandListener;
 import dev.mwhitney.listeners.PiPHandoffListener;
 import dev.mwhitney.listeners.PiPMediaTransferListener;
 import dev.mwhitney.listeners.PiPWindowListener;
-import dev.mwhitney.listeners.simplified.KeyPressListener;
-import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PropertiesManager;
@@ -72,6 +72,7 @@ import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaAttributor.Flag;
 import dev.mwhitney.media.PiPMediaCMD;
+import dev.mwhitney.resources.PiPAARes;
 import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.util.UnsetBool;
 import dev.mwhitney.util.selection.ReloadSelection.ReloadSelections;
@@ -82,7 +83,7 @@ import dev.mwhitney.util.selection.ReloadSelection.ReloadSelections;
  * 
  * @author mwhitney57
  */
-public abstract class PiPWindowListeners implements PiPWindowListener, PiPCommandListener, PiPMediaTransferListener, PiPHandoffListener, PiPAttributeRequestListener {
+public abstract class PiPWindowListeners implements PiPWindowListener, PiPCommandListener, PiPMediaTransferListener, PiPHandoffListener, PiPAttributeRequestListener, BindHandler {
     /** A DataFlavor containing a web URL. */
     private DataFlavor flavorWebURL;
     
@@ -90,25 +91,26 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     private DropTarget dndTarget;
     /** A DropTarget for drag 'n drop or clipboard media transfers that should be handed off to a new window. */
     private DropTarget dndTargetSecondary;
-    /** The KeyListener for all windows. */
-    private KeyListener keyListener;
     /** The AttributeUpdateListener which listens for updates to each window's media's attributes. */
     private AttributeUpdateListener attributeListener;
+    /**
+     * The high-speed mouse button tracker. Used instead of {@link BindHook} data
+     * for maximum speed and readability. This is used for drag events, which must
+     * be as fast as possible. While {@link BindHook} should be fast, this approach
+     * should be faster, simpler, and certainly more readable.
+     */
+    private HSMBTracker mouse = new HSMBTracker();
+    /** The keyboard and mouse hook which triggers bind actions when certain configured inputs are received that match shortcuts. */
+    private BindHook kbmHook;
     
-    /** The Point at which a drag action originated from. */
-    private Point dragOrigin;
-    /** The Point at which a LMB drag action originated from. */
-    private Point dragOriginLMB;
-    /** A boolean for whether or not the LMB is down. */
-    private boolean leftMouseDown;
-    /** A boolean for whether or not the MMB is down. */
-    private boolean middleMouseDown;
-    /** The MouseAdapter for all windows. */
-    private MouseAdapter mouseAdapter;
-    /** The MouseMotionAdapter for all windows. */
-    private MouseMotionAdapter mouseDrag;
-    
+    /**
+     * Creates a new window listeners instance. Each instance handles multiple
+     * listeners and related logic.
+     */
     public PiPWindowListeners() {
+        // Window null safety check warning.
+        if (get() == null) System.err.println("<!> Critical window error: get() returned null PiPWindow during listeners instance construction.");
+        
         // Create custom flavor(s).
         try {
             flavorWebURL = new DataFlavor("application/x-java-url;class=java.net.URL");
@@ -129,127 +131,80 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             @Override
             public synchronized void drop(DropTargetDropEvent evt) { dropReceived(evt); }
         };
-
-        keyListener = (KeyPressListener) (e) -> {
-            final int keyCode = e.getKeyCode();
-            final boolean shiftDown = (e.getModifiersEx() & KeyEvent.SHIFT_DOWN_MASK) != 0;
-            final boolean ctrlDown  = (e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK)  != 0;
-            final boolean altDown   = (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK)   != 0;
-
-            switch (keyCode) {
-            // RELOCATE WINDOW ON SCREEN IF OFF
-            case KeyEvent.VK_L:
-                if (ctrlDown) {
-                    // Enable size & pos locks. TODO Allow customization instead for this option in config. User can check select each they want to be able to enable.
-                    if (shiftDown)
-                        get().state().on(LOCKED_SIZE, LOCKED_POSITION);
-                    // Disable all locks.
-                    else if (altDown)
-                        get().state().off(LOCKED_SIZE, LOCKED_POSITION, LOCKED_FULLSCREEN, LOCKED_MEDIA);
-                    // Pop-up with lock selection options for user to decide.
-                    else new LockSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class)),
-                            get().state()).moveRelTo(get()).display();
-                }
-                else get().ensureOnScreen();
-                break;
-            // SHOW KEYBOARD SHORTCUTS
-            case KeyEvent.VK_K:
-                final BetterTextArea shortcutsComp = new BetterTextArea(Initializer.SHORTCUTS);
-                TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
-                break;
-            // SHOW WINDOW BORDERS
-            case KeyEvent.VK_B:
-                get().flashBorder(null);
-                break;
-            // OPEN LOCAL/CACHED FILE DIRECTORY
-            case KeyEvent.VK_O:
-                if (!ctrlDown) break;
-
-                // Default to cache folder.
-                String openSrc = Initializer.APP_CACHE_FOLDER;
-                if (get().hasAttributedMedia()) {
-                    // Determine local media location (if any)
-                    if (get().getMedia().isCached())
-                        openSrc = get().getMedia().getCacheSrc();
-                    else if (get().getMedia().getAttributes().isLocal())
-                        openSrc = get().getMedia().getSrc();
-                }
-                // Open the cache folder or parent folder containing the media file.
-                try {
-                    File openFile = new File(openSrc);
-                    if (openSrc.equals(Initializer.APP_CACHE_FOLDER))
-                        openFile.mkdirs();
-                    else
-                        openFile = openFile.getParentFile();
-                    Desktop.getDesktop().open(openFile);
-                } catch (IOException ioe) { ioe.printStackTrace(); }
-                break;
-            // PASTE MEDIA
-            case KeyEvent.VK_V:
-                if (ctrlDown) {
-                    try {
-                        clipboardPasted();
-                    } catch (InvalidTransferMediaException itme) { System.err.println(itme.getMessage()); }
-                }
-                break;
-            // GLOBAL MUTE
-            case KeyEvent.VK_M:
-                if (ctrlDown && shiftDown)
-                    PropertiesManager.mediator.propertyChanged(PiPProperty.GLOBAL_MUTED,
-                            String.valueOf(!PropertiesManager.mediator.propertyState(PiPProperty.GLOBAL_MUTED, Boolean.class)));
-                break;
-            // ADD NEW WINDOW
-            case KeyEvent.VK_A:
-                if (shiftDown) handoff(null);
-                break;
-            // RESTART/RELOAD
-            case KeyEvent.VK_R:
-                if (ctrlDown) {
-                    get().flashBorderEDT(PiPWindow.BORDER_OK);
-                    sendMediaCMD(PiPMediaCMD.RELOAD, (shiftDown ? ReloadSelections.QUICK : ReloadSelections.REGULAR));
-                }
-                break;
-            // DELETE & CONTINUE (CLOSE MEDIA) OR DUPLICATE WINDOW
-            case KeyEvent.VK_D:
-                // All actions below require shift, return if not pressed.
-                if (!shiftDown || !get().hasMedia())
+        
+        kbmHook = new BindHook(get().getManager().getController()) {
+            @Override
+            public void onKeyBind(BindDetails<KeyInput> bind)       { handleShortcutBind(bind); }
+            @Override
+            public void onKeyBindUp(BindDetails<KeyInput> bind)     { handleShortcutBind(bind); }
+            @Override
+            public void onMouseBind(BindDetails<MouseInput> bind)   { handleShortcutBind(bind); }
+            @Override
+            public void onMouseBindUp(BindDetails<MouseInput> bind) { handleShortcutBind(bind); }
+            @Override
+            public void onScrollBind(BindDetails<MouseInput> bind)  { handleShortcutBind(bind); }
+            @Override
+            public void onMouse(MouseInput input) {
+                switch(input.code()) {
+                case MouseInput.LMB:
+                    // Just store on-screen position for PAN actions.
+                    mouse.usePointLMB(new Point(input.getOnScreenX(), input.getOnScreenY()));
+                    // LMB was already thought to be down. Ensure pan action was stopped before another is potentially started.
+                    if (get().state().is(PLAYER_SWING) && mouse.isLMB())
+                        sendMediaCMD(PiPMediaCMD.PAN);
+                    // Paste Media Shortcut - Default, Built-in Bind. Cannot be reconfigured. However, additional binds may be added for the shortcut.
+                    if (input.isDoubleClick() && !get().hasMedia())
+                        handleShortcutBind(BindDetails.createDummy(Shortcut.PASTE_MEDIA));
                     break;
+                case MouseInput.MMB:
+                    mouse.onMMB();
+                    break;
+                case MouseInput.RMB:
+                    // Store difference between on screen points and in-window points.
+                    mouse.usePointRMB(new Point(input.getOnScreenX() - get().getX(), input.getOnScreenY() - get().getY()));
+                    break;
+                }
+            }
+            @Override
+            public void onMouseUp(MouseInput input) {
+                switch(input.code()) {
+                case MouseInput.LMB:
+                    mouse.offLMB();
+                    // Ensure PAN is cancelled on LMB release.
+                    if (get().state().is(PLAYER_SWING)) sendMediaCMD(PiPMediaCMD.PAN);
+                    break;
+                case MouseInput.MMB:
+                    mouse.offMMB();
+                    break;
+                case MouseInput.RMB:
+                    mouse.offRMB();
+                    break;
+                }
+            }
+            @Override
+            public void onScroll(MouseInput input) {
+                // Adjust as a Multiplier of the Mouse Wheel Clicks (Negated to Give Proper, Default Scroll Direction)
+                final int wheelClicks   = -(input.getWheelRotation());
+                final boolean shiftDown = input.maskDown(KeyEvent.SHIFT_DOWN_MASK);
+                final boolean ctrlDown  = input.maskDown(KeyEvent.CTRL_DOWN_MASK);
                 
-                // Mark the media for deletion and continue to next case to close.
-                if (ctrlDown)
-                    get().getMedia().markForDeletion();
-                // Duplicate the window.
-                else {
-                    // Create a new window.
-                    final PiPWindow dupeWindow = handoff(null);
-                    // Create READY hook and adjust size and location relative to current window.
-                    dupeWindow.state().hook(READY, true, () -> {
-                        dupeWindow.changeSize(get().getSize(), true);
-                        dupeWindow.setLocation(get().getX() + 40, get().getY() + 25);
-                        dupeWindow.ensureOnScreen();
-                    });
-                    // Set media, which eventually executes the above hook or unhooks it if the window fails to load.
-                    dupeWindow.setMedia(new PiPMedia(get().getMedia()));
-                    break;
+                // Zoom Shortcuts - Default, Built-in Bind. Cannot be reconfigured. However, additional binds may be added for these shortcuts.
+                if (get().state().is(PLAYER_SWING)) {
+                    final Shortcut zoomShortcut = ( wheelClicks > 0
+                        ? (ctrlDown ? Shortcut.ZOOM_IN_MORE  : (shiftDown ? Shortcut.ZOOM_IN_LESS  : Shortcut.ZOOM_IN))
+                        : (ctrlDown ? Shortcut.ZOOM_OUT_MORE : (shiftDown ? Shortcut.ZOOM_OUT_LESS : Shortcut.ZOOM_OUT))
+                    );
+                    get().handleShortcutBind(new BindDetails<MouseInput>(zoomShortcut, input));
                 }
-            // CLOSE MEDIA
-            case KeyEvent.VK_C:
-                if (ctrlDown) setWindowMedia(null);
-                break;
-            // HIDE WINDOW
-            case KeyEvent.VK_H:
-                if (ctrlDown && shiftDown)
-                    get().getListener().hideWindows();
-                else if (ctrlDown && get().state().not(CLOSED))
-                    get().setVisible(false);
-                break;
-            // CLOSE WINDOW(S)
-            case KeyEvent.VK_ESCAPE:
-                if (shiftDown && TopDialog.showConfirm("Are you sure you want to close all windows?", "Clear Windows", JOptionPane.YES_NO_OPTION) == 0)
-                    get().getListener().clearWindows();
-                else if (!shiftDown)
-                    get().requestClose();
-                break;
+            }
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                // Only Drag if RMB is Pressed and Has Point
+                if (mouse.hasPointRMB() && get().state().not(FULLSCREEN, LOCKED_POSITION))
+                    get().setLocation(e.getXOnScreen() - mouse.getPointRMB().x, e.getYOnScreen() - mouse.getPointRMB().y);
+                else if (mouse.hasPointLMB())
+                    sendMediaCMD(PiPMediaCMD.PAN, Integer.toString(e.getXOnScreen() - mouse.getPointLMB().x),
+                            Integer.toString(e.getYOnScreen() - mouse.getPointLMB().y));
             }
         };
 
@@ -264,140 +219,6 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             public void titleUpdated(String title) {
                 // Set title. Per documentation on setTitle(String), null value is treated as an empty string.
                 SwingUtilities.invokeLater(() -> get().setTitle(title));
-            }
-        };
-
-        mouseAdapter = new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                final boolean ctrlDown = (e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0;
-
-                // Right-Click
-                if (e.getButton() == MouseEvent.BUTTON3) {
-                    // Seek Forward Shortcut
-                    if (middleMouseDown)
-                        sendMediaCMD(PiPMediaCMD.SEEK, "SKIP", "5000");
-                    // Save Point of RMB Click for Potential Drag
-                    else
-                        dragOrigin = new Point(e.getXOnScreen() - get().getX(), e.getYOnScreen() - get().getY());
-                }
-                // Left-Click
-                else if (e.getButton() == MouseEvent.BUTTON1) {
-                    // LMB was already thought to be down. Ensure pan action was stopped.
-                    if (leftMouseDown && dragOriginLMB != null)
-                        sendMediaCMD(PiPMediaCMD.PAN);
-
-                    leftMouseDown = true;
-                    dragOriginLMB = new Point(e.getXOnScreen(), e.getYOnScreen());
-
-                    // Seek Backwards Shortcut
-                    if (middleMouseDown) {
-                        sendMediaCMD(PiPMediaCMD.SEEK, "SKIP", "-5000");
-                        return;
-                    }
-
-                    // Double Click
-                    if (e.getClickCount() == 2) {
-                        // Toggles Fullscreen if Window Has Media
-                        if (get().hasMedia())
-                            sendMediaCMD(PiPMediaCMD.FULLSCREEN);
-                        // Pastes and Sets Clipboard Media Source
-                        else {
-                            leftMouseDown = false; // Reset state -- Mouse down feels more responsive for multi-click actions.
-                            try {
-                                clipboardPasted();
-                            } catch (InvalidTransferMediaException itme) { System.err.println(itme.getMessage()); }
-                        }
-                    }
-                    
-                    // Play/Pause Shortcut
-                    if (get().state().not(PLAYER_SWING)) {
-                        if (get().state().is(PLAYER_COMBO))
-                            sendMediaCMD(PiPMediaCMD.PLAYPAUSE, "true", "true");
-                        else
-                            sendMediaCMD(PiPMediaCMD.PLAYPAUSE, "false", "true");
-                    }
-                }
-                // Middle-Mouse-Click
-                else if (e.getButton() == MouseEvent.BUTTON2) {
-                    middleMouseDown = true;
-
-                    // Double Middle-Click Opens a New Empty Window
-                    if (e.getClickCount() == 2)
-                        handoff(null);
-                    else if (ctrlDown && get().state().is(PLAYER_SWING))
-                        sendMediaCMD(PiPMediaCMD.ZOOM, "SET", "1.00f", "0", "0");
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                // Right-Click
-                if (e.getButton() == MouseEvent.BUTTON3) {
-                    // Different Set of Commands, So Return
-                    if (middleMouseDown)
-                        return;
-
-                    // Discard Point of RMB Click for Potential Drag
-                    dragOrigin = null;
-
-                    // Triple Right-Click -- Mouse Release Prevents Input on Content Behind Window When Its Size Changes
-                    if (e.getClickCount() == 3) {
-                        // Closes Window Media
-                        if (get().hasMedia()) setWindowMedia(null);
-                        // Closes Window If No Media
-                        else CompletableFuture.runAsync(() -> get().requestClose());
-                    }
-                }
-                // Left-Click
-                else if (e.getButton() == MouseEvent.BUTTON1) {
-                    leftMouseDown = false;
-                    dragOriginLMB = null;
-                    if (get().state().is(PLAYER_SWING)) {
-                        sendMediaCMD(PiPMediaCMD.PAN);
-                    }
-                }
-                // Middle-Mouse-Click
-                else if (e.getButton() == MouseEvent.BUTTON2) {
-                    middleMouseDown = false;
-
-                    // Playback Rate/Speed Reset Shortcut
-                    if (dragOrigin != null)
-                        sendMediaCMD(PiPMediaCMD.SPEED_ADJUST, "SET", "1.00f");
-                }
-            }
-
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                // Adjust as a Multiplier of the Mouse Wheel Clicks (Negated to Give Proper, Default Scroll Direction)
-                final int wheelClicks   = -(e.getWheelRotation());
-                final boolean shiftDown = (e.getModifiersEx() & KeyEvent.SHIFT_DOWN_MASK) != 0;
-                final boolean ctrlDown  = (e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK)  != 0;
-
-                // Playback Rate/Speed Adjust Shortcut
-                if (dragOrigin != null)
-                    sendMediaCMD(PiPMediaCMD.SPEED_ADJUST, "SKIP", Float.toString(wheelClicks * 0.1f));
-                // Zoom Adjust Shortcut
-                else if (get().state().is(PLAYER_SWING))
-                    sendMediaCMD(PiPMediaCMD.ZOOM, "SKIP",
-                            Float.toString(wheelClicks * (ctrlDown ? 0.25f : (shiftDown ? 0.05f : 0.10f))),
-                            Integer.toString(e.getX() - (get().getInnerWidth() / 2)),
-                            Integer.toString(e.getY() - (get().getInnerHeight() / 2)));
-                // Volume Adjust Shortcut
-                else
-                    sendMediaCMD(PiPMediaCMD.VOLUME_ADJUST, "SKIP", Integer.toString(wheelClicks * 3));
-            }
-        };
-
-        mouseDrag = new MouseMotionAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                // Only Drag if a Drag Origin is Saved (RMB is Pressed)
-                if (dragOrigin != null && get().state().not(FULLSCREEN, LOCKED_POSITION))
-                    get().setLocation(e.getXOnScreen() - dragOrigin.x, e.getYOnScreen() - dragOrigin.y);
-                else if (dragOriginLMB != null)
-                    sendMediaCMD(PiPMediaCMD.PAN, Integer.toString(e.getXOnScreen() - dragOriginLMB.x),
-                            Integer.toString(e.getYOnScreen() - dragOriginLMB.y));
             }
         };
     }
@@ -523,9 +344,8 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         final boolean PREFER_LINK = get().propertyState(PiPProperty.DND_PREFER_LINK, Boolean.class);
         
         // Ensure clipboard directory exists.
-        if (clipboardSrc) PiPAAUtils.ensureExistence(Initializer.APP_CLIPBOARD_FOLDER);
+        if (clipboardSrc) PiPAAUtils.ensureExistence(PiPAARes.APP_CLIPBOARD_FOLDER);
 
-        // ##### START 0.9.4-SNAPSHOT New Approach (IN TESTING)
         final boolean hasFlavorOverrides = flavorOverrides != null && flavorOverrides.length > 0;
         final MediaFlavorPicker picker = new MediaFlavorPicker(hasFlavorOverrides
             ? flavorOverrides
@@ -592,12 +412,11 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             // Delete leftover URL files placed in cache, if any are present.
             if (dataFile  != null) dataFile.stream()
                 .filter(f -> f.getPath().toLowerCase().endsWith(".url"))
-                .filter(f -> f.getPath().startsWith(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath()))
+                .filter(f -> f.getPath().startsWith(new File(PiPAARes.APP_CLIPBOARD_FOLDER).getPath()))
                 .forEach(f -> f.delete());
             // Flush image at the end if not null, ensuring no memory leak.
             if (dataImage != null) dataImage.flush();
         });
-        // ##### END 0.9.4-SNAPSHOT New Approach
     }
     
     /**
@@ -613,7 +432,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         File outFile = null;
         while (outFile == null || outFile.exists()) {
             name = "/cachedImg" + (int) (Math.random() * 100000) + ".png";
-            outFile = new File(Initializer.APP_CLIPBOARD_FOLDER + name);
+            outFile = new File(PiPAARes.APP_CLIPBOARD_FOLDER + name);
         }
         outFile.mkdirs();
         ImageIO.write(img, "png", outFile);
@@ -655,7 +474,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
 //            System.out.println(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath());
 //            System.out.println(System.getProperty("java.io.tmpdir"));
             /* Since 0.9.4-SNAPSHOT, it is assumed that temporary directory files have already been moved to the cache prior to calling this method. */
-            final boolean fileInTemp = droppedFile.getPath().startsWith(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath());
+            final boolean fileInTemp = droppedFile.getPath().startsWith(new File(PiPAARes.APP_CLIPBOARD_FOLDER).getPath());
             
             // Only prompt the user for artwork replacement if on the first file and the window has attributed, artwork-supporting media. 
             if (f == 0 && get().hasAttributedMedia() && MediaExt.supportsArtwork(get().getMedia().getAttributes().getFileExtension())) {
@@ -836,12 +655,12 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     }
     
     /**
-     * Retrieves the {@link KeyListener} used for keyboard inputs.
+     * Retrieves the {@link BindHook} used for keyboard and mouse inputs.
      * 
-     * @return the window-wide KeyListener.
+     * @return the window-wide keyboard and mouse hook.
      */
-    public KeyListener keyListener() {
-        return this.keyListener;
+    public BindHook kbmHook() {
+        return this.kbmHook;
     }
     
     /**
@@ -851,24 +670,6 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
      */
     public AttributeUpdateListener attributeListener() {
         return this.attributeListener;
-    }
-    
-    /**
-     * Retrieves the MouseAdapter listener used for mouse inputs.
-     * 
-     * @return the MouseAdapter listener.
-     */
-    public MouseAdapter mouseAdapter() {
-        return mouseAdapter;
-    }
-    
-    /**
-     * Retrieves the MouseMotionAdapter listener used for mouse drag inputs.
-     * 
-     * @return the MouseMotionAdapter listener.
-     */
-    public MouseMotionAdapter mouseDrag() {
-        return mouseDrag;
     }
     
     // Listener Methods
@@ -883,4 +684,147 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     public PiPWindow handoff(PiPMedia media)    { return get().getListener().handoff(media); }
     @Override
     public PiPMediaAttributes requestAttributes(PiPMedia media, Flag... flags) { return get().getListener().requestAttributes(media, flags); }
+    @Override
+    public void handleShortcutBind(BindDetails<?> bind) {
+        // Null safety check.
+        if (bind == null) {
+            System.err.println("<!> Received null BindDetails when handling window-wide key control.");
+            return;
+        }
+        
+        final Shortcut shortcut = bind.shortcut();
+        switch (shortcut) {
+        // Add a new empty window.
+        case ADD_WINDOW:
+            handoff(null);
+            break;
+        // Close either the current media or the entire window.
+        case CLOSE_FLEX:
+            if (get().hasMedia()) setWindowMedia(null);
+            else CompletableFuture.runAsync(() -> get().requestClose());
+            break;
+        // RELOCATE WINDOW ON SCREEN IF OFF
+        case RELOCATE_WINDOW:
+            get().ensureOnScreen();
+            break;
+        // Pop-up with lock selection options for user to decide.
+        case LOCK_WINDOW_MENU:
+            new LockSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class)), get().state()).moveRelTo(get()).display();
+            break;
+        // Enable size & pos locks. TODO Allow customization instead for this option in config. User can check select each they want to be able to enable.
+        case LOCK_WINDOW_SIZEPOS:
+            get().state().on(LOCKED_SIZE, LOCKED_POSITION);
+            break;
+        // Disable all locks.
+        case LOCK_WINDOW_ALLOFF:
+            get().state().off(LOCKED_SIZE, LOCKED_POSITION, LOCKED_FULLSCREEN, LOCKED_MEDIA);
+            break;
+        // SHOW KEYBOARD SHORTCUTS
+        case KEYBOARD_SHORTCUTS:
+            final BetterTextArea shortcutsComp = new BetterTextArea(PiPAARes.SHORTCUTS);
+            TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
+            break;
+        // SHOW WINDOW BORDERS
+        case FLASH_WINDOW_BORDERS:
+            get().flashBorder(null);
+            break;
+        // OPEN LOCAL/CACHED FILE DIRECTORY
+        case OPEN_MEDIA_DIRECTORY:
+            // Default to cache folder.
+            String openSrc = PiPAARes.APP_CACHE_FOLDER;
+            if (get().hasAttributedMedia()) {
+                // Determine local media location (if any)
+                if (get().getMedia().isCached())
+                    openSrc = get().getMedia().getCacheSrc();
+                else if (get().getMedia().getAttributes().isLocal())
+                    openSrc = get().getMedia().getSrc();
+            }
+            // Open the cache folder or parent folder containing the media file.
+            try {
+                File openFile = new File(openSrc);
+                if (openSrc.equals(PiPAARes.APP_CACHE_FOLDER))
+                    openFile.mkdirs();
+                else
+                    openFile = openFile.getParentFile();
+                Desktop.getDesktop().open(openFile);
+            } catch (IOException ioe) { ioe.printStackTrace(); }
+            break;
+        // PASTE MEDIA
+        case PASTE_MEDIA:
+            try {
+                clipboardPasted();
+            } catch (InvalidTransferMediaException itme) { System.err.println(itme.getMessage()); }
+            break;
+        // GLOBAL MUTE
+        case GLOBAL_MUTE:
+            PropertiesManager.mediator.propertyChanged(PiPProperty.GLOBAL_MUTED,
+                    String.valueOf(!PropertiesManager.mediator.propertyState(PiPProperty.GLOBAL_MUTED, Boolean.class)));
+            break;
+        // RESTART/RELOAD
+        case RELOAD:
+            get().flashBorderEDT(PiPWindow.BORDER_OK);
+            sendMediaCMD(PiPMediaCMD.RELOAD, ReloadSelections.REGULAR);
+            break;
+        case RELOAD_QUICK:
+            get().flashBorderEDT(PiPWindow.BORDER_OK);
+            sendMediaCMD(PiPMediaCMD.RELOAD, ReloadSelections.QUICK);
+            break;
+        // DELETE & CONTINUE (CLOSE MEDIA) OR DUPLICATE WINDOW
+        case DELETE_MEDIA:
+            if (get().hasMedia()) {
+                get().getMedia().markForDeletion();
+                setWindowMedia(null);
+            }
+            break;
+        case DUPLICATE_WINDOW:
+            final PiPWindow dupeWindow = handoff(null);
+            if (get().hasMedia()) {
+                // Create READY hook and adjust size and location relative to current window.
+                dupeWindow.state().hook(READY, true, () -> {
+                    dupeWindow.changeSize(get().getSize(), true);
+                    dupeWindow.setLocation(get().getX() + 40, get().getY() + 25);
+                    dupeWindow.ensureOnScreen();
+                });
+                // Set media, which eventually executes the above hook or unhooks it if the window fails to load.
+                dupeWindow.setMedia(new PiPMedia(get().getMedia()));
+            } else {
+                dupeWindow.changeSize(get().getSize(), true);
+                dupeWindow.setLocation(get().getX() + 40, get().getY() + 25);
+                dupeWindow.ensureOnScreen();
+            }
+            break;
+        // CLOSE MEDIA
+        case CLOSE_MEDIA:
+            setWindowMedia(null);
+            break;
+        // HIDE WINDOW
+        case HIDE_WINDOW:
+            if (get().state().not(CLOSED)) get().setVisible(false);
+            break;
+        case HIDE_WINDOWS:
+            get().getListener().hideWindows();
+            break;
+        // CLOSE WINDOW(S)
+        case CLOSE_WINDOW:
+            System.out.println("Close window request received in listeners");
+            get().requestClose();
+            break;
+        case CLOSE_WINDOWS:
+            if (TopDialog.showConfirm("Are you sure you want to close all windows?", "Clear Windows", JOptionPane.YES_NO_OPTION) == 0)
+                get().getListener().clearWindows();
+            break;
+        default:
+            // Pass off to window's implementation in case it handles this shortcut.
+            get().handleShortcutBind(bind);
+            /* 
+             * While it may seem worse to call window's implementation like this vs. the pre-0.9.4-SNAPSHOT days, this might actually be net faster.
+             * EDT events are handled in a queue sequentially. Previously, if there were multiple listeners activating,
+             * each of those events was handled one at a time. Combining all of those calls into one listener should improve performance.
+             * Furthermore, this method should already be executing on the EDT, so usage of SwingUtilities.invokeLater(...) would only slow
+             * any code defined within the Runnable passed to that method.
+             * TODO Remove after first 0.9.5 commit -- Keep at first to log information.
+             */
+            break;
+        }
+    }
 }

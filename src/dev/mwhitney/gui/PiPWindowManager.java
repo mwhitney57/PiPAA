@@ -11,6 +11,8 @@ import javax.swing.SwingUtilities;
 
 import dev.mwhitney.exceptions.InvalidMediaException;
 import dev.mwhitney.gui.PiPWindowState.StateProp;
+import dev.mwhitney.gui.binds.BindController;
+import dev.mwhitney.gui.binds.BindControllerFetcher;
 import dev.mwhitney.listeners.PiPWindowCountListener;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
@@ -28,7 +30,7 @@ import dev.mwhitney.util.PiPAAUtils;
  * 
  * @author mwhitney57
  */
-public class PiPWindowManager implements PropertyListener {
+public class PiPWindowManager implements PropertyListener, BindControllerFetcher {
     
     /** The size of the user's screen. */
     private Rectangle userScreen;
@@ -97,6 +99,8 @@ public class PiPWindowManager implements PropertyListener {
             
             @Override
             public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindowManager.this.propertyState(prop, rtnType); }
+            @Override
+            public PiPWindowManager getManager() { return PiPWindowManager.this; }
         };
         
         // Window Size
@@ -424,7 +428,9 @@ public class PiPWindowManager implements PropertyListener {
         setPropertyInWindows(prop, value);
     }
 
-    // To Be Overriden
+    // To Be Overridden
     @Override
     public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return null; }
+    @Override
+    public BindController getController() { return null; }
 }

@@ -173,7 +173,7 @@ public class Tray implements PropertyListener {
 
         // Add Tray Icon to System Tray
         tray.setImage(trayImage);
-        tray.setTooltip(Initializer.APP_NAME);
+        tray.setTooltip(PiPAARes.APP_NAME);
         tray.setStatus("Running Windows: 1");
     }
     
@@ -185,7 +185,7 @@ public class Tray implements PropertyListener {
     private void setupTrayMenuItems() {
         final MenuItem aboutItem = new MenuItem("About", ((evt) -> {
             System.out.println("EDT? " + SwingUtilities.isEventDispatchThread());
-            TopDialog.showMsg(Initializer.APP_NAME + "\nVersion: " + Initializer.APP_BUILD + "\n\n" + String.format("""
+            TopDialog.showMsg(PiPAARes.APP_NAME + "\nVersion: " + PiPAARes.APP_BUILD + "\n\n" + String.format("""
                     Packaged with:
                     - LibVlc      [%s] (video/advanced GIF playback)
                     - yt-dlp      [%s] (media downloads)
@@ -195,7 +195,7 @@ public class Tray implements PropertyListener {
                     
                     Tray Menu Icons by:
                     Icons8 @ icons8.com
-                    """, Initializer.VLC_VERSION, Bin.YT_DLP.version(), Bin.GALLERY_DL.version(), Bin.FFMPEG.version(), Bin.IMGMAGICK.version()),
+                    """, PiPAARes.VERS_VLC, Bin.YT_DLP.version(), Bin.GALLERY_DL.version(), Bin.FFMPEG.version(), Bin.IMGMAGICK.version()),
                     "PiPAA Info", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(trayImage32));
         }));
         final MenuItem configItem = new MenuItem("Config...",   ((evt) -> SwingUtilities.invokeLater(() -> configWin.setVisible(true))));
@@ -426,7 +426,7 @@ public class Tray implements PropertyListener {
         SwingUtilities.invokeLater(() -> configWin.handlePropertyChange(prop));
     }
     
-    // Must be Overriden.
+    // Must be Overridden.
     @Override
     public void propertyChanged(PiPProperty prop, String value) {}
     @Override

@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import dev.mwhitney.main.Initializer;
+import dev.mwhitney.resources.PiPAARes;
 
 /**
  * Utility functions for the entire application.
@@ -135,7 +136,7 @@ public class PiPAAUtils {
      * @throws IOException if there was a problem ensuring the directory is empty.
      */
     public static void pruneCacheFolder() throws IOException {
-        pruneFolder(new File(Initializer.APP_CACHE_FOLDER));
+        pruneFolder(new File(PiPAARes.APP_CACHE_FOLDER));
     }
     
     /**
@@ -151,7 +152,7 @@ public class PiPAAUtils {
     public static File fileDupeInCache(final File f) {
         if (f == null) return null;
         
-        final Collection<File> files = FileUtils.listFiles(new File(Initializer.APP_CLIPBOARD_FOLDER), new String[] { FilenameUtils.getExtension(f.getName()) }, true);
+        final Collection<File> files = FileUtils.listFiles(new File(PiPAARes.APP_CLIPBOARD_FOLDER), new String[] { FilenameUtils.getExtension(f.getName()) }, true);
         for (final File file : files) {
             if (file.getPath().equals(f.getPath())) continue;
             
@@ -189,9 +190,9 @@ public class PiPAAUtils {
         final String nameNoExt = FilenameUtils.removeExtension(name);
         final String nameExt   = FilenameUtils.getExtension(name);
         // Set would-be cache file, then ensure the name will not conflict.
-        File outF = new File(Initializer.APP_CLIPBOARD_FOLDER + "/" + name);
+        File outF = new File(PiPAARes.APP_CLIPBOARD_FOLDER + "/" + name);
         while (outF == null || outF.exists()) {
-            outF = new File(Initializer.APP_CLIPBOARD_FOLDER + "/" + nameNoExt + (int) (Math.random() * 100000) + "." + nameExt);
+            outF = new File(PiPAARes.APP_CLIPBOARD_FOLDER + "/" + nameNoExt + (int) (Math.random() * 100000) + "." + nameExt);
         }
         return outF;
     }

@@ -26,13 +26,6 @@ import net.codejava.utility.UnzipUtility;
  * @author mwhitney57
  */
 public class Binaries {
-    /** A String with the path to the cookies file, which is used as the value to the cookies argument for some binaries. */
-    public static final String COOKIES_PATH_ARG = "\"" + Initializer.APP_FOLDER + "/cookies.txt\"";
-    /** A String with the path containing app ffmpeg binaries, which is used as the value to the '--ffmpeg-location' argument for some binaries. */
-    public static final String FFMPEG_LOC_ARG = "\"" + System.getProperty("user.home") + "/AppData/Roaming/PiPAA/bin/ffmpeg/bin\"";
-    /** A <tt>String</tt> with the application's yt-dlp binary plugins folder location. */
-    public static final String YTDLP_PLUGINS_FOLDER = Initializer.APP_BIN_FOLDER + "/yt-dlp-plugins";
-    
     /** The set of binaries used by PiPAA. */
     public enum Bin {
         /** The yt-dlp executable for downloading media, typically videos. */
@@ -125,7 +118,7 @@ public class Binaries {
     public static boolean HAS_IMGMAGICK = false;
     
     /** The PropertyListener to get property states from. */
-    private static PropertyListener propertyListener;
+    private static volatile PropertyListener propertyListener;
     
     /**
      * Returns the passed Bin binary command.
@@ -175,7 +168,7 @@ public class Binaries {
      * @return a String with the "binned" result.
      */
     public static String binned(String s) {
-        return new StringBuilder(Initializer.APP_BIN_FOLDER).append("/").append(s).toString();
+        return new StringBuilder(PiPAARes.APP_BIN_FOLDER).append("/").append(s).toString();
     }
     
     /**
@@ -297,7 +290,7 @@ public class Binaries {
     public static boolean extract(Bin b) throws IOException {
         System.out.println("<!> Extracting bin: " + b.exeless() + "...");
         final StringBuilder pathIn  = new StringBuilder(PiPAARes.PATH_BIN).append("/");
-        final StringBuilder pathOut = new StringBuilder(Initializer.APP_BIN_FOLDER).append("/");
+        final StringBuilder pathOut = new StringBuilder(PiPAARes.APP_BIN_FOLDER).append("/");
         
         // Binary extraction
         switch (b) {

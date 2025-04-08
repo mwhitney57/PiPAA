@@ -38,7 +38,6 @@ import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.listeners.simplified.MouseReleaseListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.Binaries;
-import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.PiPProperty.DOWNLOAD_OPTION;
 import dev.mwhitney.main.PiPProperty.FREQUENCY_OPTION;
@@ -50,6 +49,7 @@ import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
 import dev.mwhitney.main.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
 import dev.mwhitney.main.PiPPropertyDesc;
+import dev.mwhitney.resources.PiPAARes;
 import dev.mwhitney.update.PiPUpdater;
 import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
 import dev.mwhitney.util.PiPAAUtils;
@@ -88,6 +88,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private BetterCheckbox chkSystemVLC;
     /** The BetterCheckbox for the {@link PiPProperty#USE_SYS_BINARIES} property. */
     private BetterCheckbox chkSystemBin;
+    /** The BetterCheckbox for the {@link PiPProperty#USE_HW_DECODING} property. */
+    private BetterCheckbox chkHWDecoding;
     /** The BetterCheckbox for the {@link PiPProperty#USE_SUPER_RES} property. */
     private BetterCheckbox chkSuperRes;
     /** The BetterCheckbox for the {@link PiPProperty#DND_PREFER_LINK} property. */
@@ -184,11 +186,11 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblTrimTransparency = new BetterLabel(PiPPropertyDesc.TRIM_TRANSPARENCY, textFont);
         final BetterButton btnOpenFolder = new BetterButton("Open Application Folder", titleFont, (e) -> {
             try {
-                Desktop.getDesktop().open(new File(Initializer.APP_FOLDER));
+                Desktop.getDesktop().open(new File(PiPAARes.APP_FOLDER));
             } catch (IOException ioe) { ioe.printStackTrace(); }
         });
         final BetterButton btnShowShortcuts = new BetterButton("Show Keyboard and Mouse Shortcuts", titleFont, (e) -> {
-            final BetterTextArea shortcutsComp = new BetterTextArea(Initializer.SHORTCUTS);
+            final BetterTextArea shortcutsComp = new BetterTextArea(PiPAARes.SHORTCUTS);
             TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
         });
         
@@ -239,7 +241,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblMediaCache = new BetterLabel("Open, prune, or delete the media cache. Prune deletes empty folders and subfolders from the cache.", textFont);
         final BetterButton btnOpenCache = new BetterButton("Open", titleFont, (e) -> {
             // Ensure cache folder exists before trying to open it.
-            final File cacheFolder = new File(Initializer.APP_CACHE_FOLDER);
+            final File cacheFolder = new File(PiPAARes.APP_CACHE_FOLDER);
             cacheFolder.mkdirs();
             
             try {
@@ -258,7 +260,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             });
         });
         final BetterButton btnClearCache = new BetterButton("Clear", titleFont, (e) -> {
-            final File cacheDir = new File(Initializer.APP_CACHE_FOLDER);
+            final File cacheDir = new File(PiPAARes.APP_CACHE_FOLDER);
             cacheDir.mkdirs();
             CompletableFuture.runAsync(() -> {
                 if (JOptionPane.YES_OPTION == TopDialog.showConfirm("Are you sure you want to irreversibly clear your media cache?\nSize: "
@@ -276,7 +278,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblVLCCache      = new BetterLabel("Open or delete the VLC artwork cache. Artwork (or album art) is cached here occasionally when media is played.", textFont);
         final BetterButton btnOpenVLCCache = new BetterButton("Open", titleFont, (e) -> {
             // Ensure cache folder exists before trying to open it.
-            final File vlcFolder = new File(Initializer.VLC_ART_CACHE_FOLDER);
+            final File vlcFolder = new File(PiPAARes.VLC_ART_CACHE_FOLDER);
             vlcFolder.mkdirs();
             
             try {
@@ -284,7 +286,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             } catch (IOException ioe) { ioe.printStackTrace(); }
         });
         final BetterButton btnClearVLCCache = new BetterButton("Clear", titleFont, (e) -> {
-            final File vlcFolder = new File(Initializer.VLC_ART_CACHE_FOLDER);
+            final File vlcFolder = new File(PiPAARes.VLC_ART_CACHE_FOLDER);
             vlcFolder.mkdirs();
             CompletableFuture.runAsync(() -> {
                 if (JOptionPane.YES_OPTION == TopDialog.showConfirm("Are you sure you want to irreversibly clear your VLC artwork cache?\nSize: "
@@ -329,7 +331,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
                             result.hasException() ? 2500 : 1500, false);
                 }
                 if (result.updated()) {
-                    propertyChanged(PiPProperty.APP_UPDATING_FROM, (force ? "FORCED-" : "") + Initializer.APP_BUILD.toString());
+                    propertyChanged(PiPProperty.APP_UPDATING_FROM, (force ? "FORCED-" : "") + PiPAARes.APP_BUILD.toString());
                     System.exit(0);
                 }
                 if (result.hasException()) System.err.println("Warning, app update process failed: " + result.exception().getTotalMessage());
@@ -368,6 +370,13 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         chkSystemBin = new BetterCheckbox("⚙️ Use System Binaries", false, titleFont);
         chkSystemBin.addActionListener((e) -> propertyChanged(PiPProperty.USE_SYS_BINARIES, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblSystemBin  = new BetterLabel(PiPPropertyDesc.USE_SYS_BINARIES, textFont);
+        chkHWDecoding = new BetterCheckbox("🔨 Hardware-Accelerated Decoding", false, titleFont);
+        chkHWDecoding.addActionListener((e) -> {
+            final boolean state = ((BetterCheckbox) e.getSource()).isSelected();
+            propertyChanged(PiPProperty.USE_HW_DECODING, Boolean.toString(state));
+            chkSuperRes.setEnabled(state);  // Disable RTX Super Res. if this is disabled.
+        });
+        final BetterLabel lblHWDecoding   = new BetterLabel(PiPPropertyDesc.USE_HW_DECODING, textFont);
         chkSuperRes = new BetterCheckbox("🎞️ RTX Video Super Resolution", false, titleFont);
         chkSuperRes.addActionListener((e) -> propertyChanged(PiPProperty.USE_SUPER_RES, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblSuperRes   = new BetterLabel(PiPPropertyDesc.USE_SUPER_RES, textFont);
@@ -437,6 +446,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         paneAdvanced.add(lblSystemVLC, "wrap");
         paneAdvanced.add(chkSystemBin, "gaptop 5px, wrap 0px");
         paneAdvanced.add(lblSystemBin, "wrap");
+        paneAdvanced.add(chkHWDecoding, "gaptop 5px, wrap 0px");
+        paneAdvanced.add(lblHWDecoding, "wrap");
         paneAdvanced.add(chkSuperRes, "gaptop 5px, wrap 0px");
         paneAdvanced.add(lblSuperRes, "wrap");
         
@@ -681,6 +692,11 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         case USE_SYS_BINARIES:
             chkSystemBin.setSelected(propertyState(prop, Boolean.class));
             break;
+        case USE_HW_DECODING:
+            final boolean state = propertyState(prop, Boolean.class);
+            chkHWDecoding.setSelected(state);
+            chkSuperRes.setEnabled(state);      // Disable RTX Super Res. if this is disabled.
+            break;
         case USE_SUPER_RES:
             chkSuperRes.setSelected(propertyState(prop, Boolean.class));
             break;
@@ -708,7 +724,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         for (final PiPProperty prop : PiPProperty.values()) handlePropertyChange(prop);
     }
 
-    // To Be Overriden
+    // To Be Overridden
     @Override
     public void propertyChanged(PiPProperty prop, String value) {}
     @Override

@@ -24,7 +24,9 @@ public enum PiPProperty {
     USE_SYS_VLC,
     /** If PiPAA should prefer to use the required binaries already present on the system, if available. */
     USE_SYS_BINARIES,
-    /** If PiPAA should attempt to use NVIDIA's RTX Video Super Resolution. Enables hardware decoding and configures Direct3D11 VLC options. */
+    /** If PiPAA should attempt to use hardware decoding and configures Direct3D11 VLC options. */
+    USE_HW_DECODING,
+    /** If PiPAA should attempt to use NVIDIA's RTX Video Super Resolution. Requires {@link #USE_HW_DECODING}. */
     USE_SUPER_RES,
     /** If downloaded media files should be deleted after being closed, erasing them from the cache. */
     DISABLE_CACHE,
@@ -87,6 +89,7 @@ public enum PiPProperty {
              APP_UPDATE_FORCE,
              USE_SYS_VLC,
              USE_SYS_BINARIES,
+             USE_HW_DECODING,
              USE_SUPER_RES            -> "false";
         case DEFAULT_VOLUME           -> "50";
         case DEFAULT_PLAYBACK_RATE    -> "1";
