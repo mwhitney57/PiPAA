@@ -207,7 +207,11 @@ public class Tray implements PropertyListener {
             SwingUtilities.invokeLater(() -> configWin.handlePropertyChange(PiPProperty.GLOBAL_MUTED));
         }));
         final MenuItem setAllPauseItem    = new MenuItem("Pause All Windows",  ((evt) -> this.propertyChanged(PiPProperty.SET_ALL_PAUSED, "true")));
-        final MenuItem setAllPlayItem     = new MenuItem("Play All Windows",   ((evt) -> this.propertyChanged(PiPProperty.SET_ALL_PAUSED, "false")));
+        final MenuItem setAllPlayItem     = new MenuItem("Play All Windows",   ((evt) -> {
+            // Only play all windows if Single Play Mode is disabled.
+            if (!this.propertyState(PiPProperty.SINGLE_PLAY_MODE, Boolean.class))
+                this.propertyChanged(PiPProperty.SET_ALL_PAUSED, "false");
+        }));
         final MenuItem setAllMuteItem     = new MenuItem("Mute All Windows",   ((evt) -> this.propertyChanged(PiPProperty.SET_ALL_MUTED,  "true")));
         final MenuItem setAllUnmuteItem   = new MenuItem("Unmute All Windows", ((evt) -> this.propertyChanged(PiPProperty.SET_ALL_MUTED, "false")));
         final MenuItem setAllVolumeItem   = new MenuItem("Volume for All Windows...", ((evt) -> {

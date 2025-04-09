@@ -17,6 +17,7 @@ public final class PiPPropertyDesc {
         BASIC_GIF_PLAYBACK    = "Basic playback uses an image viewer component instead of VLC to view GIFs. This is smooth and uses less system resources, but has less controls (i.e. playback speed or play/pause).",
         ADV_GIF_PLAYBACK      = "Advanced playback downloads GIF media and converts it to a video format before playing. Only takes effect when \"Basic GIF Playback\" is disabled.",
         DND_PREFER_LINK       = "Prefer to source drag and drop media from links, if able. The default is off, which typically results in PiPAA copy/pasting the media directly.",
+        SINGLE_PLAY_MODE      = "Only allows one window to play media at a time. Playing media will automatically pause media in any other windows. Pausing the only window playing media will leave all windows paused.",
         GLOBAL_MUTED          = "While enabled, every window is muted. However, each window will remember its own mute state, which will take effect when the global mute is disabled.",
         DEFAULT_VOLUME        = "The default volume level of each new window.",
         DEFAULT_PLAYBACK_RATE = "The default playback rate or speed of each new window.",

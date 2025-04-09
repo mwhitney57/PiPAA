@@ -41,7 +41,8 @@ public enum Shortcut {
     ),
     /** For closing media within a window, or the window itself if it has no media. */
     CLOSE_FLEX(
-        new MouseBind(BindOptions.build().onHit(3).onRelease(), MouseEvent.BUTTON3)
+        // Use lower default delay to minimize accidental closings from consecutive RMB drag (move) operations.
+        new MouseBind(BindOptions.build().useDelay(225).onHit(3).onRelease(), MouseEvent.BUTTON3)
     ),
     CLOSE_MEDIA(
         new KeyBind(KeyEvent.VK_C, CTRL_DOWN_MASK)

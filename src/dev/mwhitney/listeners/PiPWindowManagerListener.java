@@ -43,7 +43,7 @@ public interface PiPWindowManagerListener extends PiPListener {
     /**
      * Clears all windows, closing them entirely.
      */
-    public default void clearWindows()          { if (get() != null) get().clearWindows(); }
+    public default void clearWindows()          { if (get() != null) get().clearWindowsQuickly(); }
     /**
      * Called when the window is requesting for its manager to close it.
      */

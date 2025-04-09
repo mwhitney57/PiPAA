@@ -14,6 +14,8 @@ public enum PiPProperty {
     GIF_PLAYBACK_MODE,
     /** If Drag and Drop actions should prefer utilizing a link, if available. */
     DND_PREFER_LINK,
+    /** A mode which only allows a single window to play at any given time. */
+    SINGLE_PLAY_MODE,
     /** A global mute toggle which supersedes a window's mute state and applies to all windows. */
     GLOBAL_MUTED,
     /** The default volume to use for media in newly-created windows. */
@@ -85,6 +87,7 @@ public enum PiPProperty {
              CONVERT_WEB_INDIRECT     -> "true";
         case TRIM_TRANSPARENCY,
              GLOBAL_MUTED,
+             SINGLE_PLAY_MODE,
              DISABLE_CACHE,
              APP_UPDATE_FORCE,
              USE_SYS_VLC,

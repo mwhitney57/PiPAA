@@ -3,8 +3,12 @@ package dev.mwhitney.gui;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -31,6 +35,8 @@ import dev.mwhitney.util.PiPAAUtils;
  * @author mwhitney57
  */
 public class PiPWindowManager implements PropertyListener, BindControllerFetcher {
+    /** The {@link CountDownLatch} which gives the manager time to clear windows during exit, but only up to a set timeout. */
+    private CountDownLatch exitLatch;
     
     /** The size of the user's screen. */
     private Rectangle userScreen;
@@ -43,9 +49,9 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
     /** The window count listener that gets called when the live window count changes. */
     private PiPWindowCountListener countListener;
     /** The count/amount of <b>live</b>, unclosed PiPWindows managed by this manager.*/
-    private int liveWindowCount;
+    private volatile int liveWindowCount;
     /** An int index for the last window that received user focus. */
-    private int lastWindowFocused;
+    private volatile int lastWindowFocused;
     /** The Point (x,y) of the top-left corner of the last added window. */
     private Point lastSpawnLocation;
     /** The Point (x,y) of the bottom-right corner of the last added window. */
@@ -92,9 +98,7 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
     public PiPWindow addWindow(PiPMedia media) {
         // Window Creation
         final PiPWindow window = new PiPWindow() {
-            /**
-             * The randomly-generated serial UID for PiPWindows.
-             */
+            /** The randomly-generated serial UID for PiPWindows. */
             private static final long serialVersionUID = 4710798365075224246L;
             
             @Override
@@ -189,7 +193,6 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         windows.get(index).closeWindow();
         
         liveWindowCountDec(); // Update Live Window Count
-        gcIfZeroCount();      // GC If Cleared Last Window -- See Method's Doc. As To Why
         return true;
     }
     
@@ -257,10 +260,19 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
     }
 
     /**
-     * Clears (removes) all windows managed by this window manager.
-     * Runs <b>asynchronously</b>.
+     * <b>Deprecated</b> in favor of {@link #clearWindowsQuickly()}. This method
+     * actually performs sequential clearing of windows. It runs asynchronously from
+     * the thread it was called on, but the window closings do not run
+     * asynchronously of each other. This can be incredibly slow, as windows can
+     * hang during the closing process. It is unlikely that this method will be
+     * needed over {@link #clearWindowsQuickly()}.
+     * <p>
+     * Clears (removes) all windows managed by this window manager. Runs
+     * <b>asynchronously</b>.
      */
+    @Deprecated(since = "0.9.5")
     public void clearWindows() {
+        // Used CFExec approach to avoid error handling. Can safely ignore errors from pruning.
         CFExec.runSequential(() -> {
             clearWindowsInSync();
             if (propertyState(PiPProperty.DISABLE_CACHE, Boolean.class))
@@ -269,10 +281,44 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
     }
     
     /**
-     * Clears (removes) all windows managed by this window manager.
-     * Runs <b>synchronously</b>.
+     * Clears (removes) all windows managed by this window manager. Runs
+     * <b>asynchronously</b>. Furthermore, each window closing operation is handled
+     * asynchronously and near-simultaneously instead of happening sequentially.
+     * This allows for much quicker clearing of windows, even when some of the
+     * windows hang during close.
+     * 
+     * @since 0.9.5
+     */
+    public void clearWindowsQuickly() {
+        // Run clearing operation asynchronously.
+        CompletableFuture.runAsync(() -> clearWindowsQuicklyInSync());
+    }
+    
+    /**
+     * Clears (removes) all windows managed by this window manager. Runs
+     * <b>synchronously</b>. However, each window closing operation is handled
+     * asynchronously and near-simultaneously instead of happening sequentially.
+     * This allows for much quicker clearing of windows, even when some of the
+     * windows hang during close.
+     * 
+     * @since 0.9.5
+     */
+    public void clearWindowsQuicklyInSync() {
+        // Map each window close operation to an asynchronous task.
+        CompletableFuture<?>[] closeTasks = this.windows.stream().filter(window -> window != null && window.state().not(StateProp.CLOSING, StateProp.CLOSED))
+            .map(window -> CompletableFuture.runAsync(window::closeWindow))
+            .toArray(CompletableFuture[]::new);
+        // Execute all of the asynchronous closing tasks, then set live window count which should ultimately perform cleanup.
+        CompletableFuture.allOf(closeTasks).whenComplete((result, throwable) -> setLiveWindowCount(0));
+    }
+
+    /**
+     * Clears (removes) all windows managed by this window manager. Runs
+     * <b>synchronously</b>.
      * 
      * @see {@link #clearWindows()} to run this code asynchronously.
+     * @see {@link #clearWindowsQuickly()} to run this code asynchronously and have
+     *      each window close simultaneously instead of sequentially.
      */
     private void clearWindowsInSync() {
         // Iterate. Don't need Iterator -- not removing from List during loop.
@@ -282,15 +328,63 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
                 removeWindow(i);
             }
         }
-        this.windows.clear();
     }
     
     /**
-     * Prepares for application exit/close.
-     * Clears all windows. Executes <b>synchronously</b>.
+     * Performs cleanup operations when there are zero <b>live</b> windows, per the
+     * {@link #liveWindowCount()}.
+     * <p>
+     * This method should only be called when there are no live windows, as it
+     * clears the internal {@link List} containing references to these windows.
+     * 
+     * @since 0.9.5
+     */
+    private void onZeroCleanup() {
+        // Only perform cleanup if there are no live windows.
+        if (this.liveWindowCount != 0) return;
+        
+        // Clear internal list and update window count.
+        this.windows.clear();
+        
+        // Conditionally prune the cache folder.
+        if (propertyState(PiPProperty.DISABLE_CACHE, Boolean.class)) try {
+            PiPAAUtils.pruneCacheFolder();
+        } catch (IOException e) {}
+        
+        // GC -- See Method's Doc. As To Why
+        gcIfZeroCount();
+        
+        // Application is Exiting -- Count down latch to indicate windows are closed.
+        if (this.exitLatch != null) exitLatch.countDown();
+    }
+    
+    /**
+     * Prepares for application exit/close. Clears all windows asynchronously, but
+     * executes <b>synchronously</b>.
+     * <p>
+     * This method will attempt to wait for all of the windows to close, but has a
+     * set timeout for that operation. It will ultimately proceed and return if the
+     * timeout is exceeded, which would indicate that it is taking too long to close
+     * the windows.
+     * <p>
+     * Ideally all windows are closed properly before application exit. That is best
+     * practice. However, the user experience would suffer greatly if there was no
+     * cap on how long such an operation could take. A reasonable timeout is crucial
+     * for keeping the application quick and responsive to user input.
      */
     public void exit() {
-        clearWindowsInSync();
+        exitLatch = new CountDownLatch(1);
+        clearWindowsQuicklyInSync();
+        
+        // Wait a maximum of 3 seconds for windows to close properly, then forcibly continue with exit.
+        try {
+            if (exitLatch.await(3, TimeUnit.SECONDS))
+                System.out.println("[EXIT] Window manager exited normally.");
+            else
+                System.err.println("[EXIT] Window manager exited forcibly: Took too long to clear windows.");
+        } catch (InterruptedException e) {
+            System.err.println("[EXIT] Window manager exited OK, but was interrupted while closing windows.");
+        }
     }
     
     /**
@@ -389,8 +483,13 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
      */
     private void setLiveWindowCount(int count) {
         this.liveWindowCount = count;
+        
+        // Update Displayed Window Count Elsewhere (Ex: Tray Menu)
         if(this.countListener != null)
             this.countListener.windowCountChanged();
+        
+        // Perform Cleanup On Zero Window Count
+        onZeroCleanup();
     }
     
     /**

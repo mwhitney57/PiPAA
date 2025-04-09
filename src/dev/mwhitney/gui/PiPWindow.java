@@ -295,8 +295,14 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 if (state.not(CLOSING)) requestClose();
             }
         });
-        // Clear Key/Mouse Inputs When Focus is Lost -- Prevents Lingering Inputs from Lack of "Released" Calls.
-        this.addWindowFocusListener((WindowFocusLostListener) (e) -> PiPWindow.this.managerListener.get().getController().clearAllInputs());
+        
+        /* 
+         * Clear Key/Mouse Inputs and Tracker Data When Focus is Lost -- Prevents Lingering Inputs from Lack of "Released" Calls.
+         * Also prevents two windows from having their received inputs be considered together as potentially consecutive.
+         */
+        this.addWindowFocusListener((WindowFocusLostListener) (e) ->
+            CompletableFuture.runAsync(() -> PiPWindow.this.managerListener.get().getController().clearAllInputs().clearTrackers())
+        );
 
         // Add Text Field (not Media Player yet), then Set Content Pane and Show
         contentPane.add(textField, BorderLayout.CENTER);
@@ -444,6 +450,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     state().off(LOADING);
 
                     applyVideo(mediaPlayer);
+                    
+                    // Fire redundant play command to ensure older windows respect the mode.
+                    if (propertyState(PiPProperty.SINGLE_PLAY_MODE, Boolean.class))
+                        mediaCommand(PiPMediaCMD.PLAY);
                 }
             }
             
@@ -1053,6 +1063,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 if (strArgs && args[0] != null && Boolean.valueOf(args[0]))
                     flashBorderEDT(BORDER_OK);
                 
+                // If in Single Play Mode, pause all windows first, then play this one.
+                if (propertyState(PiPProperty.SINGLE_PLAY_MODE, Boolean.class))
+                    getManager().propertyChanged(PiPProperty.SET_ALL_PAUSED, "true");
+                
                 state.off(MANUALLY_STOPPED, MANUALLY_PAUSED);
                 mediaPlayer.mediaPlayer().controls().play();
                 break;
@@ -1062,9 +1076,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     flashBorderEDT(BORDER_ERROR);
                 if (strArgs && args.length > 1 && args[1] != null)
                     state.set(MANUALLY_PAUSED, Boolean.valueOf(args[1]));
-                
-                // Using setPause(boolean), as pause() inverts the current pause state.
-                mediaPlayer.mediaPlayer().controls().setPause(true);
+
+                // Only allow pause once window is ready. Prevents invisible window effect and allows Single Playback Mode to function.
+                if (state.is(READY))
+                    mediaPlayer.mediaPlayer().controls().setPause(true);    // Use setPause(boolean), not pause() which inverts state.
                 break;
             case SEEK_FRAME:
                 /*

@@ -85,6 +85,19 @@ public abstract class BindHitsTracker implements BindsFetcher {
     public void resetHits() {
         this.hits.set(1);
     }
+    
+    /**
+     * Clears the current tracking data, resetting the consecutive hit counter back
+     * to one and canceling the delay timer if it's active. This method does
+     * <b>not</b> clear what the last input was, but since the timer cancels, the
+     * next hit should be treated as non-consecutive regardless.
+     */
+    public void clear() {
+        // Cancel timer, preventing consecutive hits even if the next is the same input.
+        if (isTimerValid() && !isTimerDone()) timer.cancel(false);
+        // Reset the hits back to one.
+        resetHits();
+    }
 
     /**
      * Checks if a keyboard bind with the same input, but a higher hits amount,
@@ -221,26 +234,65 @@ public abstract class BindHitsTracker implements BindsFetcher {
 
         // Update input instance to contain its hit count.
         input.setHits(hits.get());
-        // Check if there is any binding with more hits than this. If none exists, we don't need to schedule a timer.
-        if (input instanceof KeyInput keyInput) {
-            final BindDetails<KeyInput> higherHit = higherKeyHitsExists(keyInput);
-            
-            // A higher hit bind exists. Schedule the timer with that bind's delay.
-            if (higherHit != null) restartTimer(higherHit.options().delay());
-            // No higher hit exists. Just reset hits.
-            else resetHits();
-        }
-        else if (input instanceof MouseInput mouseInput) {
-            final BindDetails<MouseInput> higherHit = higherMouseHitsExists(mouseInput);
-            
-            // A higher hit bind exists. Schedule the timer with that bind's delay.
-            if (higherHit != null) restartTimer(higherHit.options().delay());
-            // No higher hit exists. Just reset hits.
-            else resetHits();
-        }
-        // Unexpected input instance type -- Only expected KeyInput or MouseInput. Warn in console.
+        
+        // Check if there is any binding with more hits than this. Schedule a timer if there is.
+        BindDetails<?> higherHit = null;
+        if (input instanceof KeyInput keyInput)
+            higherHit = higherKeyHitsExists(keyInput);
+        else if (input instanceof MouseInput mouseInput)
+            higherHit = higherMouseHitsExists(mouseInput);
         else System.err.println("<!> ERROR: Got a non-Key or Mouse Input instance in BindHitsTracker.");
+        
+        // A higher hit bind exists. Schedule the timer with that bind's delay.
+        if (higherHit != null) restartTimer(higherHit.options().delay());
+        // If no higher hit exists, the reset will happen in hitUp method.
+        
         // Return adjusted hits value.
         return input.hits();
+    }
+    
+    /**
+     * Tracks a release (up) operation on a hit under the passed {@link BindInput},
+     * returning what the hit number was prior to calling this method.
+     * <p>
+     * This method is a "finalizer" of sorts, resetting the consecutive hit counter
+     * if there is no bind under the passed input with a higher hit requirement.
+     * This functionality used to exist within {@link #hit(BindInput)}, but
+     * resetting the count there meant that binds which activated on release would
+     * never work. The hits counter would reset after {@link #hit(BindInput)}, then
+     * any {@link #get(BindInput)} operation after an input release would return
+     * <code>1</code>.
+     * <p>
+     * Instead, the call to this method not only retrieves the hit count, but will
+     * handle the reset and finalize the down/up cycle for an input.
+     * <p>
+     * This method will return what the hits number was <b>before it was called</b>.
+     * Therefore, even if the hit counter is reset here, the count from the last
+     * {@link #hit(BindInput)} will return. u
+     * 
+     * @param input - the {@link BindInput} which was released.
+     * @return the current consecutive hits number, or <code>1</code> if the passed
+     *         input was <b>not</b> the last hit.
+     */
+    public int hitUp(BindInput input) {
+        // If input was not last hit, return default of 1 hit.
+        if (!wasLastHit(input)) return 1;
+        
+        // Update input instance to contain its hit count.
+        final int hitsBeforeReset = hits.get();
+        input.setHits(hitsBeforeReset);
+        
+        // Check if there is any binding with more hits than this. If none exists, reset hits.
+        final BindDetails<?> higherHit;
+        if (input instanceof KeyInput keyInput)
+            higherHit = higherKeyHitsExists(keyInput);
+        else if (input instanceof MouseInput mouseInput)
+            higherHit = higherMouseHitsExists(mouseInput);
+        else return hitsBeforeReset;  // Only handle KeyInput/MouseInput instances.
+        
+        // No higher hit exists. Reset hits.
+        if (higherHit == null) resetHits();
+        
+        return hitsBeforeReset;
     }
 }

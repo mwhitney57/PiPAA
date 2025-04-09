@@ -102,6 +102,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private BetterCheckbox chkTrimTransparency;
     /** The BetterComboBox for the {@link PiPProperty#THEME} property. */
     private BetterComboBox comboTrim;
+    /** The BetterCheckbox for the {@link PiPProperty#SINGLE_PLAY} property. */
+    private BetterCheckbox chkSinglePlay;
     /** The BetterCheckbox for the {@link PiPProperty#GLOBAL_MUTED} property. */
     private BetterCheckbox chkGlobMute;
     /** The BetterLabel for the {@link PiPProperty#DEFAULT_VOLUME} property. */
@@ -198,6 +200,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblGIFPlaybackTitle = new BetterLabel("GIF Playback Mode", titleFont);
         comboGIFPlayback = new BetterComboBox(PropDefault.PLAYBACK.labels(), titleFont);
         final BetterLabel lblGIFPlayback = new BetterLabel(PiPPropertyDesc.GIF_PLAYBACK_MODE, textFont);
+        chkSinglePlay = new BetterCheckbox("💠 Single Playback Mode", true, titleFont);
+        chkSinglePlay.addActionListener((e) -> propertyChanged(PiPProperty.SINGLE_PLAY_MODE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        final BetterLabel lblSinglePlay = new BetterLabel(PiPPropertyDesc.SINGLE_PLAY_MODE, textFont);
         chkGlobMute = new BetterCheckbox("🔇 Global Mute", true, titleFont);
         chkGlobMute.addActionListener((e) -> propertyChanged(PiPProperty.GLOBAL_MUTED, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblGlobMute = new BetterLabel(PiPPropertyDesc.GLOBAL_MUTED, textFont);
@@ -403,6 +408,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         panePlayback.add(comboGIFPlayback, "gaptop 5px, split 2, w 50%");
         panePlayback.add(lblGIFPlaybackTitle, "span, wrap 4px");
         panePlayback.add(lblGIFPlayback, "wrap");
+        panePlayback.add(chkSinglePlay, "wrap 0px");
+        panePlayback.add(lblSinglePlay, "wrap");
         panePlayback.add(chkGlobMute, "wrap 0px");
         panePlayback.add(lblGlobMute, "wrap");
         panePlayback.add(lblDefVolTitle, "aligny top, split 2");
@@ -649,6 +656,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             final TRIM_OPTION option = PropDefault.TRIM.matchAny(propertyState(prop, String.class));
             comboTrim.setSelectedIndex(option.index());
             comboTrim.setToolTipText(option.description());
+            break;
+        case SINGLE_PLAY_MODE:
+            chkSinglePlay.setSelected(propertyState(prop, Boolean.class));
             break;
         case GLOBAL_MUTED:
             chkGlobMute.setSelected(propertyState(prop, Boolean.class));

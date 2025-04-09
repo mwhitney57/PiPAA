@@ -362,7 +362,7 @@ public class BindController {
         // No binds under the passed input. Return null early.
         if (binds == null) return null;
         // Set the hits using the tracker.
-        input.setHits(keyHitsTracker.get(input));
+        input.setHits(keyHitsTracker.hitUp(input));
         
         // Iterate over every bind, adding those which have a compatible hits requirement.
         final List<BindDetails<KeyInput>> shortcuts = new ArrayList<>(binds.size());
@@ -548,7 +548,7 @@ public class BindController {
         // No binds under the passed input. Return null early.
         if (binds == null) return null;
         // Set the hits using the tracker.
-        input.setHits(mouseHitsTracker.get(input));
+        input.setHits(mouseHitsTracker.hitUp(input));
         
         // Iterate over every bind, adding those which have a compatible hits requirement.
         final List<BindDetails<MouseInput>> shortcuts = new ArrayList<>(binds.size());
@@ -617,6 +617,24 @@ public class BindController {
     public BindController clearAllInputs() {
         clearKeyInputs();
         clearMouseInputs();
+        return this;
+    }
+    
+    /**
+     * Clears all of the data from the keyboard and mouse trackers, resetting their
+     * counts and canceling consecutive hit checks.
+     * <p>
+     * This method is especially useful in preventing inputs from one window
+     * carrying over to another. For example, clicking on a window to
+     * <code>PLAY/PAUSE</code>, then clicking on another to do the same, only for
+     * the application to initiate <code>FULLSCREEN</code> because it tracked both
+     * hits, even though the window focus switched.
+     * 
+     * @return this BindController instance.
+     */
+    public BindController clearTrackers() {
+        this.keyHitsTracker.clear();
+        this.mouseHitsTracker.clear();
         return this;
     }
 
