@@ -65,8 +65,11 @@ public enum Shortcut {
     DUPLICATE_WINDOW(
         new KeyBind(KeyEvent.VK_D, SHIFT_DOWN_MASK)
     ),
-    FLASH_WINDOW_BORDERS(
+    FLASH_BORDERS(
         new KeyBind(KeyEvent.VK_B)
+    ),
+    FLASH_BORDERS_ALL(
+        new KeyBind(KeyEvent.VK_B, CTRL_DOWN_MASK | SHIFT_DOWN_MASK)
     ),
     FULLSCREEN(
         new KeyBind(KeyEvent.VK_F),
@@ -96,9 +99,22 @@ public enum Shortcut {
     PASTE_MEDIA(
         new KeyBind(KeyEvent.VK_V, CTRL_DOWN_MASK)
     ),
+    PAUSE(
+    ),
+    PAUSE_ALL(
+        new KeyBind(KeyEvent.VK_P, ALT_DOWN_MASK)
+    ),
+    PLAY(
+    ),
+    PLAY_ALL(
+        new KeyBind(KeyEvent.VK_P, SHIFT_DOWN_MASK)
+    ),
     PLAY_PAUSE(
         new KeyBind(KeyEvent.VK_SPACE),
         new MouseBind(BindOptions.build().useDelay(250), MouseEvent.BUTTON1)
+    ),
+    PLAY_PAUSE_ALL(
+        new KeyBind(KeyEvent.VK_SPACE, CTRL_DOWN_MASK | SHIFT_DOWN_MASK)
     ),
     PLAYBACK_RATE_0(
         new KeyBind(KeyEvent.VK_0, ALT_DOWN_MASK),
@@ -182,6 +198,12 @@ public enum Shortcut {
     RELOCATE_WINDOW(
         new KeyBind(KeyEvent.VK_L)
     ),
+    RESET_SIZE(
+        new KeyBind(BindOptions.build().onHit(2), KeyEvent.VK_Z)
+    ),
+    RESET_SIZE_ALL(
+        new KeyBind(BindOptions.build().onHit(2), KeyEvent.VK_Z, CTRL_DOWN_MASK | SHIFT_DOWN_MASK)
+    ),
     RESET_ZOOM(
         new KeyBind(KeyEvent.VK_OPEN_BRACKET, CTRL_DOWN_MASK | SHIFT_DOWN_MASK),
         new MouseBind(MouseEvent.BUTTON2, CTRL_DOWN_MASK)
@@ -191,6 +213,10 @@ public enum Shortcut {
     ),
     SAVE_MEDIA_ALT(
         new KeyBind(KeyEvent.VK_S, CTRL_DOWN_MASK | ALT_DOWN_MASK)
+    ),
+    SEEK(
+    ),
+    SEEK_ALL(
     ),
     SEEK_0(
         new KeyBind(KeyEvent.VK_0),
@@ -231,6 +257,47 @@ public enum Shortcut {
     SEEK_9(
         new KeyBind(KeyEvent.VK_9),
         new KeyBind(KeyEvent.VK_NUMPAD9)
+    ),
+    SEEK_0_ALL(
+        // CTRL + SHIFT + 0 is absorbed by Windows OS, so cannot use it. Was originally desired.
+        new KeyBind(KeyEvent.VK_0, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD0, SHIFT_DOWN_MASK)
+    ),
+    SEEK_1_ALL(
+        new KeyBind(KeyEvent.VK_1, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD1, SHIFT_DOWN_MASK)
+    ),
+    SEEK_2_ALL(
+        new KeyBind(KeyEvent.VK_2, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD2, SHIFT_DOWN_MASK)
+    ),
+    SEEK_3_ALL(
+        new KeyBind(KeyEvent.VK_3, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD3, SHIFT_DOWN_MASK)
+    ),
+    SEEK_4_ALL(
+        new KeyBind(KeyEvent.VK_4, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD4, SHIFT_DOWN_MASK)
+    ),
+    SEEK_5_ALL(
+        new KeyBind(KeyEvent.VK_5, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD5, SHIFT_DOWN_MASK)
+    ),
+    SEEK_6_ALL(
+        new KeyBind(KeyEvent.VK_6, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD6, SHIFT_DOWN_MASK)
+    ),
+    SEEK_7_ALL(
+        new KeyBind(KeyEvent.VK_7, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD7, SHIFT_DOWN_MASK)
+    ),
+    SEEK_8_ALL(
+        new KeyBind(KeyEvent.VK_8, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD8, SHIFT_DOWN_MASK)
+    ),
+    SEEK_9_ALL(
+        new KeyBind(KeyEvent.VK_9, SHIFT_DOWN_MASK),
+        new KeyBind(KeyEvent.VK_NUMPAD9, SHIFT_DOWN_MASK)
     ),
     SEEK_BACKWARD_LESS(
         new KeyBind(KeyEvent.VK_LEFT, SHIFT_DOWN_MASK),

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -17,6 +18,9 @@ import dev.mwhitney.exceptions.InvalidMediaException;
 import dev.mwhitney.gui.PiPWindowState.StateProp;
 import dev.mwhitney.gui.binds.BindController;
 import dev.mwhitney.gui.binds.BindControllerFetcher;
+import dev.mwhitney.gui.binds.BindDetails;
+import dev.mwhitney.gui.binds.BindHandler;
+import dev.mwhitney.gui.binds.Shortcut;
 import dev.mwhitney.listeners.PiPWindowCountListener;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
@@ -34,7 +38,7 @@ import dev.mwhitney.util.PiPAAUtils;
  * 
  * @author mwhitney57
  */
-public class PiPWindowManager implements PropertyListener, BindControllerFetcher {
+public class PiPWindowManager implements PropertyListener, BindControllerFetcher, BindHandler {
     /** The {@link CountDownLatch} which gives the manager time to clear windows during exit, but only up to a set timeout. */
     private CountDownLatch exitLatch;
     
@@ -210,11 +214,7 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
             return;
         
         // Set State in All Windows
-        for(final PiPWindow window : windows) {
-            if (window == null || window.state().is(StateProp.CLOSED))
-                continue;
-            SwingUtilities.invokeLater(() -> window.setExtendedState(state));
-        }
+        callInLiveWindows(window -> SwingUtilities.invokeLater(() -> window.setExtendedState(state)));
     }
     
     /**
@@ -224,10 +224,23 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
      */
     private void setWindowsVisible(boolean visible) {
         // Set Visibility State for All Windows
-        for(final PiPWindow window : windows) {
-            if (window == null || window.state().is(StateProp.CLOSED))
+        callInLiveWindows(window -> SwingUtilities.invokeLater(() -> window.setVisible(visible)));
+    }
+    
+    /**
+     * Executes the passed {@link Consumer} with every <b>live</b> window.
+     * <p>
+     * As a reminder, <b>live</b> windows are those which have not been nullified
+     * and are not {@link StateProp#CLOSING} nor {@link CLOSED}.
+     * 
+     * @param action - the {@link Consumer} to accept with every live window.
+     */
+    private void callInLiveWindows(Consumer<PiPWindow> action) {
+        for(final PiPWindow window : this.windows) {
+            if (window == null || window.state().any(StateProp.CLOSING, StateProp.CLOSED))
                 continue;
-            SwingUtilities.invokeLater(() -> window.setVisible(visible));
+            
+            action.accept(window);
         }
     }
     
@@ -507,11 +520,16 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
     }
     
     /**
+     * <b>Deprecated</b>, as {@link #callInLiveWindows(Consumer)} simplifies this
+     * kind of logic such that this function is no longer necessary.
+     * <p>
      * Fires the propertyChanged method in each PiPWindow.
      * 
-     * @param prop - the PiPProperty that has changed.
+     * @param prop  - the PiPProperty that has changed.
      * @param value - the new property value.
      */
+    @SuppressWarnings("unused")
+    @Deprecated(since = "0.9.5", forRemoval = true)
     private void setPropertyInWindows(PiPProperty prop, String value) {
         for(final PiPWindow window : this.windows) {
             if(window != null && window.state().not(StateProp.CLOSED))
@@ -524,9 +542,66 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         // Return if property value is null. This is currently not an acceptable value.
         if(value == null) return;
         
-        setPropertyInWindows(prop, value);
+        callInLiveWindows(window -> window.propertyChanged(prop, value));
     }
 
+    @Override
+    public void handleShortcutBind(BindDetails<?> bind) {
+        // Grab Shortcut from details.
+        final Shortcut shortcut = bind.shortcut();
+        switch(shortcut) {
+        case FLASH_BORDERS_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.FLASH_BORDERS)));
+            break;
+        case PAUSE_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.PAUSE)));
+            break;
+        case PLAY_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.PLAY)));
+            break;
+        case PLAY_PAUSE_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.PLAY_PAUSE)));
+            break;
+        case RESET_SIZE_ALL:
+            callInLiveWindows(window -> SwingUtilities.invokeLater(() -> window.resetSize()));
+            break;
+        case SEEK_ALL:
+            // TODO Implement after SEEK in PiPWindow.
+            break;
+        case SEEK_0_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_0)));
+            break;
+        case SEEK_1_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_1)));
+            break;
+        case SEEK_2_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_2)));
+            break;
+        case SEEK_3_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_3)));
+            break;
+        case SEEK_4_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_4)));
+            break;
+        case SEEK_5_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_5)));
+            break;
+        case SEEK_6_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_6)));
+            break;
+        case SEEK_7_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_7)));
+            break;
+        case SEEK_8_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_8)));
+            break;
+        case SEEK_9_ALL:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_9)));
+            break;
+        default: break; // Do nothing for the rest. Some actions handled in PiPWindow or PiPWindowListeners.
+        }
+    }
+    
     // To Be Overridden
     @Override
     public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return null; }

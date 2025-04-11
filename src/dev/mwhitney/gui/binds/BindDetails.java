@@ -107,6 +107,23 @@ public class BindDetails <I extends BindInput> {
     public BindOptions options() {
         return this.options;
     }
+    
+    /**
+     * A safety layer on top of {@link BindInput#maskDown(int)} which ensures that
+     * this details instance contains an input in the first place. This method just
+     * simplifies the logic of having to ensure that an input exists before checking
+     * its masks.
+     * <p>
+     * If the input is <code>null</code>, then <code>false</code> will be rightly
+     * returned.
+     * 
+     * @param mask - an int with the modifiers mask to check for.
+     * @return <code>true</code> if the passed mask is down; <code>false</code>
+     *         otherwise, including if the input is <code>null</code>.
+     */
+    public boolean maskDown(int mask) {
+        return (hasInput() ? this.input.maskDown(mask) : false);
+    }
 
     /**
      * Creates a "dummy" set of bind details, which pertains to the passed

@@ -434,7 +434,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                         
                         // Ensure the window is on-screen after loading content.
                         ensureOnScreen();
-                        state().on(READY);
+                        state.on(READY);
                     });
                     
                     System.err.println("---> FINISHED applying video.");
@@ -447,7 +447,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 // Sets the media to be done loading if it was still loading and the position changed.
                 if (media != null && media.isLoading() && newPosition > 0.0f) {
                     media.setLoading(false);
-                    state().off(LOADING);
+                    state.off(LOADING);
 
                     applyVideo(mediaPlayer);
                     
@@ -474,7 +474,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 if (media != null && media.isLoading() && media.hasAttributes() && media.getAttributes().isAudio()) {
                     // Set that the media loading is being handled (false).
                     media.setLoading(false);
-                    state().off(LOADING);
+                    state.off(LOADING);
                     
                     // Run further operations asynchronously.
                     CompletableFuture.runAsync(() -> {
@@ -551,24 +551,26 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             System.err.println("<!> Received null BindDetails when handling key control in window.");
             return;
         }
-        // Run media player key controls code asynchronously (OFF of EDT).
-        CompletableFuture.runAsync(() -> {
+        
+        // Setup as Runnable.
+        final Runnable handle = () -> {
             // Debug
             // System.out.println("Handling Shortcut Bind in Window: " + bind);
             
             // Modifiers
-            final boolean ctrlDown  = bind.input().maskDown(KeyEvent.CTRL_DOWN_MASK);
+            final boolean ctrlDown  = bind.maskDown(KeyEvent.CTRL_DOWN_MASK);
 
             // Grab Shortcut from details.
             final Shortcut shortcut = bind.shortcut();
             
             // Controls For Either Player
             switch (shortcut) {
-            // FULLSCREEN
+            case FLASH_BORDERS:
+                flashBorder(null);
+                break;
             case FULLSCREEN:
                 if (hasMedia()) mediaCommand(PiPMediaCMD.FULLSCREEN);
                 break;
-            // DEBUG INFO PRINTS
             case DEBUG_INFO:
                 if (!hasAttributedMedia()) {
                     System.out.println("Cancelling request to print info: Window is missing attributed media.");
@@ -580,14 +582,23 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 final BetterTextArea infoTxt = new BetterTextArea(this.toString(ctrlDown));
                 TopDialog.showMsg(infoTxt, "Window Information", JOptionPane.PLAIN_MESSAGE);
                 break;
-            // PLAY/PAUSE
+            case PAUSE:
+            case PLAY:
             case PLAY_PAUSE:
-                // Indicate play/pause was manual either way.
-                // Only flash borders with audio media for a visual indicator.
-                if (state().is(PLAYER_COMBO))
-                    mediaCommand(PiPMediaCMD.PLAYPAUSE, "true", "true");
-                else if (state().is(PLAYER_VLC))
-                    mediaCommand(PiPMediaCMD.PLAYPAUSE, "false", "true");
+                final PiPMediaCMD playPause = switch(shortcut) {
+                case PAUSE -> PiPMediaCMD.PAUSE;
+                case PLAY  -> PiPMediaCMD.PLAY;
+                default    -> PiPMediaCMD.PLAYPAUSE;
+                };
+                // Command, Flash Borders? (Only for Audio Media), Manual? (Yes)
+                if (state.is(PLAYER_COMBO))
+                    mediaCommand(playPause, "true", "true");
+                else if (state.is(PLAYER_VLC))
+                    mediaCommand(playPause, "false", "true");
+                break;
+            // SEEK SPECIFIC
+            case SEEK:
+                // TODO Work on extension of SelectionPopup which is similar to a JOptionPane text input dialog. Can be used here.
                 break;
             // SEEK BY PERCENTAGE
             case SEEK_0:
@@ -619,6 +630,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 break;
             case SEEK_9:
                 mediaCommand(PiPMediaCMD.SEEK, "SET", "0.9f");
+                break;
+            // SEEK FRAME BY FRAME
+            case SEEK_FRAME:
+                mediaCommand(PiPMediaCMD.SEEK_FRAME);
                 break;
             // SEEK BACKWARD
             case SEEK_BACKWARD_LESS:
@@ -703,10 +718,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case PLAYBACK_RATE_UP_MAX:
                 mediaCommand(PiPMediaCMD.SPEED_ADJUST, "SET", "1.0f");
                 break;
-            // SEEK FRAME
-            case SEEK_FRAME:
-                mediaCommand(PiPMediaCMD.SEEK_FRAME);
-                break;
             // VOLUME BY PERCENTAGE
             case VOLUME_0:
                 mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SET", "0");
@@ -764,13 +775,15 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case VOLUME_UP_MAX:
                 mediaCommand(PiPMediaCMD.VOLUME_ADJUST, "SKIP", "100");
                 break;
-            // MUTE/UNMUTE
+            // VOLUME MUTE/UNMUTE
             case VOLUME_MUTE_UNMUTE:
                 flashBorderEDT(state.is(LOCALLY_MUTED) ? BORDER_OK : BORDER_ERROR);
                 mediaCommand(PiPMediaCMD.MUTEUNMUTE);
                 break;
-            // CYCLE AUDIO TRACKS
             case CYCLE_AUDIO_TRACKS:
+                // Only cycle tracks under applicable players.
+                if (state.not(PLAYER_VLC, PLAYER_COMBO)) break;
+                
                 if (mediaPlayer.mediaPlayer().audio().trackCount() > 1) {
                     // Determine starting index for loop, then find next track in cycle.
                     final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().audio().trackDescriptions();
@@ -789,8 +802,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     EasyTopDialog.showMsg(this, "No audio tracks.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
                 }
                 break;
-            // SUBTITLES
             case CYCLE_SUBTITLE_TRACKS:
+                // Only cycle tracks under applicable players.
+                if (state.not(PLAYER_VLC, PLAYER_COMBO)) break;
+                
                 if (mediaPlayer.mediaPlayer().subpictures().trackCount() > 1) {
                     // Determine starting index for loop, then find next track in cycle.
                     final List<TrackDescription> tracks = mediaPlayer.mediaPlayer().subpictures().trackDescriptions();
@@ -805,7 +820,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     EasyTopDialog.showMsg(this, "No subtitle tracks.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
                 }
                 break;
-            // SAVE TO CACHE
             case SAVE_MEDIA:
             case SAVE_MEDIA_ALT:
                 // Save to Cache
@@ -848,9 +862,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     state.off(SAVING_MEDIA);
                 }
                 break;
-            // ADD ARTWORK
             case ADD_MEDIA_ARTWORK:
-                if (state().not(PLAYER_COMBO)) break;
+                if (state.not(PLAYER_COMBO)) break;
                 
                 final StringBuilder imgLoc = new StringBuilder();
                 try {
@@ -873,6 +886,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     });
                 } catch (InvocationTargetException | InterruptedException ex) { ex.printStackTrace(); }
                 if (!imgLoc.isEmpty()) replaceArtwork(imgLoc.toString());
+                break;
+            case RESET_SIZE:
+                SwingUtilities.invokeLater(() -> resetSize());
                 break;
             case RESET_ZOOM:
                 if (state.is(PLAYER_SWING)) mediaCommand(PiPMediaCMD.ZOOM, "SET", "1.00f", "0", "0");
@@ -906,9 +922,17 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 else
                     mediaCommand(PiPMediaCMD.ZOOM, "SKIP", Float.toString(zoomAmount));
                 break;
-            default: break;  // Do nothing for the rest. Some actions handled elsewhere, such as PiPWindowListners.
+            default:
+                // Pass off to manager's implementation in case it handles this shortcut.
+                getManager().handleShortcutBind(bind);
+                break;
             }
-        });
+        };
+        
+        // Ensure code runs asynchronously (OFF of EDT).
+        if (SwingUtilities.isEventDispatchThread())
+            CompletableFuture.runAsync(handle);
+        else handle.run();
     }
 
     /**
@@ -1041,7 +1065,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                         return false;
                     }
                     media.setLoading(false);
-                    state().off(LOADING);
+                    state.off(LOADING);
                 }
                 // VLC and COMBO Players
                 if(state.not(PLAYER_SWING)) {
@@ -1122,6 +1146,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case VOLUME_ADJUST:
 //                System.out.println("VOL ADJUST DETECTED ON: " + media.getAttributes().getTitle());
                 // Expected Arguments: [0]=Type (Set or Skip), [1]=Amount
+                // TODO Catch/handle potential formatting exception on valueOf, or produce better logic here.
                 int newVol = Integer.valueOf(args[1]);
                 if (args[0].equals("SKIP")) {
                     newVol += mediaPlayer.mediaPlayer().audio().volume();
@@ -1131,6 +1156,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case SPEED_ADJUST:
 //                System.out.println("SPEED ADJUST " + args[0] + args[1]);
                 // Expected Arguments: [0]=Type (Set or Adjust), [1]=Amount
+                // TODO Catch/handle potential formatting exception on valueOf, or produce better logic here.
                 float newRate = Float.valueOf(args[1]);
                 if (args[0].equals("SKIP")) {
                     newRate += mediaPlayer.mediaPlayer().status().rate();
@@ -1326,7 +1352,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         // Minimize during loading to prevent obstruction. Loading status ON and set hook.
         setExtendedState(JFrame.ICONIFIED);
         setIconImage(ICON_WORK);
-        state().off(READY).on(LOADING).hook(LOADING, false, () -> SwingUtilities.invokeLater(() -> {
+        state.off(READY).on(LOADING).hook(LOADING, false, () -> SwingUtilities.invokeLater(() -> {
             setExtendedState(JFrame.NORMAL); setIconImage(ICON_NORMAL);
         }));
 
@@ -1920,6 +1946,20 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         PiPWindow.this.setSize(size);
         state.off(RESIZING);
     }
+
+    /**
+     * Resets the size of this window to the default.
+     * <p>
+     * If this window has media, the {@link #DEFAULT_MEDIA_SIZE} will be used,
+     * scaled appropriately. Otherwise, the {@link #DEFAULT_SIZE} will be applied.
+     * <p>
+     * This method does <b>not</b> automatically run on the EDT, but it <b>should be
+     * called from the EDT</b>.
+     */
+    public void resetSize() {
+        if (hasMedia()) changeSize(media.getAttributes().getScaledSize(DEFAULT_MEDIA_SIZE));
+        else            changeSize(DEFAULT_SIZE, true);
+    }
     
     /**
      * Relocates this window to be within the pixel bounds of the display. It
@@ -2025,7 +2065,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         final int prevState = getExtendedState();
         super.setExtendedState(state);
         
-        if (state().is(PLAYER_SWING) && (prevState == JFrame.MAXIMIZED_BOTH || prevState == JFrame.NORMAL) && imgLabel.getIcon() != null)
+        if (this.state.is(PLAYER_SWING) && (prevState == JFrame.MAXIMIZED_BOTH || prevState == JFrame.NORMAL) && imgLabel.getIcon() != null)
             ((StretchIcon) imgLabel.getIcon()).setZoom(1.00f, new Point(0,0));
     }
     

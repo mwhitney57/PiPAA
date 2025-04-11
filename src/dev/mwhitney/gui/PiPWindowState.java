@@ -503,6 +503,20 @@ public class PiPWindowState {
     }
     
     /**
+     * Checks if <b>any</b> of the passed StateProp(s) are on/enabled/true.
+     * 
+     * @param props - one or more StateProps to check.
+     * @return <code>true</code> if any properties are on; <code>false</code> otherwise.
+     */
+    public boolean any(StateProp... props) {
+        for (final StateProp prop : props) {
+            if (is(prop))
+                return true;
+        }
+        return false;
+    }
+    
+    /**
      * Checks if the passed StateProp is off/disabled/false.
      * 
      * @param prop - the StateProp to check.

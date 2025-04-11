@@ -724,10 +724,6 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             final BetterTextArea shortcutsComp = new BetterTextArea(PiPAARes.SHORTCUTS);
             TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
             break;
-        // SHOW WINDOW BORDERS
-        case FLASH_WINDOW_BORDERS:
-            get().flashBorder(null);
-            break;
         // OPEN LOCAL/CACHED FILE DIRECTORY
         case OPEN_MEDIA_DIRECTORY:
             // Default to cache folder.
@@ -816,14 +812,6 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         default:
             // Pass off to window's implementation in case it handles this shortcut.
             get().handleShortcutBind(bind);
-            /* 
-             * While it may seem worse to call window's implementation like this vs. the pre-0.9.4-SNAPSHOT days, this might actually be net faster.
-             * EDT events are handled in a queue sequentially. Previously, if there were multiple listeners activating,
-             * each of those events was handled one at a time. Combining all of those calls into one listener should improve performance.
-             * Furthermore, this method should already be executing on the EDT, so usage of SwingUtilities.invokeLater(...) would only slow
-             * any code defined within the Runnable passed to that method.
-             * TODO Remove after first 0.9.5 commit -- Keep at first to log information.
-             */
             break;
         }
     }
