@@ -64,6 +64,27 @@ public interface PiPEnum<E extends Enum<E>> {
         return (s != null) && s.equalsIgnoreCase(this.toString());
     }
     /**
+     * Checks if the passed enum is <b>not</b> equivalent to this enum.
+     * 
+     * @param <E> e - the enum to compare.
+     * @return <code>true</code> if the enum <b>does not</b> match;
+     *         <code>false</code> otherwise.
+     */
+    public default boolean not(final E e) {
+        return !this.is(e);
+    }
+    /**
+     * Checks if the passed String is <b>not</b> equivalent to this enum. This
+     * method is <b>not</b> case sensitive.
+     * 
+     * @param s - the String to compare.
+     * @return <code>true</code> if the String <b>does not</b> match;
+     *         <code>false</code> otherwise.
+     */
+    public default boolean not(final String s) {
+        return !this.is(s);
+    }
+    /**
      * Checks if this enum exists within the passed array.
      * Internally uses this enum's {@link #is(Enum)} method.
      * Overriding and changing that method may affect this method's behavior.

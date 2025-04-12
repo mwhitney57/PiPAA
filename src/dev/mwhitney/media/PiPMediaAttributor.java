@@ -248,10 +248,18 @@ public class PiPMediaAttributor implements PropertyListener {
         final ArrayList<String> cmdOuts = CFExec.runAndGet(
                 () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.YT_DLP), "\"" + src + "\"", "-I", "1", "--print", "\"%(ext)s\""),
                 platSupplier,
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     false).toArray(new String[0])),
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, false).toArray(new String[0])),
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     true).toArray(new String[0])),
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, true).toArray(new String[0])))
+                // Not Audio-Only, Cookies Attempts -- Cookies attempts go first. If both cases work, we will likely get more media info.
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     false, true ).toArray(new String[0])),
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, false, true ).toArray(new String[0])),
+                // Not Audio-Only, No Cookies Attempts -- No cookies attempts are the only ones to work on some sites.
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     false, false).toArray(new String[0])),
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, false, false).toArray(new String[0])),
+                // Audio-Only, Cookies Attempts -- Cookies attempts go first. If both cases work, we will likely get more media info.
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     true,  true ).toArray(new String[0])),
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, true,  true ).toArray(new String[0])),
+                // Audio-Only, No Cookies Attempts -- No cookies attempts are the only ones to work on some sites.
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     true,  false).toArray(new String[0])),
+                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, true,  false).toArray(new String[0])))
                 .excepts((i, e) -> System.err.println("Exception caught from binary (#" + i + ") in web attribution: " + e))
                 .results();
             
@@ -290,13 +298,17 @@ public class PiPMediaAttributor implements PropertyListener {
         cmdOuts.remove(0);  // Removes extension output used for audio-only test.
         cmdOuts.remove(0);  // Removes platform-specific attribution output.
         if (audioMedia) {   // Removes regular, non-audio-only outputs.
+            cmdOuts.remove(0);  // Used Cookies
+            cmdOuts.remove(0);  // Used Cookies
             cmdOuts.remove(0);
             cmdOuts.remove(0);
         } else {            // Removes audio-only outputs.
             cmdOuts.remove(cmdOuts.size() - 1);
             cmdOuts.remove(cmdOuts.size() - 1);
+            cmdOuts.remove(cmdOuts.size() - 1); // Used Cookies (Since removing from end of list here.)
+            cmdOuts.remove(cmdOuts.size() - 1); // Used Cookies (Since removing from end of list here.)
         }
-        // List should now be of size() 2.
+        // List should now be of size() 4.
         
         // Execute command and retrieve output, splitting by lines.
         for (int cmd = 0; cmd < cmdOuts.size(); cmd++) {
@@ -365,6 +377,8 @@ public class PiPMediaAttributor implements PropertyListener {
                 format.setTitle(spaceFix(rgxTextValidator.matcher(fileName).replaceAll("").trim()));
                 format.setID(rgxTextValidator.matcher(id).replaceAll("_").trim());
             }
+            // Indicate if the working attempt used cookies. Improves success rate across the web, making more sites work.
+            if (cmd > 1) format.setUsedCookies(true);
             break;
         }
         return format;
@@ -382,9 +396,13 @@ public class PiPMediaAttributor implements PropertyListener {
      * @param media       - the PiPMedida object to get remote arguments for.
      * @param binOverride - a {@link Bin} with an override to use a specific binary.
      *                    A <code>null</code> or invalid value will not override.
+     * @param audioOnly   - a boolean for whether or not the arguments should treat
+     *                    the media as audio only.
+     * @param cookies     - a boolean for whether or not to include the cookies in
+     *                    the arguments.
      * @return a List<String> of arguments for setting the remote media.
      */
-    private ArrayList<String> getWebAttributionArgs(final String src, SRC_PLATFORM platform, final Bin binOverride, final boolean audioOnly) {
+    private ArrayList<String> getWebAttributionArgs(final String src, SRC_PLATFORM platform, final Bin binOverride, final boolean audioOnly, final boolean useCookies) {
         // Cannot proceed without proper, non-null media.
         Objects.requireNonNull(src, "The String source must be non-null to retrieve web attribution arguments.");
         
@@ -393,7 +411,6 @@ public class PiPMediaAttributor implements PropertyListener {
          * Otherwise, the list will grow in size as added elements reach the capacity, which is costly by comparison.
          */
         final ArrayList<String> webArgs = new ArrayList<String>(25);
-        boolean useCookies = true;
         
         // Determine which binary to use, defaulting to the calculated value if no override was provided.
         boolean useYTDLP = false;   // Current default is false.
@@ -404,7 +421,6 @@ public class PiPMediaAttributor implements PropertyListener {
         switch (platform) {
         case YOUTUBE:
             useYTDLP = (binOverride != null ? useYTDLP : true);
-            useCookies = false;
         case X:
         case REDDIT:
         default:

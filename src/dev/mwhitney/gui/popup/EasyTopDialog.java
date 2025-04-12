@@ -10,7 +10,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import dev.mwhitney.gui.components.BetterPanel;
-import dev.mwhitney.gui.components.BetterTextArea;
+import dev.mwhitney.gui.components.BetterTextPane;
 import dev.mwhitney.listeners.simplified.KeyPressListener;
 import dev.mwhitney.listeners.simplified.MousePressListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
@@ -65,13 +65,13 @@ public class EasyTopDialog {
         panel.setBackground(theme.color(COLOR.BG));
         panel.setBorderColor(theme.color(COLOR.BG_ACCENT));
         panel.setRoundedArc(30);
-        final BetterTextArea text = new BetterTextArea(message);
-        text.setFocusable(false);
-        text.setBackground(theme.color(COLOR.BG));
-        text.setForeground(theme.color(COLOR.TXT));
-        text.setFont(new Font("Dialog", Font.BOLD, 16));
-        text.addMouseListener(mouseListener);
-        panel.add(text);
+        final BetterTextPane textPane = new BetterTextPane(message);
+        textPane.setFocusable(false);
+        textPane.setBackground(theme.color(COLOR.BG));
+        textPane.setForeground(theme.color(COLOR.TXT));
+        textPane.setFont(new Font("Dialog", Font.BOLD, 16));
+        textPane.addMouseListener(mouseListener);
+        panel.add(textPane);
         
         parent.setContentPane(panel);
         parent.pack();

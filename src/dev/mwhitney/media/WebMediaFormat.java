@@ -35,8 +35,10 @@ public class WebMediaFormat {
     private MediaExt extension;
     /** A Dimension which holds the x (width) and y (height) values for the media's resolution. */
     private Dimension resolution;
-    /** A boolean which for whether or not the media is solely audio. */
+    /** A boolean for whether or not the media is solely audio. */
     private boolean audioOnly;
+    /** A boolean for whether or not the media was attributed using cookies. */
+    private boolean usedCookies;
     
     /**
      * Gets the {@link FORMAT} the media.
@@ -269,6 +271,30 @@ public class WebMediaFormat {
         return this;
     }
     
+    /**
+     * Checks if cookies were used when attributing the media.
+     * <p>
+     * This is helpful to know for later-on in the loading/caching process, as some
+     * sites only work if they do or do not receive cookies.
+     * 
+     * @return <code>true</code> if cookies were used when attributing the media;
+     *         <code>false</code> otherwise.
+     */
+    public boolean usedCookies() {
+        return this.usedCookies;
+    }
+    
+    /**
+     * Sets whether or not cookies were used when attributing the web media.
+     * 
+     * @param usedCookies - a boolean with the value.
+     * @return this WebMediaFormat instance.
+     */
+    public WebMediaFormat setUsedCookies(boolean usedCookies) {
+        this.usedCookies = usedCookies;
+        return this;
+    }
+    
     @Override
     public String toString() {
         return String.format("%s'%s'%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s",
@@ -279,6 +305,7 @@ public class WebMediaFormat {
                 "Format", Objects.toString(format(), "NONE"),
                 "Quality", Objects.toString(resolution(), "NONE"),
                 "Playlist Item", (isItem() ? item() : "N/A"),
-                "Audio Only", Objects.toString(audioOnly(), "NONE"));
+                "Audio Only", Objects.toString(audioOnly(), "NONE"),
+                "Used Cookies", Objects.toString(usedCookies(), "NONE"));
     }
 }

@@ -738,11 +738,13 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             // Open the cache folder or parent folder containing the media file.
             try {
                 File openFile = new File(openSrc);
-                if (openSrc.equals(PiPAARes.APP_CACHE_FOLDER))
+                if (openSrc.equals(PiPAARes.APP_CACHE_FOLDER)) {
                     openFile.mkdirs();
-                else
-                    openFile = openFile.getParentFile();
-                Desktop.getDesktop().open(openFile);
+                    Desktop.getDesktop().open(openFile);
+                } else {
+                    final String openCmd = "explorer.exe /select,\"" + openFile.getAbsolutePath() + "\"";
+                    new ProcessBuilder("cmd.exe", "/c", openCmd).start();
+                }
             } catch (IOException ioe) { ioe.printStackTrace(); }
             break;
         // PASTE MEDIA

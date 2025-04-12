@@ -273,6 +273,29 @@ public class PiPMediaAttributes {
     }
     
     /**
+     * Checks if the media needs to be downloaded in order to play based off of the
+     * current attributes.
+     * <p>
+     * This method does not check if the media <i>can</i> be downloaded, by
+     * verifying if attributes are non-<code>null</code>. It just checks if it
+     * <i>should</i> be downloaded.
+     * 
+     * @return <code>true</code> if the media should be downloaded;
+     *         <code>false</code> otherwise.
+     */
+    public boolean needsDownload() {
+        // Local media does NOT need to be downloaded.
+        if (isLocal()) return false;
+        // Web Images and GIFs must be downloaded.
+        if (isImage() || isGIF()) return true;
+        // Web Video, Audio, and Playlists must be downloaded IF they are indirectly sourced.
+        if ((isVideo() || isAudio() || isPlaylist()) && isWebIndirect()) return true;
+        
+        // Passed all checks, can be played without downloading.
+        return false;
+    }
+
+    /**
      * Checks if the {@link TYPE} is <code>PLAYLIST</code>.
      * 
      * @return <code>true</code> if the type if <code>PLAYLIST</code>; <code>false</code> otherwise.

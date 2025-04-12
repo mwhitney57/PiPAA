@@ -82,6 +82,7 @@ import dev.mwhitney.media.PiPMediaAttributor.Flag;
 import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.media.PiPMediaCMDArgs;
 import dev.mwhitney.media.WebMediaFormat;
+import dev.mwhitney.media.WebMediaFormat.FORMAT;
 import dev.mwhitney.resources.PiPAARes;
 import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.util.selection.ReloadSelection;
@@ -1008,6 +1009,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     if (result == null) {
                         // Unable to Set Remote Media -- Cancel and Close Current Media
                         mediaCommand(PiPMediaCMD.CLOSE);
+                        flashBorderEDT(BORDER_ERROR);
                         return false;
                     }
                     
@@ -1541,12 +1543,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         final List<String> platformArgs = new ArrayList<String>();
         final String mediaFileNameID = media.getAttributes().getDownloadFileNameID();
         final WebMediaFormat wmf = media.getAttributes().getWMF();
+        final FORMAT webFormat = media.getAttributes().getWebFormat();
         final boolean multiMedia = wmf.isItem();
-        boolean useCookies = true;
+        final boolean useCookies = media.getAttributes().getWMF().usedCookies();
         
-        // Determine which binary to use, defaulting to the calculated value if no override was provided.
-        boolean useYTDLP = false;
-//        boolean useYTDLP = !FORMAT.GALLERY_DL.is(media.getAttributes().getWebFormat());
+        // Try downloading with the same binary that the attributor succeeded in using, but prefer override value if passed.
+        //     Defaults to gallery-dl if format is null.
+        boolean useYTDLP = (webFormat != null && FORMAT.GALLERY_DL.not(webFormat));
         useYTDLP = (binOverride == Bin.YT_DLP ? true : (binOverride == Bin.GALLERY_DL ? false : useYTDLP));
         
         // Change Commands Depending on Remote Source Platform (if any)
@@ -1558,7 +1561,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         switch (platform) {
         case YOUTUBE:
             useYTDLP = true;
-            useCookies = false;
         case X:
         case REDDIT:
         default:
@@ -1642,9 +1644,17 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         // Try to load direct remote/web media without caching.
         if(adjustedWebSrc != null && !ogSrcOverride && !forceDownload)
             src = adjustedWebSrc;
-        // Return current source early if no download is true OR is web direct and download not forced.
-        if (noDownload || ((attributes.isVideo() || attributes.isAudio() || attributes.isPlaylist()) && attributes.isWebDirect() && !forceDownload))
+        // Return null if configuration disallows download when it's necessary.
+        if (noDownload && attributes.needsDownload()) {
+            System.err.println("Cannot set remote media: Media must be downloaded, but Download Media configured to NEVER.");
+            statusUpdate("Media downloads disabled!");
+            return null;
+        }
+        // Type is able to be played directly, so return current (direct) source early -- UNLESS we should force download.
+        if (!attributes.needsDownload() && !forceDownload) {
+            System.out.println("Media can be played directly without downloading.");
             return src;
+        }
         
         // Prepare Media Information, Cache Folder, and Arguments for Commands
         final StringBuilder cacheFolder = new StringBuilder(PiPAARes.APP_CACHE_FOLDER + "/web");
