@@ -7,9 +7,9 @@
     Picture-in-Picture Anything Anywhere — Play almost any media, whatever the source, within simple, always-on-top windows.
     <br><br>
     <img src="https://img.shields.io/badge/designed for-windows-blue?style=flat&logo=windows" alt="Designed for and Tested on Windows">
-    <img src="https://img.shields.io/badge/latest release-0.9.4-00456B" alt="PiPAA v0.9.4">
+    <a href="https://github.com/mwhitney57/PiPAA/releases/latest" target="_blank"><img src="https://img.shields.io/badge/latest release-0.9.4-00456B" alt="PiPAA v0.9.4"></a>
     <img src="https://img.shields.io/badge/language-java-F58219?logo=openjdk" alt="Written in Java">
-    <a target="_blank" href="https://github.com/mwhitney57/PiPAA/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL%203.0-yellow" alt="GPL License v3.0"></a>
+    <a href="https://github.com/mwhitney57/PiPAA/blob/main/LICENSE" target="_blank"><img src="https://img.shields.io/badge/license-GPL%203.0-yellow" alt="GPL License v3.0"></a>
 </p>
 
 ### Table of Contents
@@ -96,6 +96,9 @@ Download the `PiPAA-with-Java.zip` asset from a [release](https://github.com/mwh
 </details>
 
 That's it! You are set and PiPAA should be working on your system.
+
+> [!NOTE]
+> PiPAA is currently developed using Java 17, but will use Java 21 by release of `v1.0.0`. You do not need to update to Java 21 if you use the pre-packaged `.zip`, which contains a portable [Adoptium](https://adoptium.net/) build of Java for you.
 
 ### ⚙ Loading Media
 Media can be loaded in two ways:
@@ -194,7 +197,7 @@ Please reference the tables below with the available shortcuts and how they can 
 </details>
 
 > [!NOTE]
-> _Shortcut customization will come in a future release._
+> Shortcut customization will come in a future release. Changes to the underlying system have already been made.
 
 ## 📜 Guides
 A collection of simple guides to help new PiPAA users.
@@ -214,9 +217,38 @@ It is not recommended to export your cookies from _every_ site, as that is unnec
 Windows Defender SmartScreen may display a warning when you first try to launch the application. This warning often displays when an application does not have a verified publisher. It is <b><i>not</i></b> an indicator of malicious code. To bypass this warning and run the application:<br><br>
 <img src="https://f.mwhitney.dev/projects/pipaa/demo/demoSmartScreen1.jpg" alt="PiPAA SmartScreen1."><br><br><img src="https://f.mwhitney.dev/projects/pipaa/demo/demoSmartScreen2.jpg" alt="PiPAA SmartScreen2.">
 </details>
+<details><summary><h3>Upgrade from PiPAA with Java 17 to PiPAA with Java 21.</h3></summary>
+    
+By the release of `v1.0.0`, PiPAA will migrate from using Java 17 to Java 21. This upgrade comes with many benefits for both the developers and users of PiPAA. Once the change is made, you *may* have to upgrade your Java version.
+
+Starting with `v0.9.5`, the pre-packaged Java build within `PiPAA-with-Java.zip` will be Java 21. Therefore, if you are using any version from `v0.9.5` onwards you should not need to upgrade!
+
+Still don't know what to do? Pick an option below to see if you need to upgrade:
+<details><summary><h4>
+    
+✔️ I am using PiPAA `v0.9.5` or later and downloaded `PiPAA-with-Java.zip`.
+</h4></summary>
+
+You do not need to upgrade! If something goes wrong, you can always [redownload](https://github.com/mwhitney57/PiPAA/releases/latest); you will **not** lose your configuration.
+
+</details>
+<details><summary><h4>
+
+❌ I am using PiPAA `v0.9.4` or earlier and only have older versions of Java on my system.
+</h4></summary>
+
+Download the `PiPAA-with-Java.zip` asset from a [release](https://github.com/mwhitney57/PiPAA/releases). This ZIP archive contains a Java 21 bundle, so you are still not required to install Java!
+
+1. Extract `PiPAA-with-Java.zip`.
+2. Run `PiPAA.exe` within the extracted folder.
+
+> ⚠️ Do not move `PiPAA.exe` outside of this folder unless you have Java installed on your system. It will not be able to locate the Java bundle it shipped with and you will receive an error.
+
+</details>
+</details>
 
 > [!NOTE]
-> _Video demonstrations and more guides will likely come in the future._
+> Video demonstrations and more guides will likely come in the future.
 
 ## 🤔 F.A.Q.
 <details><summary><h3>What is the point of PiPAA? How should I use it?</h3></summary>
@@ -352,9 +384,11 @@ Miscellaneous:
 ### ℹ Additional Information
 Many thanks again to all developers who created or contributed to the projects listed in the [Binaries](#-binaries) and [Libraries](#-libraries) sections. These libraries heavily streamlined the process of developing PiPAA, and they have vastly increased its capability.
 
+The `PiPAA-with-Java.zip` archive found in each release contains an [Adoptium](https://adoptium.net/) JRE build for Windows x64. If you have a Windows aarch64 system, you can download a replacement [here](https://adoptium.net/temurin/releases/?os=windows&arch=aarch64&package=jre).
+
 **System Compatibility**<br/>
 PiPAA was designed just for computers running versions of Windows. Other operating systems are highly unlikely to work. Support for them may come with future updates, but do not expect positive results on other systems until then.
 
 **Java Compatibility**<br/>
-PiPAA is built using Java 17. If you do not have Java 17 or higher installed, you may download the `PiPAA-with-Java.zip` asset from a full PiPAA release. Unzip after downloading and keep `PiPAA.exe` in the unzipped folder.
+PiPAA is built using Java 17, and will be using Java 21 by release of `v1.0.0`. If you **do not** have Java 17 or higher installed, you may download the `PiPAA-with-Java.zip` asset from a full PiPAA release. Unzip after downloading and run `PiPAA.exe`. Keep the application in the unzipped folder so that it can use the provided Java build.
 To update, simply replace the `PiPAA.exe` file with the new one. Instead, you can use PiPAA's over-the-air updating feature within the app to automatically update for you.
