@@ -258,8 +258,8 @@ At its core, PiPAA is a basic, lightweight media player that supports loading me
 | :---------                               | :-----:                     | :---:           |
 | Stay on top of other windows.            | ✔️                          | ✔️             |
 | Full Media Player Controls               | ❌                          | ✔️             |
-| Support for Images                       | ❌                          | ✔️             |
-| Support for Audio                        | ❌                          | ✔️             |
+| Support for Standalone Images            | ❌                          | ✔️             |
+| Support for Standalone Audio             | ❌                          | ✔️             |
 | Easy and Limitless Resizing              | ❌                          | ✔️             |
 | Save Media                               | ❌                          | ✔️             |
 | Lightweight*                             | ❌                          | ✔️             |
@@ -312,6 +312,10 @@ PiPAA is actively being developed and not yet at a Release v1.0 state. Major kno
 - Background processes, such as downloading/caching media, will continue until terminated or finished executing, even after the application has closed.
     - This is due to how PiPAA asynchronously executes these tasks. A fix is already planned.
     - If you encounter this issue, open `Task Manager` and terminate the processes.
+- The application takes a long time to load media under certain circumstances.
+    - This is a bug introduced during development of versions `v0.9.3` and onward, and it's especially noticeable in `v0.9.4` when attempting to load media in multiple windows simultaneously.
+    - Stems from the media attribution process. Changes were made over time to improve reliability for remote media, but this increased complexity and hurts loading times.
+    - A fix is in the works and will be implemented in an upcoming snapshot of `v0.9.5`.
 
 ## 🧱 Building
 PiPAA should be simple to build on your own. It requires Java 17 or later and [Maven](https://maven.apache.org/). If you already have an IDE such as [Eclipse](https://eclipseide.org/), Maven should already be available within the application.
@@ -387,7 +391,7 @@ Many thanks again to all developers who created or contributed to the projects l
 The `PiPAA-with-Java.zip` archive found in each release contains an [Adoptium](https://adoptium.net/) JRE build for Windows x64. If you have a Windows aarch64 system, you can download a replacement [here](https://adoptium.net/temurin/releases/?os=windows&arch=aarch64&package=jre).
 
 **System Compatibility**<br/>
-PiPAA was designed just for computers running versions of Windows. Other operating systems are highly unlikely to work. Support for them may come with future updates, but do not expect positive results on other systems until then.
+PiPAA was designed just for computers running versions of Windows. Other operating systems will not work as of `v0.9.4`. Support for them may come with future updates, but do not expect positive results on other systems until then.
 
 **Java Compatibility**<br/>
 PiPAA is built using Java 17, and will be using Java 21 by release of `v1.0.0`. If you **do not** have Java 17 or higher installed, you may download the `PiPAA-with-Java.zip` asset from a full PiPAA release. Unzip after downloading and run `PiPAA.exe`. Keep the application in the unzipped folder so that it can use the provided Java build.
