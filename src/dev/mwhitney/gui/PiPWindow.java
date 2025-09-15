@@ -384,6 +384,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         else {
             // Hardware-Accelerated Decoding (Acceleration) OFF
             state.off(HW_ACCELERATION);
+            // This alone does not guarantee use of software decoding; ":avcodec-hw=none" as a playback argument helps. See PLAY logic.
             playerArgs.add("--avcodec-hw=none");
         }
         
@@ -987,7 +988,14 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 media.setLoading(true);
                 
                 // Declare Options
-                String[] options = { ":play-and-pause", "" };
+                String[] options = {
+                    // Pause the media once the end is reached. PiPAA handles the restart/replay logic.
+                    ":play-and-pause",
+                    // Helps ensure software decoding is used in combination with previous argument.
+                    state.not(HW_ACCELERATION) ? ":avcodec-hw=none" : "",
+                    // Empty argument to be replaced if needed below.
+                    ""
+                };
                 
                 // Local Media
                 if (media.getAttributes().isLocal()) {
