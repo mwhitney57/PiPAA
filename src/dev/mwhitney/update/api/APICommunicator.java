@@ -87,6 +87,29 @@ public class APICommunicator {
     }
     
     /**
+     * Performs an {@link HttpRequest}, first creating a new resource-safe
+     * {@link HttpClient} to send the request.
+     * <p>
+     * This method was implemented simply to ensure that the process of creating and
+     * using a new {@link HttpClient} remained safe without resource leaks. After
+     * migrating from Java 17 to 21, HttpClient implemented {@link AutoCloseable},
+     * so this is best practice.
+     * 
+     * @param request - the {@link HttpRequest} to send.
+     * @return an {@link HttpResponse} with the String response.
+     * @throws IOException          if there is an input/output error during the
+     *                              request.
+     * @throws InterruptedException if the request communication is interrupted.
+     * @since 0.9.5
+     */
+    private static HttpResponse<String> httpRequest(HttpRequest request) throws IOException, InterruptedException {
+        // Use try-with-resources to prevent potential resource leak.
+        try (final HttpClient client = HttpClient.newHttpClient()) {
+            return client.send(request, HttpResponse.BodyHandlers.ofString());
+        }
+    }
+    
+    /**
      * Performs an API {@link Request}.
      * <p>
      * The request returns an {@link UpdatePayload} containing a {@link Build} and a
@@ -114,7 +137,7 @@ public class APICommunicator {
         }
         
         // Send the HttpRequest, then get the HttpResponse.
-        final HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        final HttpResponse<String> response = httpRequest(request);
         // Return if response has no information.
         if (response.body().isBlank()) return null;
         // Otherwise continue and convert body to JSON.

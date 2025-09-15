@@ -2,6 +2,8 @@ package dev.mwhitney.media;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
@@ -63,9 +65,10 @@ public class MediaURL {
      * 
      * @param src - a String with the potential media source.
      * @throws MalformedURLException if the passed source is not a valid URL.
+     * @throws URISyntaxException if the passed source is not of a valid URI syntax.
      */
-    public MediaURL(String src) throws MalformedURLException {
-        this.url = new URL(httpify(src));
+    public MediaURL(String src) throws MalformedURLException, URISyntaxException {
+        this.url = new URI(httpify(src)).toURL();
         
         // Will only turn true if the above does not throw an exception.
         this.valid = true;

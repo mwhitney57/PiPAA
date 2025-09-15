@@ -19,8 +19,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -486,7 +485,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
 //                            System.out.println(mediaPlayer.media().meta().get(Meta.ARTWORK_URL));
                             // Only bother attempting to change the artwork if the type of audio file supports it.
                             if (MediaExt.supportsArtwork(media.getAttributes().getFileExtension()))
-                                file = new File(new URL(mediaPlayer.media().meta().get(Meta.ARTWORK_URL)).toURI());
+                                file = new File(URI.create(mediaPlayer.media().meta().get(Meta.ARTWORK_URL)));
                         } catch (Exception e) { System.err.println("Warning: Couldn't load media artwork, it may not exist. Using default..."); }
                         try {
                             setImgViewerSrc((file != null ? file.getPath() : null), PiPWindow.class.getResource(PiPAARes.ICON_AUDIO_128));
@@ -1847,12 +1846,12 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         final String currentArt = mediaPlayer.mediaPlayer().media().meta().get(Meta.ARTWORK_URL);
         if (currentArt != null && !currentArt.isEmpty()) {
             try {
-                final File fileCurr = new File(new URL(currentArt).toURI());
+                final File fileCurr = new File(URI.create(currentArt));
                 if (fileCurr.exists()) {
                     fileCurr.delete();
                     System.err.println("Art for media already in VLC Art Cache, replacing...");
                 }
-            } catch (MalformedURLException | URISyntaxException ex) { ex.printStackTrace(); }
+            } catch (IllegalArgumentException ex) { ex.printStackTrace(); }
         }
         // Set Artwork Metadata, Save it to Underlying Media, then Reload to Show Art
 //        System.out.println(mediaPlayer.mediaPlayer().media().meta().get(Meta.ARTWORK_URL));

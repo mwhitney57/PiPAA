@@ -2,6 +2,7 @@ package dev.mwhitney.media;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -743,7 +744,7 @@ public class PiPMediaAttributor implements PropertyListener {
         MediaURL murl = null;
         try {
             murl = new MediaURL(src);
-        } catch (MalformedURLException mue) { mue.printStackTrace(); }
+        } catch (MalformedURLException | URISyntaxException ex) { ex.printStackTrace(); }
         return murl;
     }
     
