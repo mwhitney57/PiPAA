@@ -1,0 +1,156 @@
+# This workflow will build a package using Maven and then publish a release. It runs daily for snapshot builds if changes were made.
+# Beta and Release builds are triggered by creation of tags.
+
+name: Build and Release PiPAA
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  schedule:  # Schedule Daily Build and Release of Snapshot
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:  # Enables manually triggering of workflow for Snapshot Build/Release
+
+permissions:
+  contents: write  # Give GITHUB_TOKEN permission to push tags and manage releases.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+    - name: Build with Maven
+      run: mvn --batch-mode --update-snapshots clean package
+    - name: Rename shaded JAR
+      run: mv target/*-shaded.jar target/PiPAA.jar
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: PiPAA-artifacts
+        path: |
+          target/PiPAA.jar
+          target/PiPAA.exe
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Install tools
+      run: sudo apt-get update && sudo apt-get install -y xmlstarlet jq zip unzip
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: PiPAA-artifacts
+        path: target/
+    - name: Determine tag and check changes
+      id: setup
+      run: |
+        version=$(xmlstarlet sel -N maven=http://maven.apache.org/POM/4.0.0 -t -v "/maven:project/maven:version" pom.xml)
+        has_changes="true"
+        type=""
+        tag_name=""
+        if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          type="snapshot"
+          tag_name="v${version%-SNAPSHOT}-snapshot"
+          release_exists=$(gh release view "$tag_name" --json name -q .name || echo "")
+          if [ -n "$release_exists" ]; then
+            old_commit=$(git rev-parse "$tag_name")
+            has_changes=$(git log --pretty=oneline "$old_commit"..HEAD | wc -l)
+          else
+            has_changes="1"  # New snapshot
+          fi
+          if [ "$has_changes" -eq 0 ]; then
+            echo "No code changes since last snapshot; skipping release."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+        else
+          tag_name="${{ github.ref_name }}"
+          if [[ "$tag_name" == *-beta ]]; then
+            type="beta"
+          else
+            type="release"
+          fi
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+        fi
+        echo "tag_name=$tag_name" >> $GITHUB_OUTPUT
+        echo "type=$type" >> $GITHUB_OUTPUT
+        echo "clean_version=${version%-SNAPSHOT}" >> $GITHUB_OUTPUT
+        echo "is_prerelease=$([ "$type" != "release" ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+    - name: Update snapshot tag if needed
+      if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.setup.outputs.has_changes == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        tag_name="${{ steps.setup.outputs.tag_name }}"
+        gh release delete "$tag_name" --yes || true
+        git push origin :"$tag_name" || true
+        git tag -f "$tag_name" HEAD
+        git push origin "$tag_name" --force
+    - name: Download and bundle JRE
+      if: steps.setup.outputs.has_changes == 'true'
+      run: |
+        jre_url=$(curl -s https://api.adoptium.net/v3/assets/latest/21/hotspot | jq -r '.[] | select(.binary.os == "windows" and .binary.architecture == "x64" and .binary.image_type == "jre") | .binary.package.link')
+        curl -L -o jre.zip "$jre_url"
+        unzip jre.zip -d temp_jre
+        mkdir -p bundle/jre
+        mv temp_jre/*/* bundle/jre/
+        cp target/PiPAA.exe bundle/
+        cd bundle && zip -r ../PiPAA-with-Java.zip . && cd ..
+        mv PiPAA-with-Java.zip target/
+    - name: Generate changelog and commits
+      if: steps.setup.outputs.has_changes == 'true'
+      uses: heinrichreimer/github-changelog-generator-action@v2.4
+      id: changelog
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Prepare release body
+      if: steps.setup.outputs.has_changes == 'true'
+      id: body
+      run: |
+        tag_name="${{ steps.setup.outputs.tag_name }}"
+        last_stable=$(git tag --list 'v*' --sort=-v:refname | grep -v '\-snapshot$' | head -1 || echo "")
+        if [[ "${{ steps.setup.outputs.type }}" == "snapshot" ]]; then
+          since_tag="$last_stable"
+        else
+          last_tag=$(git tag --list 'v*' --sort=-v:refname | head -2 | tail -1 || echo "")
+          since_tag="$last_tag"
+        fi
+        commits=$(git log --pretty="* %h - %s (%an, %ad)" "$since_tag"..HEAD)
+        body=$(cat <<'EOF'
+        This is a snapshot release with the latest changes. It may contain more bugs. Check the recent [commits](https://github.com/mwhitney57/PiPAA/commits/main/) for more information.
+        ## ⚙️ Pre-v1.0.0 Reminder
+        We have not hit `v1.0.0` yet. Some things need polish! Please leave an issue on the repository or check the current [Known Issues](https://github.com/mwhitney57/PiPAA?tab=readme-ov-file#-known-issues) if anything is wrong!
+        EOF
+        )
+        echo "body<<EOF" >> $GITHUB_OUTPUT
+        echo "$body" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    - name: Create or Update Release
+      if: steps.setup.outputs.has_changes == 'true'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.setup.outputs.tag_name }}
+        name: ${{ steps.setup.outputs.type == 'snapshot' && 'Snapshot' || (steps.setup.outputs.type == 'beta' && 'Beta' || 'Release') }} v${{ steps.setup.outputs.clean_version }}
+        body: ${{ steps.body.outputs.body }}
+        draft: false
+        prerelease: ${{ steps.setup.outputs.is_prerelease }}
+        files: |
+          target/PiPAA.jar
+          target/PiPAA.exe
+          target/PiPAA-with-Java.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

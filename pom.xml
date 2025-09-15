@@ -21,8 +21,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
   </properties>
 
   <dependencies>
@@ -73,11 +73,22 @@
   </dependencies>
 
   <build>
+    <!-- Points to custom source location – Default: src/main/java – main/java subfolders are excluded in this project -->
+    <sourceDirectory>src</sourceDirectory>
+    
+    <resources>
+      <resource>
+        <directory>src</directory>  <!-- Copy all non-Java files from src (resources in package paths) -->
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -87,17 +98,110 @@
           </execution>
         </executions>
         <configuration>
-          <shadedArtifactAttached>true</shadedArtifactAttached>
-          <shadedClassifierName>shaded</shadedClassifierName>
+          <shadedArtifactAttached>true</shadedArtifactAttached>  <!-- Attach instead of replace -->
+          <shadedClassifierName>shaded</shadedClassifierName>  <!-- Classifier for attached JAR -->
           <transformers>
             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <mainClass>dev.mwhitney.main.Initializer</mainClass>
               <manifestEntries>
                 <Main-Class>dev.mwhitney.main.Initializer</Main-Class>
+                <Add-VM-Options>-Dsun.java2d.noddraw=true</Add-VM-Options>  <!-- JVM argument(s) baked into JAR -->
               </manifestEntries>
             </transformer>
             <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
           </transformers>
+          <filters>
+            <!-- Include all project files in JAR -->
+              <filter>
+                <artifact>${project.groupId}:${project.artifactId}</artifact>
+                <includes>
+                    <include>**/*</include>  <!-- Select all classes and resources in JAR -->
+                </includes>
+            </filter>
+            <!-- Exclude signature files from dependencies -->
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+              </excludes>
+            </filter>
+          </filters>
         </configuration>
+      </plugin>
+      
+      <!-- Parse version for dynamic Launch4j versioning -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.6.1</version>
+        <executions>
+          <execution>
+            <id>parse-version</id>
+            <goals>
+              <goal>parse-version</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <!-- Launch4j plugin mimicking provided XML config -->
+      <plugin>
+        <groupId>com.akathist.maven.plugins.launch4j</groupId>
+        <artifactId>launch4j-maven-plugin</artifactId>
+        <version>2.6.0</version>
+        <executions>
+          <execution>
+            <id>l4j-gui</id>
+            <phase>package</phase>
+            <goals>
+              <goal>launch4j</goal>
+            </goals>
+            <configuration>
+              <dontWrapJar>false</dontWrapJar>
+              <headerType>gui</headerType>
+              <jar>${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar</jar>
+              <outfile>${project.build.directory}/${project.artifactId}.exe</outfile>
+              <errTitle></errTitle>
+              <cmdLine></cmdLine>
+              <chdir>.</chdir>
+              <priority>normal</priority>
+              <downloadUrl></downloadUrl>
+              <supportUrl></supportUrl>
+              <stayAlive>false</stayAlive>
+              <restartOnCrash>false</restartOnCrash>
+              <manifest></manifest>
+              <icon>${project.basedir}/icon.ico</icon>
+              <singleInstance>
+                <mutexName>PiPAA</mutexName>
+                <windowTitle>PiPAA</windowTitle>
+              </singleInstance>
+              <jre>
+                <path>%JAVA_HOME%;%JAVA_HOME21%;%PATH%;jre</path>
+                <requiresJdk>false</requiresJdk>
+                <requires64Bit>true</requires64Bit>
+                <minVersion>21</minVersion>
+                <maxVersion></maxVersion>
+                <opts><opt>-Dsun.java2d.noddraw=true</opt></opts> <!-- Fallback. JAR should ensure this behavior anyway. -->
+              </jre>
+              <versionInfo>
+                <fileVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}.0</fileVersion>
+                <txtFileVersion>${project.version}</txtFileVersion>
+                <fileDescription>Picture-in-Picture Anything Anywhere</fileDescription>
+                <copyright>mwhitney57</copyright>
+                <productVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}.0</productVersion>
+                <txtProductVersion>${project.version}</txtProductVersion>
+                <productName>Picture-in-Picture Anything Anywhere</productName>
+                <companyName></companyName>
+                <internalName>PiPAA</internalName>
+                <originalFilename>PiPAA.exe</originalFilename>
+                <trademarks></trademarks>
+                <language>ENGLISH_US</language>
+              </versionInfo>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
