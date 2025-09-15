@@ -8,7 +8,7 @@ package dev.mwhitney.gui.binds;
  * @author mwhitney57
  * @since 0.9.5
  */
-public class KeyBind extends Bind<KeyInput> {
+public final class KeyBind extends Bind<KeyInput> {
     /**
      * Creates a new keyboard bind under the passed code with no modifiers.
      * 

@@ -12,7 +12,7 @@ import java.util.Objects;
  * @author mwhitney57
  * @since 0.9.5
  */
-public class MouseInput extends BindInput {
+public final class MouseInput extends BindInput {
     /** The LMB, or Left Mouse Button. Equal to {@link MouseEvent#BUTTON1}. */
     public static final int LMB = MouseEvent.BUTTON1;
     /** The MMB, or Middle Mouse Button (Scroll Wheel Press). Equal to {@link MouseEvent#BUTTON2}. */

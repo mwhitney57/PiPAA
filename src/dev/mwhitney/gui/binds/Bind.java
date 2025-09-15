@@ -14,7 +14,7 @@ import java.util.Objects;
  * @author mwhitney57
  * @since 0.9.5
  */
-public abstract class Bind <I extends BindInput> {
+public abstract sealed class Bind<I extends BindInput> permits KeyBind, MouseBind {
     /** The set of {@link BindDetails} pertaining to this bind instance. */
     protected volatile BindDetails<I> details;
     

@@ -8,7 +8,7 @@ package dev.mwhitney.gui.binds;
  * @author mwhitney57
  * @since 0.9.5
  */
-public class MouseBind extends Bind<MouseInput> {
+public final class MouseBind extends Bind<MouseInput> {
     /**
      * Creates a new mouse bind under the passed code with no modifiers.
      * 

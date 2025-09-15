@@ -8,7 +8,7 @@ import java.awt.event.KeyEvent;
  * @author mwhitney57
  * @since 0.9.5
  */
-public class KeyInput extends BindInput {
+public final class KeyInput extends BindInput {
     /**
      * Creates a new keyboard input with the passed code and modifiers. Defaults to
      * a {@link #hits()} value of <code>1</code>.

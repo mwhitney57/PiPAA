@@ -12,7 +12,7 @@ import java.util.Objects;
  * @author mwhitney57
  * @since 0.9.5
  */
-public abstract class BindInput {
+public abstract sealed class BindInput permits KeyInput, MouseInput {
     /** An int value for no modifiers being used. */
     public static final int NO_MODIFIERS = 0;
     
