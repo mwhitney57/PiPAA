@@ -764,4 +764,26 @@ public class PiPWindowState {
         this.hooks.clear();
         this.hooks = null;
     }
+    
+    @Override
+    public String toString() {
+        // Create builder.
+        final StringBuilder state = new StringBuilder("Window State:");
+        
+        // Add every state property value to the printout.
+        for (final StateProp prop : StateProp.values()) {
+            state.append("\n").append(prop).append("=").append(is(prop));
+        }
+        
+        // Add hook information.
+        state.append("\n>> Hooks on:");
+        hooks.forEach((prop, map) -> {
+            map.forEach((bool, list) -> {
+                if (list.size() > 0)
+                    state.append("\n").append(list.size()).append(" hook(s) into ").append(prop).append("<").append(bool).append(">");
+            });
+        });
+        
+        return state.toString();
+    }
 }

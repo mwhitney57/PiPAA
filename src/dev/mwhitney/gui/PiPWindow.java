@@ -573,7 +573,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 if (hasMedia()) mediaCommand(PiPMediaCMD.FULLSCREEN);
                 break;
             case DEBUG_INFO:
-                if (!hasAttributedMedia()) {
+                if (!hasAttributedMedia() && !ctrlDown) {
+                    // TODO Consider adding quick dialog message here as well: "No media."
                     System.out.println("Cancelling request to print info: Window is missing attributed media.");
                     flashBorderEDT(BORDER_WARNING);
                     break;
@@ -2148,7 +2149,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             info.append("   Frame Size: ").append(PiPWindow.this.getSize()).append("\n")
                 .append("ContPane Size: ").append(contentPane.getSize()).append("\n")
                 .append(" VidComp Size: ").append(mediaPlayer.videoSurfaceComponent().getSize()).append("\n")
-                .append("ImgLabel Size: ").append(imgLabel.getSize()).append("\n\n");
+                .append("ImgLabel Size: ").append(imgLabel.getSize()).append("\n\n")
+                .append(state.toString()).append("\n\n");
             for (final String line : info.toString().split("\n")) {
                 if (line.length() > longestDebugLine)
                     longestDebugLine = line.length();
