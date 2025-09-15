@@ -5,16 +5,26 @@ package darrylbu.icon;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.net.URL;
 import java.util.Objects;
 
 import javax.swing.ImageIcon;
+import javax.swing.Timer;
+
+import dev.mwhitney.gui.SubImageObserver;
+import dev.mwhitney.listeners.PaintRequester;
+import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.main.PiPProperty;
+import dev.mwhitney.main.PiPProperty.PropDefault;
+import dev.mwhitney.main.PiPProperty.SCALING_OPTION;
 
 /**
  * An <CODE>Icon</CODE> that scales its image to fill the component area,
@@ -32,7 +42,7 @@ import javax.swing.ImageIcon;
  * @version 1.0 03/27/12
  * @author Darryl
  */
-public class StretchIcon extends ImageIcon {
+public class StretchIcon extends ImageIcon implements PaintRequester, PropertyListener {
 
   /**
    * A generated, unique serial ID for StretchIcons.
@@ -293,6 +303,10 @@ public class StretchIcon extends ImageIcon {
     if (image == null) {
       return;
     }
+    
+    // Additional clause for when a rescale should happen -- when the window size has changed. @mwhitney57
+    if (parentSizeAtLastScale == null || !parentSizeAtLastScale.equals(c.getSize())) pendingImgRescale = true;
+    
     Insets insets = ((Container) c).getInsets();
     x = insets.left;
     y = insets.top;
@@ -317,7 +331,12 @@ public class StretchIcon extends ImageIcon {
     
     /* Modifications onward (below) in this method are authored by @mwhitney57. */
     
-    final ImageObserver io = getImageObserver();
+    // Observers are crucial for animated images, like GIFs.
+    // Use the set image observer, or the component itself if null.
+    final ImageObserver io = getImageObserver() != null ? getImageObserver() : c;
+    // Ensure custom observer implementation is tied to parent observer.
+    rescaleObserver.setParentObserver(io);
+    
     final Graphics2D g2d = (Graphics2D) g;
     
     // Zooming Functionality
@@ -347,7 +366,34 @@ public class StretchIcon extends ImageIcon {
 //        System.out.println(this.toString("(x: " + x + ", y:" + y + ", w: " + w + ", h: " + h + ")"));
     }
     
-    g2d.drawImage(image, x, y, w, h, io == null ? c : io);
+    // Get current image scaling option configuration.
+    final SCALING_OPTION scaling = currentScalingOption();
+    
+    // Only re-scale the image if pending (zoom or image changed).
+    if (scaling.not(SCALING_OPTION.FAST) && pendingImgRescale && !zoomChanging && (scaling.is(SCALING_OPTION.QUALITY) || !parentResizing)) {
+//        if (this.scaledImage != null) this.scaledImage.flush();   // Basic testing indicates not necessary. No visible side effects using it though.
+        this.scaledImage = toBufferedImage(image).getScaledInstance(w, h, Image.SCALE_SMOOTH);
+        this.parentSizeAtLastScale = c.getSize();
+        this.pendingImgRescale = false;
+    }
+    
+    // Draw depending on image scaling configuration.
+    switch (scaling) {
+    case QUALITY:
+    case SMART:
+        // QUALITY forces itself into this block. Smart only allowed when not zooming or resizing.
+        if (scaling.is(SCALING_OPTION.QUALITY) || (!zoomChanging && !parentResizing)) {
+            // Triggers the observer, ensuring subsequent frames get paint calls when needed. Prevents freezing for GIFs when drawn in "quality" mode.
+            c.prepareImage(image, this.rescaleObserver);
+            g2d.drawImage(scaledImage, x, y, this.rescaleObserver);
+            break;
+        }
+        // SMART, if conditions not met, reaches here and continues to use FAST approach.
+    case FAST:
+        // FAST always reaches here, but SMART can as well.
+        g2d.drawImage(image, x, y, w, h, this.rescaleObserver);
+        break;
+    }
     g2d.dispose();
   }
 
@@ -392,6 +438,35 @@ public class StretchIcon extends ImageIcon {
       return super.getIconHeight();
   }
   
+  /**
+   * The {@link Timer} that tracks recent zoom changes and fires when the icon is
+   * free to render in higher quality again.
+   * <p>
+   * Adjust the timer delay to control how long it takes until the quality version
+   * is painted. After a zoom action. The lower the number, the quicker it will
+   * update. However, too low a number won't provide enough time between zoom
+   * steps, resulting in a less smooth experience as quality versions render in
+   * intermittently.
+   * 
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  private final Timer zoomRescaleTimer = new Timer(500, e -> {
+      zoomChanging = false;
+      requestPaint();   // Requests another paint to trigger higher quality rescale.
+  });
+  /**
+   * A boolean for whether or not the zoom is "changing." This has intentionally
+   * loose accuracy, extending beyond to include the delay of
+   * {@link #zoomRescaleTimer}. This variable's core purpose is aiding the
+   * painting process in knowing when zoom operations are happening, or when they
+   * have happened very recently. This allows it to shift between quality and fast
+   * scaling.
+   * 
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  private boolean zoomChanging;
   /** A boolean for whether or not a zoom pan is pending, which is the effect of panning towards a point when zooming. */
   private boolean pendingZoomPan;
   /** A float with the zoom ratio, which is always at least <code>1.0f</code>. */
@@ -409,6 +484,127 @@ public class StretchIcon extends ImageIcon {
   /** A Point with the x and y coordinate offset buffers for an active pan. These numbers are applied to the pan offset when the pan action is stopped. */
   private Point panBuffer;
   /**
+   * The most recent scaled version of the {@link ImageIcon}. The latest scale is
+   * cached to prevent having to re-scale the image on every call of
+   * {@link #paintIcon(Component, Graphics, int, int)}.
+   * 
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  private Image scaledImage;
+  /**
+   * A {@link Dimension} with the size of the parent when the image was last
+   * scaled. This is tracked to help prevent unnecessary scaling operations.
+   * Functionally different from the tracking done with
+   * {@link #setParentResizing(boolean)}. Removal of this may lead to
+   * inconsistencies, especially if the parent size changes instantly instead of
+   * gradually.
+   * 
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  private Dimension parentSizeAtLastScale = null;
+  /**
+   * A boolean for whether or not the cached scaled image needs to be rescaled on
+   * next repaint.
+   * 
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  private boolean pendingImgRescale = true;
+  /**
+   * A custom {@link ImageObserver} that monitors for frame changes and updates
+   * that require a new image rescale, while maintaining the functionality of the
+   * observer its stepping in for.
+   * 
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  private final SubImageObserver rescaleObserver = new SubImageObserver() {
+      @Override
+      public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {
+          // Check for frame change, which means we need to rescale and cache the image on next paint.
+          if ((infoflags & (FRAMEBITS | ALLBITS)) != 0) {
+              pendingImgRescale = true;
+          }
+          // Not checking hasParentObserver intentionally. Should always have parent when in use. If not, other logic is at fault.
+          return getParentObserver().imageUpdate(img, infoflags, x, y, width, height);
+      }
+  };
+  /**
+   * A boolean for whether or not the parent of this icon is being resized. If it
+   * is, this icon may display itself using a lower quality scaling algorithm
+   * until resizing is complete.
+   * 
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  private boolean parentResizing;
+  /**
+   * Sets whether or not the parent of this icon is being resized.
+   * 
+   * @param r - the resize status.
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  public void setParentResizing(boolean r) {
+      this.parentResizing = r;
+  }
+  
+  /**
+   * Converts the passed {@link Image} to a {@link BufferedImage} by utilizing
+   * {@link Graphics2D} and drawing the image.
+   * 
+   * @param img - the {@link Image} to convert.
+   * @return the converted {@link BufferedImage}.
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  public static BufferedImage toBufferedImage(Image img) {
+      if (img instanceof BufferedImage buffImg) return buffImg;
+
+      // Create a BufferedImage and respect transparency.
+      final BufferedImage buffImg = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+
+      // Draw the Image onto the BufferedImage.
+      final Graphics2D g2d = buffImg.createGraphics();
+      g2d.drawImage(img, 0, 0, null);
+      g2d.dispose();
+
+      // Return the BufferedImage.
+      return buffImg;
+  }
+  
+  /**
+   * Gets the current {@link SCALING_OPTION} configured to the
+   * {@link PiPProperty#IMG_SCALING_QUALITY} option. This method returns the
+   * default as a fallback.
+   * 
+   * @return the current {@link SCALING_OPTION}.
+   */
+  private SCALING_OPTION currentScalingOption() {
+      return PropDefault.SCALING.matchAny(propertyState(PiPProperty.IMG_SCALING_QUALITY, String.class));
+  }
+  /**
+   * Restarts the internal zoom rescale {@link Timer}. This timer is responsible
+   * for ensuring the paint process is aware of any ongoing zoom operations, and
+   * provides a delay to ensure quality rescale operations don't happen during the
+   * zoom for better performance. Once executed, the timer will trigger a repaint
+   * that can do a quality rescale.
+   * 
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  private void restartZoomRescaleTimer() {
+      // This logic only pertains to the SMART scaling option. Return otherwise.
+      if(currentScalingOption().not(SCALING_OPTION.SMART)) return;
+      
+      zoomChanging = true;
+      zoomRescaleTimer.setRepeats(false);
+      zoomRescaleTimer.restart();
+  }
+  
+  /**
    * Sets the zoom factor and zoom point for the icon. The zoom factor cannot be
    * less than <code>1.00f</code>, and any passed value of <code>z</code> below it
    * will round up to <code>1.00f</code>.
@@ -421,6 +617,8 @@ public class StretchIcon extends ImageIcon {
       this.zoom = Math.max(1.00f, z);
       zoomPoint.setLocation(p);
       this.pendingZoomPan = true;
+      this.pendingImgRescale = true;  // Indicate the image should be rescaled since the zoom changed.
+      restartZoomRescaleTimer();
   }
 
   /**
@@ -556,4 +754,11 @@ public class StretchIcon extends ImageIcon {
   public String toString() {
       return this.toString(null);
   }
+  // To Be Overridden.
+  @Override
+  public void requestPaint() {}
+  @Override
+  public void propertyChanged(PiPProperty prop, String value) {}
+  @Override
+  public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return null; }
 }

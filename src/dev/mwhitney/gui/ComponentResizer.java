@@ -10,12 +10,15 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
+
+import dev.mwhitney.listeners.StartEndListener;
 
 /**
  *  The ComponentResizer allows you to resize a component by dragging a border
@@ -69,6 +72,12 @@ public class ComponentResizer extends MouseAdapter
 	 * @author mwhitney57
 	 */
 	private Supplier<Boolean> lockChecker;
+    /**
+     * An {@link ArrayList} of listeners which receive updates on resize events.
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+	private ArrayList<StartEndListener> resizeListeners = new ArrayList<>();
 
 	private Dimension minimumSize = MINIMUM_SIZE;
 	private Dimension maximumSize = MAXIMUM_SIZE;
@@ -330,6 +339,43 @@ public class ComponentResizer extends MouseAdapter
 	    return (this.lockChecker.get());
 	}
 	
+    /**
+     * Adds a resize listener. These listeners receive updates when the component
+     * begins the process of being resized, and when that process ends.
+     * 
+     * @param listener - the {@link StartEndListener} to add.
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+	public void addResizeListener(StartEndListener listener) {
+	    if (listener != null) this.resizeListeners.add(listener);
+	}
+	
+    /**
+     * Checks if the component is currently being resized.
+     * 
+     * @return <code>true</code> if being resized; <code>false</code> otherwise.
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+    public boolean isResizing() {
+        return this.resizing;
+    }
+    
+    /**
+     * Sets the internal resizing boolean then fires appropriate listeners.
+     * 
+     * @param r - the boolean for if the component is being resized.
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+    private void setResizing(boolean r) {
+        this.resizing = r;
+        
+        if (r) resizeListeners.forEach(l -> l.started());
+        else   resizeListeners.forEach(l -> l.ended());
+    }
+	
 	/**
 	 *  When the components minimum size is less than the drag insets then
 	 *	we can't determine which border should be resized so we need to
@@ -423,7 +469,7 @@ public class ComponentResizer extends MouseAdapter
 		//  Setup for resizing. All future dragging calculations are done based
 		//  on the original bounds of the component and mouse pressed location.
 
-		resizing = true;
+		setResizing(true);    // Changed by @mwhitney57 to use method instead.
 
 		Component source = e.getComponent();
 		pressed = e.getPoint();
@@ -447,7 +493,7 @@ public class ComponentResizer extends MouseAdapter
 	@Override
 	public void mouseReleased(MouseEvent e)
 	{
-		resizing = false;
+		setResizing(false);   // Changed by @mwhitney57 to use method instead.
 
 		Component source = e.getComponent();
 		source.setCursor( sourceCursor );

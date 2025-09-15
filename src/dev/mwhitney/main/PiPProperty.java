@@ -12,6 +12,8 @@ public enum PiPProperty {
     THEME,
     /** The mode under which to play GIF media. */
     GIF_PLAYBACK_MODE,
+    /** The quality of the images in the Swing component viewer when displayed at different resolutions. */
+    IMG_SCALING_QUALITY,
     /** If Drag and Drop actions should prefer utilizing a link, if available. */
     DND_PREFER_LINK,
     /** A mode which only allows a single window to play at any given time. */
@@ -79,6 +81,7 @@ public enum PiPProperty {
         case DOWNLOAD_WEB_MEDIA       -> PropDefault.DOWNLOAD.toString();
         case TRIM_TRANSPARENCY_OPTION -> PropDefault.TRIM.toString();
         case GIF_PLAYBACK_MODE        -> PropDefault.PLAYBACK.toString();
+        case IMG_SCALING_QUALITY      -> PropDefault.SCALING.toString();
         case OVERWRITE_CACHE          -> PropDefault.OVERWRITE.toString();
         case APP_UPDATE_TYPE          -> PropDefault.TYPE.toString();
         case APP_UPDATE_FREQUENCY     -> PropDefault.FREQUENCY_APP.toString();
@@ -116,6 +119,8 @@ public enum PiPProperty {
         public static final TRIM_OPTION      TRIM      = TRIM_OPTION.NORMAL;
         /** The default value for the {@link PiPProperty#GIF_PLAYBACK_MODE} property: {@link PLAYBACK_OPTION#BASIC} */
         public static final PLAYBACK_OPTION  PLAYBACK  = PLAYBACK_OPTION.BASIC;
+        /** The default value for the {@link PiPProperty#IMG_SCALING_QUALITY} property: {@link SCALING_OPTION#SMART} */
+        public static final SCALING_OPTION   SCALING   = SCALING_OPTION.SMART;
         /** The default value for the {@link PiPProperty#OVERWRITE_CACHE} property: {@link OVERWRITE_OPTION#NO} */
         public static final OVERWRITE_OPTION OVERWRITE = OVERWRITE_OPTION.NO;
         /** The default value for the {@link PiPProperty#APP_UPDATE_FREQUENCY} property: {@link FREQUENCY_OPTION#WEEKLY} */
@@ -408,7 +413,7 @@ public enum PiPProperty {
     /**
      * Options within the {@link PiPProperty#GIF_PLAYBACK_MODE} property.
      */
-    public enum PLAYBACK_OPTION implements PiPPropertyEnum<PLAYBACK_OPTION>{
+    public enum PLAYBACK_OPTION implements PiPPropertyEnum<PLAYBACK_OPTION> {
         /** The Basic GIF Playback mode which uses an image viewer component. */
         BASIC,
         /** The Advanced GIF Playback mode which downloads and converts GIFs to videos. */
@@ -426,6 +431,35 @@ public enum PiPProperty {
             return switch (this) {
             case BASIC    -> "Basic playback uses an image viewer component instead of VLC to view GIFs. Smooth and fast, but has different controls (i.e. no play/pause).";
             case ADVANCED -> "Advanced playback uses the video player by first converting GIF media to a video before playing. Not as smooth, but has video controls.";
+            };
+        }
+    }
+    /**
+     * Options to go with {@link PiPProperty#IMG_SCALING_QUALITY} which determines
+     * scaling quality.
+     */
+    public enum SCALING_OPTION implements PiPPropertyEnum<SCALING_OPTION> {
+        /** The quality mode forces a higher quality scaling algorithm at all times, even when illogical or unnecessary, at the cost of performance. */
+        QUALITY,
+        /** The smart mode prefers {@link #QUALITY} at all times, only switching to {@link #FAST} momentarily during zoom or window resize operations. */
+        SMART,
+        /** The fast mode forces the standard, faster, but lower quality scaling algorithm at all times, heavily sacrificing quality. */
+        FAST;
+        
+        @Override
+        public String label() {
+            return switch (this) {
+            case QUALITY -> "⭐ Force Quality";
+            case SMART   -> "💡 Smart";
+            case FAST    -> " ⚡  Fast";
+            };
+        }
+        @Override
+        public String description() {
+            return switch (this) {
+            case QUALITY -> "Forces a higher quality scaling algorithm at all times, even when unnecessary, at the cost of performance. Not recommended for hi-res media.";
+            case SMART   -> "Intelligently switches between the quality and fast algorithms to maximize quality and maintain performance. Recommended.";
+            case FAST    -> "Forces the faster, lower quality scaling algorithm at all times. Images may look worse, especially at small window sizes.";
             };
         }
     }

@@ -44,6 +44,7 @@ import dev.mwhitney.main.PiPProperty.FREQUENCY_OPTION;
 import dev.mwhitney.main.PiPProperty.OVERWRITE_OPTION;
 import dev.mwhitney.main.PiPProperty.PLAYBACK_OPTION;
 import dev.mwhitney.main.PiPProperty.PropDefault;
+import dev.mwhitney.main.PiPProperty.SCALING_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
 import dev.mwhitney.main.PiPProperty.TRIM_OPTION;
@@ -84,6 +85,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private BetterComboBox comboTheme;
     /** The BetterComboBox for the {@link PiPProperty#GIF_PLAYBACK_MODE} property. */
     private BetterComboBox comboGIFPlayback;
+    /** The BetterComboBox for the {@link PiPProperty#IMG_SCALING_QUALITY} property. */
+    private BetterComboBox comboImgScaling;
     /** The BetterCheckbox for the {@link PiPProperty#USE_SYS_VLC} property. */
     private BetterCheckbox chkSystemVLC;
     /** The BetterCheckbox for the {@link PiPProperty#USE_SYS_BINARIES} property. */
@@ -200,6 +203,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblGIFPlaybackTitle = new BetterLabel("GIF Playback Mode", titleFont);
         comboGIFPlayback = new BetterComboBox(PropDefault.PLAYBACK.labels(), titleFont);
         final BetterLabel lblGIFPlayback = new BetterLabel(PiPPropertyDesc.GIF_PLAYBACK_MODE, textFont);
+        final BetterLabel lblImgScalingTitle = new BetterLabel("Image Scaling Quality", titleFont);
+        comboImgScaling = new BetterComboBox(PropDefault.SCALING.labels(), titleFont);
+        final BetterLabel lblImgScaling = new BetterLabel(PiPPropertyDesc.IMG_SCALING_QUALITY, textFont);
         chkSinglePlay = new BetterCheckbox("💠 Single Playback Mode", true, titleFont);
         chkSinglePlay.addActionListener((e) -> propertyChanged(PiPProperty.SINGLE_PLAY_MODE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblSinglePlay = new BetterLabel(PiPPropertyDesc.SINGLE_PLAY_MODE, textFont);
@@ -408,6 +414,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         panePlayback.add(comboGIFPlayback, "gaptop 5px, split 2, w 50%");
         panePlayback.add(lblGIFPlaybackTitle, "span, wrap 4px");
         panePlayback.add(lblGIFPlayback, "wrap");
+        panePlayback.add(comboImgScaling, "gaptop 5px, split 2, w 50%");
+        panePlayback.add(lblImgScalingTitle, "span, wrap 4px");
+        panePlayback.add(lblImgScaling, "wrap");
         panePlayback.add(chkSinglePlay, "wrap 0px");
         panePlayback.add(lblSinglePlay, "wrap");
         panePlayback.add(chkGlobMute, "wrap 0px");
@@ -485,6 +494,12 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             final PLAYBACK_OPTION playback = PLAYBACK_OPTION.values()[selection];
             propertyChanged(PiPProperty.GIF_PLAYBACK_MODE, playback.toString());
             ((BetterComboBox) e.getSource()).setToolTipText(playback.description());
+        });
+        comboImgScaling.addActionListener((e) -> {
+            final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
+            final SCALING_OPTION scaling = SCALING_OPTION.values()[selection];
+            propertyChanged(PiPProperty.IMG_SCALING_QUALITY, scaling.toString());
+            ((BetterComboBox) e.getSource()).setToolTipText(scaling.description());
         });
         comboOverwriteCache.addActionListener((e) -> {
             final int selection = (int) ((BetterComboBox) e.getSource()).getSelectedIndex();
@@ -637,6 +652,11 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             final PLAYBACK_OPTION playback = PropDefault.PLAYBACK.matchAny(propertyState(prop, String.class));
             comboGIFPlayback.setSelectedIndex(playback.index());
             comboGIFPlayback.setToolTipText(playback.description());
+            break;
+        case IMG_SCALING_QUALITY:
+            final SCALING_OPTION scaling = PropDefault.SCALING.matchAny(propertyState(prop, String.class));
+            comboImgScaling.setSelectedIndex(scaling.index());
+            comboImgScaling.setToolTipText(scaling.description());
             break;
         case DND_PREFER_LINK:
             chkPreferLinkDND.setSelected(propertyState(prop, Boolean.class));

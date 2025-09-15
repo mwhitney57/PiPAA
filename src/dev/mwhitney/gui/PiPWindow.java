@@ -60,6 +60,7 @@ import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.ManagerFetcher;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.listeners.StartEndListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
@@ -278,6 +279,19 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         cr.setMinimumSize(MINIMUM_SIZE);
         cr.setDragInsets(BORDER_RESIZE_INSETS);
         cr.setLockChecker(() -> state.is(LOCKED_SIZE));
+        cr.addResizeListener(new StartEndListener() {
+            @Override
+            public void started() {
+                if (imgLabelIcon == null || state.not(PLAYER_COMBO, PLAYER_SWING)) return;  // Return if null or not applicable player.
+                imgLabelIcon.setParentResizing(true);
+            }
+            @Override
+            public void ended() {
+                if (imgLabelIcon == null || state.not(PLAYER_COMBO, PLAYER_SWING)) return;  // Return if null or not applicable player.
+                imgLabelIcon.setParentResizing(false);
+                imgLabel.repaint(); // Paint again properly now that resizing has completed.
+            }
+        });
         cr.registerComponent(this);
 
         // Pick Theme Based on Property
@@ -1784,12 +1798,26 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      *                               non-<code>null</code>.
      */
     private void setImgViewerSrc(final String src, final URL urlSrc) throws InvalidMediaException {
+        // Determine type of source and create icon.
         if (src != null)
-            imgLabelIcon = new StretchIcon(src, true);
+            imgLabelIcon = new StretchIcon(src, true) {
+                /** The randomly-generated, default serial ID. */
+                private static final long serialVersionUID = 1759259882823854325L;
+                @Override
+                public void requestPaint() { imgLabel.repaint(); }
+                @Override
+                public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindow.this.propertyState(prop, rtnType); }
+            };
         else if (urlSrc != null)
-            imgLabelIcon = new StretchIcon(urlSrc, true);
-        else
-            throw new InvalidMediaException("Neither image source option is valid.");
+            imgLabelIcon = new StretchIcon(urlSrc, true) {
+                /** The randomly-generated, default serial ID. */
+                private static final long serialVersionUID = 1759259882823854325L;
+                @Override
+                public void requestPaint() { imgLabel.repaint(); }
+                @Override
+                public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindow.this.propertyState(prop, rtnType); }
+            };
+        else throw new InvalidMediaException("Neither image source option is valid.");
             
         state.on(RESIZING);
         media.getAttributes().setSize(imgLabelIcon.getImgWidth(), imgLabelIcon.getImgHeight());
