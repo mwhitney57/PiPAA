@@ -120,22 +120,21 @@ jobs:
     - name: Prepare release body
       if: steps.setup.outputs.has_changes == 'true'
       id: body
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         tag_name="${{ steps.setup.outputs.tag_name }}"
-        last_stable=$(git tag --list 'v*' --sort=-v:refname | grep -v '\-snapshot$' | head -1 || echo "")
-        if [[ "${{ steps.setup.outputs.type }}" == "snapshot" ]]; then
-          since_tag="$last_stable"
+        release_body=$(gh release view "$tag_name" --json body -q .body || echo "")
+        if [ -n "$release_body" ]; then
+          body="$release_body"
         else
-          last_tag=$(git tag --list 'v*' --sort=-v:refname | head -2 | tail -1 || echo "")
-          since_tag="$last_tag"
+          body=$(cat <<'EOF'
+          This is a snapshot release with the latest changes. It may contain more bugs. Check the recent [commits](https://github.com/mwhitney57/PiPAA/commits/main/) for more information.
+          ## ⚙️ Pre-v1.0.0 Reminder
+          We have not hit `v1.0.0` yet. Some things need polish! Please leave an issue on the repository or check the current [Known Issues](https://github.com/mwhitney57/PiPAA?tab=readme-ov-file#-known-issues) if anything is wrong!
+          EOF
+          )
         fi
-        commits=$(git log --pretty="* %h - %s (%an, %ad)" "$since_tag"..HEAD)
-        body=$(cat <<'EOF'
-        This is a snapshot release with the latest changes. It may contain more bugs. Check the recent [commits](https://github.com/mwhitney57/PiPAA/commits/main/) for more information.
-        ## ⚙️ Pre-v1.0.0 Reminder
-        We have not hit `v1.0.0` yet. Some things need polish! Please leave an issue on the repository or check the current [Known Issues](https://github.com/mwhitney57/PiPAA?tab=readme-ov-file#-known-issues) if anything is wrong!
-        EOF
-        )
         echo "body<<EOF" >> $GITHUB_OUTPUT
         echo "$body" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
