@@ -304,6 +304,8 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
     if (image == null) {
       return;
     }
+    // Update component size cache.
+    c.getSize(compSize);
     
     // Additional clause for when a rescale should happen -- when the window size has changed. @mwhitney57
     if (parentSizeAtLastScale == null || !parentSizeAtLastScale.equals(c.getSize())) pendingImgRescale = true;
@@ -439,6 +441,14 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
       return super.getIconHeight();
   }
   
+  /**
+   * The last known size of the parent component hosting this image icon. Updated
+   * whenever there's a paint call and the image is valid.
+   * 
+   * @author mwhitney57
+   * @since 0.9.5
+   */
+  private final Dimension compSize = new Dimension(0, 0);
   /**
    * The {@link Timer} that tracks recent zoom changes and fires when the icon is
    * free to render in higher quality again.
@@ -620,6 +630,17 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
       this.pendingZoomPan = true;
       this.pendingImgRescale = true;  // Indicate the image should be rescaled since the zoom changed.
       restartZoomRescaleTimer();
+      
+      // Reset Values if Zoom is Now Normal (1.0) (Not Zoomed)
+      if (this.zoom == 1.0f) {
+          /*
+           * These values help provide a gradual zoom towards a point over multiple steps.
+           * However, if not reset between zoom chains, they skew the next zoom towards
+           * the old values. Reset to make each zoom chain feel accurate.
+           */
+          this.panOffsetPercentX = 0.0f;
+          this.panOffsetPercentY = 0.0f;
+      }
   }
 
   /**
@@ -630,8 +651,36 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
    */
   private void pendingZoomPan() {
       if (pendingZoomPan) {
+          /**
+           * Multiplied with the % screen location of the zoom point. The greater the
+           * number, the greater the movement towards the point after each zoom step. The
+           * factor is scaled based on the window size, since its panning impact is much
+           * more dramatic in smaller windows if left constant.
+           */
+          //                  Constant ↓    Scale with greatest window size dimension     ↓ Arbitrary Constant
+          final int panFactor = (int) (20 * (Math.max(compSize.width, compSize.height) / 500.0f));
+          /**
+           * Calculate where the zoom point lies in the bounds of the component displaying
+           * this image, resulting in a percentage for both axes. The very center of the
+           * component would be (0.0,0.0).
+           */
+          float xPercOfScreen = zoomPoint.x / (compSize.width  / 2.0f); // X: -1.0 ← 0 → 1.0
+          float yPercOfScreen = zoomPoint.y / (compSize.height / 2.0f); // Y: -1.0 ↑ 0 ↓ 1.0
+          /**
+           * The point's percentage across the screen is then multiplied against the pan
+           * factor to determine exactly how much the pan should move in each direction.
+           * <code> Example — Factor: 20 -> (0.75, 0.75) -> (15, 15) →↓ </code>
+           */
+          // Linear Function — Just basic multiplication. Feels accurate. Chose to scale factor with window size rather than scale the function on position.
+          float xScaledFactor = panFactor * xPercOfScreen;  // X: -Factor ← 0 → Factor
+          float yScaledFactor = panFactor * yPercOfScreen;  // Y: -Factor ↑ 0 ↓ Factor
+          // Power Function Alternative — Smaller results at smaller percentages.  Concave-up curve. Math.signum call to respect negatives. Can feel inaccurate.
+//          float xScaledFactor = panFactor * Math.signum(xPercOfScreen) * (float) Math.pow(xPercOfScreen, 2);  // X: -Factor ← 0 → Factor
+//          float yScaledFactor = panFactor * Math.signum(yPercOfScreen) * (float) Math.pow(yPercOfScreen, 2);  // Y: -Factor ↑ 0 ↓ Factor
+          
           pendingZoomPan = false;
-          this.pan(Math.max(-20, Math.min(-zoomPoint.x, 20)), Math.max(-20, Math.min(-zoomPoint.y, 20)));
+          // Pan — invert values to push image *away*, which gives effect of zooming into the point.
+          this.pan((int) -xScaledFactor, (int) -yScaledFactor);
           this.stoppedPan();
       }
   }
