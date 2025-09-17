@@ -1,4 +1,4 @@
-package dev.mwhitney.gui;
+package dev.mwhitney.gui.viewer;
 
 import java.awt.image.ImageObserver;
 

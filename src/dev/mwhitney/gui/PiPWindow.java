@@ -57,6 +57,7 @@ import dev.mwhitney.gui.decor.FadingLineBorder;
 import dev.mwhitney.gui.decor.OffsetRoundedLineBorder;
 import dev.mwhitney.gui.popup.EasyTopDialog;
 import dev.mwhitney.gui.popup.TopDialog;
+import dev.mwhitney.gui.viewer.ZoomPanSnapshot;
 import dev.mwhitney.listeners.ManagerFetcher;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.PropertyListener;
@@ -159,6 +160,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     private JLabel imgLabel;
     /** This window's JLabel's StretchIcon for displaying an image. */
     private StretchIcon imgLabelIcon;
+    /** The last zoom and pan snapshot taken of the image icon, shown in the Swing image viewer, while in Normal (non-fullscreen) mode. */
+    private ZoomPanSnapshot imgSnapshotNorm = ZoomPanSnapshot.DEFAULT;
+    /** The last zoom and pan snapshot taken of the image icon, shown in the Swing image viewer, while in Fullscreen mode. */
+    private ZoomPanSnapshot imgSnapshotFull = ZoomPanSnapshot.DEFAULT;
     /** The default text to reset the text field to. */
     private static final String DEFAULT_FIELD_TXT    = "Drop media here...";
     /** The text font used in the text field. */
@@ -1822,6 +1827,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         state.on(RESIZING);
         media.getAttributes().setSize(imgLabelIcon.getImgWidth(), imgLabelIcon.getImgHeight());
         PiPWindow.this.cr.setAspectRatio(media.getAttributes().getSize());
+        resetImgViewerSnapshots();
         SwingUtilities.invokeLater(() -> {
             imgLabel.setIcon(imgLabelIcon);
             changeSize(media.getAttributes().getScaledSize(DEFAULT_MEDIA_SIZE));
@@ -1850,8 +1856,21 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 imgLabelIcon.getImage().flush();
             }
             imgLabelIcon = null;
+            resetImgViewerSnapshots();
         }
         imgLabel.setIcon(null);
+    }
+    
+    /**
+     * Resets the Normal and Fullscreen mode zoom and pan snapshots to the default.
+     * This method is intended to be used when changing media in the image viewer,
+     * as it clears snapshot data relating to the current media and its state.
+     * 
+     * @since 0.9.5
+     */
+    private void resetImgViewerSnapshots() {
+        this.imgSnapshotNorm = ZoomPanSnapshot.DEFAULT;
+        this.imgSnapshotFull = ZoomPanSnapshot.DEFAULT;
     }
     
     /**
@@ -2111,8 +2130,19 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         final int prevState = getExtendedState();
         super.setExtendedState(state);
         
-        if (this.state.is(PLAYER_SWING) && (prevState == JFrame.MAXIMIZED_BOTH || prevState == JFrame.NORMAL) && imgLabel.getIcon() != null)
-            ((StretchIcon) imgLabel.getIcon()).setZoom(1.00f, new Point(0,0));
+        // Only continue if using the Swing player and displaying an image.
+        if (this.state.is(PLAYER_SWING) && imgLabel.getIcon() != null) {
+            // Fullscreen -> Normal -- Capture Fullscreen snapshot then apply Normal snapshot.
+            if (prevState == JFrame.MAXIMIZED_BOTH) {
+                imgSnapshotFull = imgLabelIcon.snapshot();
+                imgLabelIcon.applySnapshot(imgSnapshotNorm);
+            }
+            // Normal -> Fullscreen -- Capture Normal snapshot then apply Fullscreen snapshot.
+            else if (prevState == JFrame.NORMAL) {
+                imgSnapshotNorm = imgLabelIcon.snapshot();
+                imgLabelIcon.applySnapshot(imgSnapshotFull);
+            }
+        }
     }
     
     @Override

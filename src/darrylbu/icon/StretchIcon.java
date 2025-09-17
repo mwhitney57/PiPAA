@@ -19,7 +19,8 @@ import java.util.Objects;
 import javax.swing.ImageIcon;
 import javax.swing.Timer;
 
-import dev.mwhitney.gui.SubImageObserver;
+import dev.mwhitney.gui.viewer.SubImageObserver;
+import dev.mwhitney.gui.viewer.ZoomPanSnapshot;
 import dev.mwhitney.listeners.PaintRequester;
 import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.PiPProperty;
@@ -731,6 +732,35 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
       // Recalculate percentage offsets using new numbers.
       this.panOffsetPercentX = (panOffset.getX() / zoomDiff.getX());
       this.panOffsetPercentY = (panOffset.getY() / zoomDiff.getY());
+  }
+  
+  /**
+   * Takes a snapshot of the current zoom and pan data. Useful for capturing
+   * exactly what the image looked like in its window at any given time.
+   * 
+   * @return a {@link ZoomPanSnapshot} containing the zoom and pan data.
+   * @author mwhitney57
+   * @since 0.9.5
+   * @see {@link #applySnapshot(ZoomPanSnapshot)} to apply a snapshot.
+   */
+  public ZoomPanSnapshot snapshot() {
+      return new ZoomPanSnapshot(this.zoom, this.panOffset, this.panOffsetPercentX, this.panOffsetPercentY);
+  }
+  
+  /**
+   * Apply data from a {@link ZoomPanSnapshot}, returning to the look from when
+   * the snapshot was taken.
+   * 
+   * @param snapshot - the {@link ZoomPanSnapshot} to apply the data from.
+   * @author mwhitney57
+   * @since 0.9.5
+   * @see {@link #snapshot()} to capture a snapshot.
+   */
+  public void applySnapshot(ZoomPanSnapshot snapshot) {
+      this.zoom = snapshot.zoom();
+      this.panOffset = snapshot.pan();
+      this.panOffsetPercentX = snapshot.panX();
+      this.panOffsetPercentY = snapshot.panY();
   }
   
   /**
