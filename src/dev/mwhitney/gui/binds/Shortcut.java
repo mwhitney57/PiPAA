@@ -73,7 +73,7 @@ public enum Shortcut {
     ),
     FULLSCREEN(
         new KeyBind(KeyEvent.VK_F),
-        new MouseBind(BindOptions.build().onHit(2), MouseEvent.BUTTON1)
+        new MouseBind(BindOptions.build().onHit(2).useDelay(250), MouseEvent.BUTTON1)
     ),
     GLOBAL_MUTE(
         new KeyBind(KeyEvent.VK_M, CTRL_DOWN_MASK | SHIFT_DOWN_MASK)
