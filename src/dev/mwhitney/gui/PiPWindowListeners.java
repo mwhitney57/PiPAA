@@ -200,8 +200,27 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             @Override
             public void mouseDragged(MouseEvent e) {
                 // Only Drag if RMB is Pressed and Has Point
-                if (mouse.hasPointRMB() && get().state().not(FULLSCREEN, LOCKED_POSITION))
+                if (mouse.hasPointRMB() && get().state().not(FULLSCREEN, LOCKED_POSITION)) {
+                    // Save location from before drag in case its needed for determining distance.
+                    final Point prevPos = get().getLocation();
+                    // Move dragged window.
                     get().setLocation(e.getXOnScreen() - mouse.getPointRMB().x, e.getYOnScreen() - mouse.getPointRMB().y);
+                    // Check if all other windows should be moved as well.
+                    if (e.isShiftDown()) {
+                        // Get the dragged window's new and current position.
+                        final Point currPos = get().getLocation();
+                        get().getManager().callInLiveWindows(window -> {
+                            // Don't set location again for window which drag originated in.
+                            if (window == get()) return;
+                            // Get window's X/Y distance from originating window's previous position.
+                            final int distX = window.getX() - prevPos.x;
+                            final int distY = window.getY() - prevPos.y;
+                            // Set window's location to be the same distance, but from the originating window's new location.
+                            window.setLocation(currPos.x + distX, currPos.y + distY);
+                        });
+                    }
+                }
+                // Only Pan if LMB is Pressed and Has Point
                 else if (mouse.hasPointLMB())
                     sendMediaCMD(PiPMediaCMD.PAN, Integer.toString(e.getXOnScreen() - mouse.getPointLMB().x),
                             Integer.toString(e.getYOnScreen() - mouse.getPointLMB().y));
