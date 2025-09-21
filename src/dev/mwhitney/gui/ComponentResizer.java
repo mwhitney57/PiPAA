@@ -19,6 +19,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 import dev.mwhitney.listeners.StartEndListener;
+import dev.mwhitney.util.ScalingDimension;
 
 /**
  *  The ComponentResizer allows you to resize a component by dragging a border
@@ -554,6 +555,21 @@ public class ComponentResizer extends MouseAdapter
 		int height = bounds.height;
 		// N & W drag amounts for aspect ratio reference -- @mwhitney57
 		int dragN = 0, dragW = 0;
+		/* Begin aspect ratio-preserving resize changes -- @mwhitney57 */
+		// Declare adapted minimums. Use set minimums by default.
+		int adaptedMinimumWidth  = minimumSize.width;
+		int adaptedMinimumHeight = minimumSize.height;
+		// Find aspect ratio-respecting minimums. These will vary by media and must adapt on the fly here.
+		if (isUsingRatio()) {
+    		// Use media's aspect ratio and minimum size without borders for accuracy in initial calculations.
+    		final ScalingDimension sd = ScalingDimension.from(getAspectRatio())
+    		        .setMinimumSize(PiPWindow.MINIMUM_SIZE_VALUE)
+    		        .scaleToHeight(PiPWindow.MINIMUM_SIZE_VALUE);
+    	    // Set ratio-preserving minimums, which consist of the scaled values with the borders added back.
+    	    adaptedMinimumWidth  = sd.width  + (PiPWindow.BORDER_SIZE*2);
+    	    adaptedMinimumHeight = sd.height + (PiPWindow.BORDER_SIZE*2);
+		}
+		/* End changes by @mwhitney57 */
 
 		//  Resizing the West or North border affects the size and location
 
@@ -562,7 +578,7 @@ public class ComponentResizer extends MouseAdapter
 			int drag = getDragDistance(pressed.x, current.x, snapSize.width);
 //			int maximum = Math.min(width + x, maximumSize.width);
 			int maximum = Math.min(width + x - 10, maximumSize.width);
-			drag = getDragBounded(drag, snapSize.width, width, minimumSize.width, maximum);
+			drag = getDragBounded(drag, snapSize.width, width, adaptedMinimumWidth, maximum);
 			// Save W drag amount for aspect ratio reference -- @mwhitney57
 			dragW = drag;
 
@@ -575,7 +591,7 @@ public class ComponentResizer extends MouseAdapter
 			int drag = getDragDistance(pressed.y, current.y, snapSize.height);
 //			int maximum = Math.min(height + y, maximumSize.height);
 			int maximum = Math.min(height + y - 10, maximumSize.height);
-			drag = getDragBounded(drag, snapSize.height, height, minimumSize.height, maximum);
+			drag = getDragBounded(drag, snapSize.height, height, adaptedMinimumHeight, maximum);
 			// Save N drag amount for aspect ratio reference -- @mwhitney57
 			dragN = drag;
 			
@@ -590,7 +606,7 @@ public class ComponentResizer extends MouseAdapter
 			int drag = getDragDistance(current.x, pressed.x, snapSize.width);
 			Dimension boundingSize = getBoundingSize( source );
 			int maximum = Math.min(boundingSize.width - x, maximumSize.width);
-			drag = getDragBounded(drag, snapSize.width, width, minimumSize.width, maximum);
+			drag = getDragBounded(drag, snapSize.width, width, adaptedMinimumWidth, maximum);
 			width += drag;
 		}
 
@@ -599,7 +615,7 @@ public class ComponentResizer extends MouseAdapter
 			int drag = getDragDistance(current.y, pressed.y, snapSize.height);
 			Dimension boundingSize = getBoundingSize( source );
 			int maximum = Math.min(boundingSize.height - y, maximumSize.height);
-			drag = getDragBounded(drag, snapSize.height, height, minimumSize.height, maximum);
+			drag = getDragBounded(drag, snapSize.height, height, adaptedMinimumHeight, maximum);
 			height += drag;
 		}
 
@@ -620,21 +636,30 @@ public class ComponentResizer extends MouseAdapter
 		            x -= dragN * ratio;
 		        }
 		        // Subtract from height in preparation to account for border
-		        height -= PiPWindow.BORDER_SIZE*2;
-		        // Set bounds of component, adding the width of the borders x2 to both the W and H.
-		        source.setBounds(x, y, (int) (height * ratio) + (PiPWindow.BORDER_SIZE*2), (int) (height + (PiPWindow.BORDER_SIZE*2)));
+                height -= PiPWindow.BORDER_SIZE*2;
+                // Ensure final calculated values remain above minimums. Precision can be off by a pixel or so. This remedies that.
+                final int calcW = Math.max(adaptedMinimumWidth,  (int) (height * ratio) + (PiPWindow.BORDER_SIZE*2));
+                final int calcH = Math.max(adaptedMinimumHeight, (int) (height + (PiPWindow.BORDER_SIZE*2)));
+                // Set bounds of component, adding the width of the borders x2 to both the W and H.
+                source.setBounds(x, y, calcW, calcH);
 		    }
 		    else if (WEST == (direction & WEST) || (EAST == (direction & EAST))) {
 		        // Subtract from width in preparation to account for border
 		        width -= PiPWindow.BORDER_SIZE*2;
-		        // Set bounds of component, adding the width of the borders x2 to both the W and H.
-		        source.setBounds(x, y, width + (PiPWindow.BORDER_SIZE*2), (int) (width / ratio) + (PiPWindow.BORDER_SIZE*2));
+		        // Ensure final calculated values remain above minimums. Precision can be off by a pixel or so. This remedies that.
+                final int calcW = Math.max(adaptedMinimumWidth,  width + (PiPWindow.BORDER_SIZE*2));
+                final int calcH = Math.max(adaptedMinimumHeight, (int) (width / ratio) + (PiPWindow.BORDER_SIZE*2));
+                // Set bounds of component, adding the width of the borders x2 to both the W and H.
+                source.setBounds(x, y, calcW, calcH);
 		    }
 		    else if (SOUTH == (direction & SOUTH)) {
 		        // Subtract from height in preparation to account for border
                 height -= PiPWindow.BORDER_SIZE*2;
+                // Ensure final calculated values remain above minimums. Precision can be off by a pixel or so. This remedies that.
+                final int calcW = Math.max(adaptedMinimumWidth,  (int) (height * ratio) + (PiPWindow.BORDER_SIZE*2));
+                final int calcH = Math.max(adaptedMinimumHeight, height + (PiPWindow.BORDER_SIZE*2));
                 // Set bounds of component, adding the width of the borders x2 to both the W and H.
-                source.setBounds(x, y, (int) (height * ratio) + (PiPWindow.BORDER_SIZE*2), height + (PiPWindow.BORDER_SIZE*2));
+                source.setBounds(x, y, calcW, calcH);
 		    }
 		} else {
 		    source.setBounds(x, y, width, height);

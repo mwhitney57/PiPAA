@@ -23,6 +23,16 @@ public class ScalingDimension extends Dimension {
     private int minimumHeight;
     
     /**
+     * Creates a new {@link ScalingDimension} with the passed width and height.
+     * 
+     * @param width  - an int with the width in pixels.
+     * @param height - an int with the height in pixels.
+     */
+    public ScalingDimension(int width, int height) {
+        super(width, height);
+    }
+    
+    /**
      * Creates a {@link ScalingDimension} from the passed {@link Dimension},
      * deriving its size.
      * 
@@ -30,8 +40,7 @@ public class ScalingDimension extends Dimension {
      * @return the new {@link ScalingDimension} instance.
      */
     public static ScalingDimension from(Dimension d) {
-        final ScalingDimension scalingD = new ScalingDimension();
-        scalingD.setSize(d);
+        final ScalingDimension scalingD = new ScalingDimension(d.width, d.height);
         return scalingD;
     }
     
@@ -39,10 +48,12 @@ public class ScalingDimension extends Dimension {
      * Sets the minimum size for both the width and height.
      * 
      * @param size - an int with the size in pixels.
+     * @return this {@link ScalingDimension} instance.
      */
-    public void setMinimumSize(int size) {
+    public ScalingDimension setMinimumSize(int size) {
         setMinimumWidth(size);
         setMinimumHeight(size);
+        return this;
     }
     
     /**

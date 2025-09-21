@@ -124,7 +124,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     /** The window insets where the user can drag and resize the window. */
     private static final Insets BORDER_RESIZE_INSETS  = new Insets(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE);
     /** The minimum width and height of PiPWindows. */
-    private static final int MINIMUM_SIZE_VALUE       = 64;
+    public  static final int MINIMUM_SIZE_VALUE       = 64;
     /** The minimum size of PiPWindows. */
     private static final Dimension MINIMUM_SIZE       = new Dimension(MINIMUM_SIZE_VALUE + (BORDER_SIZE*2), MINIMUM_SIZE_VALUE + (BORDER_SIZE*2));
     /** The default size of PiPWindows. */
@@ -2074,8 +2074,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      */
     public void scaleSize(final int size, final boolean width) {
         // Scale current dimensions to desired width/height while respecting window minimum.
-        final ScalingDimension dim = ScalingDimension.from(new Dimension(getInnerWidth(), getInnerHeight()));
-        dim.setMinimumSize(MINIMUM_SIZE_VALUE);
+        final ScalingDimension dim = new ScalingDimension(getInnerWidth(), getInnerHeight()).setMinimumSize(MINIMUM_SIZE_VALUE);
         if (width) dim.scaleToWidth(size);  // Resize Based on Width
         else       dim.scaleToHeight(size); // Resize Based on Height
         changeSize(dim);
