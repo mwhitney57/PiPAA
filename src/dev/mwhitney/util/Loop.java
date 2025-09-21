@@ -1,4 +1,4 @@
-package dev.mwhitney.main;
+package dev.mwhitney.util;
 
 import java.util.Objects;
 

@@ -235,7 +235,7 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
      * 
      * @param action - the {@link Consumer} to accept with every live window.
      */
-    private void callInLiveWindows(Consumer<PiPWindow> action) {
+    public void callInLiveWindows(Consumer<PiPWindow> action) {
         for(final PiPWindow window : this.windows) {
             if (window == null || window.state().any(StateProp.CLOSING, StateProp.CLOSED))
                 continue;

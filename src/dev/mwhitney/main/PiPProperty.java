@@ -186,6 +186,8 @@ public enum PiPProperty {
             TXT,
             /** The color of buttons. */
             BTN,
+            /** The color of buttons when hovered over or highlighted. */
+            BTN_HOVER,
             /** The color of buttons when they are pressed. */
             BTN_PRESSED,
             /** The color of button borders. */
@@ -205,6 +207,7 @@ public enum PiPProperty {
         public static final Color LIGHT_BG_ACCENT    = new Color(210, 210, 210);
         public static final Color LIGHT_TXT          = Color.BLACK;
         public static final Color LIGHT_BTN          = new Color(0, 120, 215);
+        public static final Color LIGHT_BTN_HOVER    = new Color(0, 140, 255);
         public static final Color LIGHT_BTN_PRESSED  = new Color(0, 84, 150);
         public static final Color LIGHT_BTN_BORDER   = new Color(0, 60, 107);
         public static final Color LIGHT_BTN_TXT      = Color.WHITE;
@@ -216,6 +219,7 @@ public enum PiPProperty {
         public static final Color DARK_BG_ACCENT    = new Color(50, 50, 50);
         public static final Color DARK_TXT          = Color.LIGHT_GRAY;
         public static final Color DARK_BTN          = new Color(35, 35, 35);
+        public static final Color DARK_BTN_HOVER    = DARK_BG_ACCENT;
         public static final Color DARK_BTN_PRESSED  = DARK_BTN.darker();
         public static final Color DARK_BTN_BORDER   = Color.BLACK;
         public static final Color DARK_BTN_TXT      = Color.WHITE;
@@ -227,6 +231,7 @@ public enum PiPProperty {
         public static final Color PINK_BG_ACCENT    = PINK_BG.darker();
         public static final Color PINK_TXT          = Color.WHITE;
         public static final Color PINK_BTN          = new Color(172, 193, 138);
+        public static final Color PINK_BTN_HOVER    = new Color(196, 211, 171);
         public static final Color PINK_BTN_PRESSED  = PINK_BTN.darker();
         public static final Color PINK_BTN_BORDER   = PINK_BTN_PRESSED.darker();
         public static final Color PINK_BTN_TXT      = Color.WHITE;
@@ -234,10 +239,11 @@ public enum PiPProperty {
         public static final Color PINK_SLIDER_KNOB  = PINK_BTN;
         public static final Color PINK_SLIDER_EMPTY = Color.WHITE;
         /* SUBNAUTICA COLORS */
-        public static final Color SUBNAUTICA_BG           = new Color(247,135,59);
+        public static final Color SUBNAUTICA_BG           = new Color(247, 135, 59);
         public static final Color SUBNAUTICA_BG_ACCENT    = SUBNAUTICA_BG.darker();
         public static final Color SUBNAUTICA_TXT          = Color.WHITE;
         public static final Color SUBNAUTICA_BTN          = new Color(11, 153, 255);
+        public static final Color SUBNAUTICA_BTN_HOVER    = new Color(51, 170, 255);
         public static final Color SUBNAUTICA_BTN_PRESSED  = new Color(9, 122, 204);
         public static final Color SUBNAUTICA_BTN_BORDER   = new Color(8, 107, 179);
         public static final Color SUBNAUTICA_BTN_TXT      = Color.WHITE;
@@ -249,6 +255,7 @@ public enum PiPProperty {
         public static final Color OCEAN_BG_ACCENT    = OCEAN_BG.darker();
         public static final Color OCEAN_TXT          = Color.WHITE;
         public static final Color OCEAN_BTN          = new Color(0, 26, 51);
+        public static final Color OCEAN_BTN_HOVER    = new Color(0, 40, 77);
         public static final Color OCEAN_BTN_PRESSED  = OCEAN_BTN.darker();
         public static final Color OCEAN_BTN_BORDER   = OCEAN_BTN_PRESSED.darker();
         public static final Color OCEAN_BTN_TXT      = Color.WHITE;
@@ -256,14 +263,15 @@ public enum PiPProperty {
         public static final Color OCEAN_SLIDER_KNOB  = OCEAN_SLIDER.darker();
         public static final Color OCEAN_SLIDER_EMPTY = OCEAN_SLIDER_KNOB.darker().darker().darker();
         /* FIRE COLORS */
-        public static final Color FIRE_BG           = new Color(221,22,0);
+        public static final Color FIRE_BG           = new Color(221, 22, 0);
         public static final Color FIRE_BG_ACCENT    = FIRE_BG.darker();
         public static final Color FIRE_TXT          = Color.WHITE;
-        public static final Color FIRE_BTN          = new Color(127,0,0);
+        public static final Color FIRE_BTN          = new Color(127, 0, 0);
+        public static final Color FIRE_BTN_HOVER    = new Color(153, 0, 0);
         public static final Color FIRE_BTN_PRESSED  = FIRE_BTN.darker();
         public static final Color FIRE_BTN_BORDER   = FIRE_BTN_PRESSED.darker();
         public static final Color FIRE_BTN_TXT      = Color.WHITE;
-        public static final Color FIRE_SLIDER       = new Color (255,47,24).darker();
+        public static final Color FIRE_SLIDER       = new Color (255, 47, 24).darker();
         public static final Color FIRE_SLIDER_KNOB  = FIRE_SLIDER.darker();
         public static final Color FIRE_SLIDER_EMPTY = FIRE_SLIDER_KNOB.darker().darker().darker();
         
@@ -283,6 +291,7 @@ public enum PiPProperty {
                 case TXT          -> LIGHT_TXT;
                 case BTN          -> LIGHT_BTN;
                 case BTN_BORDER   -> LIGHT_BTN_BORDER;
+                case BTN_HOVER    -> LIGHT_BTN_HOVER;
                 case BTN_PRESSED  -> LIGHT_BTN_PRESSED;
                 case BTN_TXT      -> LIGHT_BTN_TXT;
                 case SLIDER       -> LIGHT_SLIDER;
@@ -295,6 +304,7 @@ public enum PiPProperty {
                 case TXT          -> DARK_TXT;
                 case BTN          -> DARK_BTN;
                 case BTN_BORDER   -> DARK_BTN_BORDER;
+                case BTN_HOVER    -> DARK_BTN_HOVER;
                 case BTN_PRESSED  -> DARK_BTN_PRESSED;
                 case BTN_TXT      -> DARK_BTN_TXT;
                 case SLIDER       -> DARK_SLIDER;
@@ -307,6 +317,7 @@ public enum PiPProperty {
                 case TXT          -> PINK_TXT;
                 case BTN          -> PINK_BTN;
                 case BTN_BORDER   -> PINK_BTN_BORDER;
+                case BTN_HOVER    -> PINK_BTN_HOVER;
                 case BTN_PRESSED  -> PINK_BTN_PRESSED;
                 case BTN_TXT      -> PINK_BTN_TXT;
                 case SLIDER       -> PINK_SLIDER;
@@ -319,6 +330,7 @@ public enum PiPProperty {
                 case TXT          -> SUBNAUTICA_TXT;
                 case BTN          -> SUBNAUTICA_BTN;
                 case BTN_BORDER   -> SUBNAUTICA_BTN_BORDER;
+                case BTN_HOVER    -> SUBNAUTICA_BTN_HOVER;
                 case BTN_PRESSED  -> SUBNAUTICA_BTN_PRESSED;
                 case BTN_TXT      -> SUBNAUTICA_BTN_TXT;
                 case SLIDER       -> SUBNAUTICA_SLIDER;
@@ -331,6 +343,7 @@ public enum PiPProperty {
                 case TXT          -> OCEAN_TXT;
                 case BTN          -> OCEAN_BTN;
                 case BTN_BORDER   -> OCEAN_BTN_BORDER;
+                case BTN_HOVER    -> OCEAN_BTN_HOVER;
                 case BTN_PRESSED  -> OCEAN_BTN_PRESSED;
                 case BTN_TXT      -> OCEAN_BTN_TXT;
                 case SLIDER       -> OCEAN_SLIDER;
@@ -343,6 +356,7 @@ public enum PiPProperty {
                 case TXT          -> FIRE_TXT;
                 case BTN          -> FIRE_BTN;
                 case BTN_BORDER   -> FIRE_BTN_BORDER;
+                case BTN_HOVER    -> FIRE_BTN_HOVER;
                 case BTN_PRESSED  -> FIRE_BTN_PRESSED;
                 case BTN_TXT      -> FIRE_BTN_TXT;
                 case SLIDER       -> FIRE_SLIDER;

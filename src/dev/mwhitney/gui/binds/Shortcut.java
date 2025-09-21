@@ -39,7 +39,7 @@ public enum Shortcut {
         new KeyBind(KeyEvent.VK_A, SHIFT_DOWN_MASK),
         new MouseBind(BindOptions.build().onHit(2), MouseEvent.BUTTON2)
     ),
-    /** For closing media within a window, or the window itself if it has no media. */
+    /** Adapts: For closing media within a window, or the window itself if it has no media. */
     CLOSE_FLEX(
         // Use lower default delay to minimize accidental closings from consecutive RMB drag (move) operations.
         new MouseBind(BindOptions.build().useDelay(225).onHit(3).onRelease(), MouseEvent.BUTTON3)
@@ -207,6 +207,12 @@ public enum Shortcut {
     RESET_ZOOM(
         new KeyBind(KeyEvent.VK_OPEN_BRACKET, CTRL_DOWN_MASK | SHIFT_DOWN_MASK),
         new MouseBind(MouseEvent.BUTTON2, CTRL_DOWN_MASK)
+    ),
+    RESIZE_WINDOW(
+        new KeyBind(BindOptions.build().onHit(2), KeyEvent.VK_W)
+    ),
+    RESIZE_WINDOWS(
+        new KeyBind(BindOptions.build().onHit(2), KeyEvent.VK_W, SHIFT_DOWN_MASK)
     ),
     SAVE_MEDIA(
         new KeyBind(KeyEvent.VK_S, CTRL_DOWN_MASK)
@@ -410,6 +416,32 @@ public enum Shortcut {
     VOLUME_MUTE_UNMUTE(
         new KeyBind(KeyEvent.VK_M)
 	),
+    // Step increase/decrease size of window.
+    WINDOW_SIZE_INCREASE_LESS(
+    ),
+    WINDOW_SIZE_INCREASE(
+    ),
+    WINDOW_SIZE_INCREASE_MORE(
+    ),
+    WINDOW_SIZE_DECREASE_LESS(
+    ),
+    WINDOW_SIZE_DECREASE(
+    ),
+    WINDOW_SIZE_DECREASE_MORE(
+    ),
+    // Step increase/decrease size of ALL windows.
+    WINDOWS_SIZE_INCREASE_LESS(
+    ),
+    WINDOWS_SIZE_INCREASE(
+    ),
+    WINDOWS_SIZE_INCREASE_MORE(
+    ),
+    WINDOWS_SIZE_DECREASE_LESS(
+    ),
+    WINDOWS_SIZE_DECREASE(
+    ),
+    WINDOWS_SIZE_DECREASE_MORE(
+    ),
     ZOOM_IN_LESS(
         new KeyBind(KeyEvent.VK_CLOSE_BRACKET, SHIFT_DOWN_MASK)
     ),

@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
+import javax.swing.SwingUtilities;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
@@ -195,5 +197,81 @@ public class PiPAAUtils {
             outF = new File(PiPAARes.APP_CLIPBOARD_FOLDER + "/" + nameNoExt + (int) (Math.random() * 100000) + "." + nameExt);
         }
         return outF;
+    }
+
+    /**
+     * Appends a series of Integers together. Whereas adding integers provides a
+     * sum, this method simply connects them together. Leading zeroes are ignored,
+     * but trailing zeroes are respected.
+     * 
+     * Negative values are not accepted by this method and will throw an
+     * {@link IllegalArgumentException}. Valid Examples:
+     * 
+     * <pre>
+     * { 0,  0, 2, 3, 9 } → 239
+     * { 0,  0, 4, 0, 0 } → 4
+     * { 1, 12, 4, 0, 0 } → 112400
+     * </pre>
+     * 
+     * @param nums - one or more integers to append.
+     * @return the appended Integer result, or <code>-1</code> if there were no ints
+     *         to append.
+     * @throws IllegalArgumentException if a negative number is passed.
+     * @throws NumberFormatException    if, inexplicably, a non-int value is present
+     *                                  that cannot be parsed into an int.
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+    public static Integer appendInts(Integer... nums) {
+        if (nums == null || nums.length < 1) return -1;
+        
+        final StringBuilder build = new StringBuilder(nums.length);
+        for (final Integer i : nums) {
+            if (i < 0) throw new IllegalArgumentException("Negative numbers cannot be appended: " + i);
+            build.append(i);
+        }
+        return Integer.parseInt(build.toString());
+    }
+
+    /**
+     * Splits an integer into individual digits, returning them all in an int array.
+     * Negative integers are accepted, but they naturally lose the negative sign.
+     * Examples:
+     * <pre>
+     * splitInt(123)  → { 1, 2, 3 }
+     * splitInt(1)    → { 1 }
+     * splitInt(0)    → { 0 }
+     * splitInt(-123) → { 1, 2, 3 }
+     * </pre>
+     * 
+     * @param number - the number to split.
+     * @return an int array with the split digits of the passed number.
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+    public static int[] splitInt(int number) {
+        // Handle zero manually. Math log10 function cannot handle zero, returns negative infinity.
+        if (number == 0) return new int[] {0};
+        // Determine length mathematically. Should be more efficient than converting to String for length.
+        final int   length = (int) Math.log10(Math.abs(number)) + 1;
+        System.out.println("array length: " + length);
+        // Initialize digits array of desired final length.
+        final int[] digits = new int[length];
+        // Works right to left extracting digits from the initial number until it reaches <= zero.
+        for (int i = length - 1; i >= 0; i--) {
+            digits[i] = number % 10;    // Gets remainder after removing all 10s.
+            number /= 10;               // Remove set of 10s. Example: 123 -> 12.
+        }
+        return digits;
+    }
+    /**
+     * Prints out a statement which verifies if the calling thread is the
+     * event-dispatch thread (EDT).
+     * 
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+    public static void isEDT() {
+        System.out.println("<?> Is on the EDT: " + SwingUtilities.isEventDispatchThread());
     }
 }

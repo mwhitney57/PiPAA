@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import javax.swing.ImageIcon;
@@ -48,14 +49,17 @@ import darrylbu.icon.StretchIcon;
 import dev.mwhitney.exceptions.InvalidMediaException;
 import dev.mwhitney.exceptions.MediaModificationException;
 import dev.mwhitney.gui.PiPWindowSnapshot.SnapshotData;
-import dev.mwhitney.gui.binds.Shortcut;
 import dev.mwhitney.gui.binds.BindDetails;
 import dev.mwhitney.gui.binds.BindHandler;
 import dev.mwhitney.gui.binds.MouseInput;
+import dev.mwhitney.gui.binds.Shortcut;
 import dev.mwhitney.gui.components.BetterTextArea;
 import dev.mwhitney.gui.decor.FadingLineBorder;
 import dev.mwhitney.gui.decor.OffsetRoundedLineBorder;
 import dev.mwhitney.gui.popup.EasyTopDialog;
+import dev.mwhitney.gui.popup.NumericalInputPopup;
+import dev.mwhitney.gui.popup.OptionPopup;
+import dev.mwhitney.gui.popup.SelectionPopup;
 import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.gui.viewer.ZoomPanSnapshot;
 import dev.mwhitney.listeners.ManagerFetcher;
@@ -65,7 +69,6 @@ import dev.mwhitney.listeners.StartEndListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
-import dev.mwhitney.main.Loop;
 import dev.mwhitney.main.PermanentRunnable;
 import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.PiPProperty.DOWNLOAD_OPTION;
@@ -85,7 +88,10 @@ import dev.mwhitney.media.PiPMediaCMDArgs;
 import dev.mwhitney.media.WebMediaFormat;
 import dev.mwhitney.media.WebMediaFormat.FORMAT;
 import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.util.Loop;
 import dev.mwhitney.util.PiPAAUtils;
+import dev.mwhitney.util.ScalingDimension;
+import dev.mwhitney.util.UnsetBool;
 import dev.mwhitney.util.selection.ReloadSelection;
 import dev.mwhitney.util.selection.ReloadSelection.ReloadSelections;
 import dev.mwhitney.util.selection.Selector;
@@ -117,8 +123,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     public  static final int BORDER_SIZE = 20;
     /** The window insets where the user can drag and resize the window. */
     private static final Insets BORDER_RESIZE_INSETS  = new Insets(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE);
+    /** The minimum width and height of PiPWindows. */
+    private static final int MINIMUM_SIZE_VALUE       = 64;
     /** The minimum size of PiPWindows. */
-    private static final Dimension MINIMUM_SIZE       = new Dimension(64  + (BORDER_SIZE*2), 64  + (BORDER_SIZE*2));
+    private static final Dimension MINIMUM_SIZE       = new Dimension(MINIMUM_SIZE_VALUE + (BORDER_SIZE*2), MINIMUM_SIZE_VALUE + (BORDER_SIZE*2));
     /** The default size of PiPWindows. */
     public  static final Dimension DEFAULT_SIZE       = new Dimension(320, 200);
     /** The maximum size of audio-only PiPWindows. */
@@ -907,6 +915,35 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     });
                 } catch (InvocationTargetException | InterruptedException ex) { ex.printStackTrace(); }
                 if (!imgLoc.isEmpty()) replaceArtwork(imgLoc.toString());
+                break;
+            case RESIZE_WINDOW:
+            case RESIZE_WINDOWS:
+                // Determine if scaling Width or Height of window.
+                final UnsetBool scaleWidth = new UnsetBool();
+                final SelectionPopup optionPopup = new OptionPopup(
+                        PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)),
+                        "Resize Width or Height?", new String[] { "Width", "Height" }).setReceiver(option -> {
+                            if (option == 0) scaleWidth.set(true);
+                            if (option == 1) scaleWidth.set(false);
+                        }).moveRelTo(this).display();
+                optionPopup.block();   // Block and wait for pop-up interaction.
+                
+                if (scaleWidth.isUnset()) break;    // Neither Width or Height selected -- User exited pop-up without selecting.
+                
+                // Get numerical value using pop-up.
+                final AtomicInteger input = new AtomicInteger(-1);  // Start at -1 to detect lack of change.
+                final NumericalInputPopup popup = new NumericalInputPopup(
+                        PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)),
+                        "Resize: " + (scaleWidth.isTrue() ? "Width" : "Height"), 4);
+                popup.setValueReceiver(value -> input.set(value)).moveRelTo(this).display().block();
+                
+                if (input.get() == -1) break;    // Size value not entered -- User exited pop-up without confirming.
+                
+                // Scale current dimensions to desired width/height while respecting window minimum.
+                if (shortcut == Shortcut.RESIZE_WINDOW)
+                    scaleSize(input.get(), scaleWidth.isTrue());  // Finally, change size of window.
+                else
+                    getManager().callInLiveWindows(window -> window.scaleSize(input.get(), scaleWidth.isTrue()));
                 break;
             case RESET_SIZE:
                 SwingUtilities.invokeLater(() -> resetSize());
@@ -2010,6 +2047,38 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         if (!ignoreBorders) size.setSize(size.width + (BORDER_SIZE * 2), size.height + (BORDER_SIZE * 2));
         PiPWindow.this.setSize(size);
         state.off(RESIZING);
+    }
+    
+    /**
+     * Scales the size, maintaining the current aspect ratio, to match the passed
+     * width or height amount. The size value will not be respected only if it would
+     * push either the width or height below the {@link #MINIMUM_SIZE_VALUE} for the
+     * window.
+     * <p>
+     * Examples:
+     * <pre>
+     * // Examples assume minimum width of 64. All maintain ratio.
+     * (1280, 720) → scaleSize(480,  true) → (480, 270)
+     * (1280, 720) → scaleSize(480, false) → (853, 480)
+     * ( 300, 100) → scaleSize( 80, false) → (240,  80)
+     * 
+     * // Too small. Width/Height would be below minimum. Adjusts automatically.
+     * ( 300, 100) → scaleSize( 70,  true) → (192,  64)
+     * ( 300, 100) → scaleSize( 32,  true) → (192,  64)
+     * ( 300, 100) → scaleSize( 32, false) → (192,  64)
+     * </pre>
+     * 
+     * @param size  - an int with the target size value.
+     * @param width - a boolean for whether the target size is for the width
+     *              (<code>true</code>) or height (<code>false</code>)
+     */
+    public void scaleSize(final int size, final boolean width) {
+        // Scale current dimensions to desired width/height while respecting window minimum.
+        final ScalingDimension dim = ScalingDimension.from(new Dimension(getInnerWidth(), getInnerHeight()));
+        dim.setMinimumSize(MINIMUM_SIZE_VALUE);
+        if (width) dim.scaleToWidth(size);  // Resize Based on Width
+        else       dim.scaleToHeight(size); // Resize Based on Height
+        changeSize(dim);
     }
 
     /**

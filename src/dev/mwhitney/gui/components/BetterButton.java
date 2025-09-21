@@ -22,16 +22,16 @@ public class BetterButton extends JButton {
     private static final long serialVersionUID = -5531816749938062883L;
     
     /** The Color of the button's background. */
-    private Color colorBG;
+    protected Color colorBG;
     /** The Color of the button's background (when pressed.) */
-    private Color colorBGPressed;
+    protected Color colorBGPressed;
     /** The Color of the button's border. */
-    private Color colorBorder;
+    protected Color colorBorder;
     
     /** The arc for the rounded corners. */
-    private int roundedArc       = -1;
+    protected int roundedArc       = -1;
     /** The arc for the rounded border corners. */
-    private int roundedArcBorder = -1;
+    protected int roundedArcBorder = -1;
     
     /**
      * Creates a BetterButton with the passed label and label font.
