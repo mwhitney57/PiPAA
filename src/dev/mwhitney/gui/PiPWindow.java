@@ -918,32 +918,30 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 break;
             case RESIZE_WINDOW:
             case RESIZE_WINDOWS:
+                // ♦ EDT Safe ♦ Verified: 2025-09-21
                 // Determine if scaling Width or Height of window.
                 final UnsetBool scaleWidth = new UnsetBool();
-                final SelectionPopup optionPopup = new OptionPopup(
+                SelectionPopup.showAndBlock(() -> new OptionPopup(
                         PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)),
-                        "Resize Width or Height?", new String[] { "Width", "Height" }).setReceiver(option -> {
-                            if (option == 0) scaleWidth.set(true);
-                            if (option == 1) scaleWidth.set(false);
-                        }).moveRelTo(this).display();
-                optionPopup.block();   // Block and wait for pop-up interaction.
+                        "Resize Width or Height?", new String[] { "Width", "Height" })
+                        .setReceiver(option -> scaleWidth.set(option == 0 ? true : false)).moveRelTo(this).display());
                 
-                if (scaleWidth.isUnset()) break;    // Neither Width or Height selected -- User exited pop-up without selecting.
+                // Neither Width or Height selected -- User exited pop-up without selecting.
+                if (scaleWidth.isUnset()) break;
                 
                 // Get numerical value using pop-up.
                 final AtomicInteger input = new AtomicInteger(-1);  // Start at -1 to detect lack of change.
-                final NumericalInputPopup popup = new NumericalInputPopup(
+                SelectionPopup.showAndBlock(() -> new NumericalInputPopup(
                         PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)),
-                        "Resize: " + (scaleWidth.isTrue() ? "Width" : "Height"), 4);
-                popup.setValueReceiver(value -> input.set(value)).moveRelTo(this).display().block();
+                        "Resize: " + (scaleWidth.isTrue() ? "Width" : "Height"), 4)
+                        .setValueReceiver(value -> input.set(value)).moveRelTo(this).display());
                 
-                if (input.get() == -1) break;    // Size value not entered -- User exited pop-up without confirming.
+                // Size value not entered -- User exited pop-up without confirming.
+                if (input.get() == -1) break;
                 
                 // Scale current dimensions to desired width/height while respecting window minimum.
-                if (shortcut == Shortcut.RESIZE_WINDOW)
-                    scaleSize(input.get(), scaleWidth.isTrue());  // Finally, change size of window.
-                else
-                    getManager().callInLiveWindows(window -> window.scaleSize(input.get(), scaleWidth.isTrue()));
+                if (shortcut == Shortcut.RESIZE_WINDOW) scaleSize(input.get(), scaleWidth.isTrue());
+                else getManager().callInLiveWindows(w -> w.scaleSize(input.get(), scaleWidth.isTrue()));
                 break;
             case RESET_SIZE:
                 SwingUtilities.invokeLater(() -> resetSize());
@@ -2055,6 +2053,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * push either the width or height below the {@link #MINIMUM_SIZE_VALUE} for the
      * window.
      * <p>
+     * This method does some additional computation, even if minimal, so it should
+     * ideally be called off of the Swing event-dispatch thread (EDT). The final
+     * adjustment to the window size is handled on the EDT.
+     * <p>
      * Examples:
      * <pre>
      * // Examples assume minimum width of 64. All maintain ratio.
@@ -2077,7 +2079,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         final ScalingDimension dim = new ScalingDimension(getInnerWidth(), getInnerHeight()).setMinimumSize(MINIMUM_SIZE_VALUE);
         if (width) dim.scaleToWidth(size);  // Resize Based on Width
         else       dim.scaleToHeight(size); // Resize Based on Height
-        changeSize(dim);
+        SwingUtilities.invokeLater(() -> changeSize(dim));
     }
 
     /**

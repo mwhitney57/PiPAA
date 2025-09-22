@@ -4,12 +4,16 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import javax.swing.JDialog;
 import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 
 import dev.mwhitney.gui.PiPWindowState;
 import dev.mwhitney.gui.components.BetterButton;
@@ -238,5 +242,91 @@ public abstract class SelectionPopup extends JDialog {
     public SelectionPopup setReceiver(SelectionReceiver receiver) {
         this.receiver = receiver;
         return this;
+    }
+    
+    /**
+     * Gets a supplied {@link SelectionPopup} instance, executing the
+     * {@link Supplier} safely on the event-dispatch thread (EDT) before blocking
+     * the current thread. The block will timeout after the passed number of seconds
+     * elapses. Pass a negative value to not use a timeout.
+     * <p>
+     * <b>Any code provided within the passed {@link Supplier} will execute on the
+     * EDT.</b> Therefore, using this method can dramatically improve readability
+     * and reduce boilerplate.
+     * <p>
+     * Pop-ups can be constructed and displayed within the provided
+     * {@link Supplier}, then this method will block on the current thread and await
+     * user selection. Once a selection is received, the block will release and the
+     * thread will resume.
+     * <p>
+     * <b>Example Format</b><br>
+     * Replace SelectionPopup with a subclass of choice or declare its abstract
+     * method(s) inline.
+     * 
+     * <pre>
+     * AtomicInteger choice = new AtomicInteger();
+     * showAndBlock(() -> new SelectionPopup(THEME, "Select an option.")
+     *         .setReceiver(selection -> choice.set(selection))
+     *         .moveRelTo(this).display());
+     * </pre>
+     * 
+     * @param supplier - a {@link Supplier} that executes on the EDT and provides
+     *                 the pop-up to block with.
+     * @param timeout  - an int in {@link TimeUnit#SECONDS} for the maximum time
+     *                 before the block times out.
+     * @return <code>true</code> if the block succeeded and the thread resumed
+     *         normally; <code>false</code> otherwise.
+     * @see {@link #showAndBlock(Supplier)} to block without a set timeout.
+     */
+    public static boolean showAndBlock(Supplier<SelectionPopup> supplier, int timeout) {
+        final AtomicReference<SelectionPopup> ref = new AtomicReference<>();
+        try {
+            // Supplier may include Swing-related code that must run on EDT.
+            SwingUtilities.invokeAndWait(() -> ref.set(supplier.get()));
+        } catch (InvocationTargetException | InterruptedException e) {
+            // Error with pop-up. Return false due to interruption.
+            return false;
+        }
+        // Pull pop-up from supplier for easy reference.
+        final SelectionPopup popup = ref.get();
+        // Pop-up was not created or supplied properly: Error, return false.
+        if (popup == null) return false;
+        // Return block's return value. Use valid timeout if specified.
+        return timeout <= 0 ? popup.block() : popup.block(timeout);
+    }
+    
+    /**
+     * Gets a supplied {@link SelectionPopup} instance, executing the
+     * {@link Supplier} safely on the event-dispatch thread (EDT) before blocking
+     * the current thread. The block will not timeout.
+     * <p>
+     * <b>Any code provided within the passed {@link Supplier} will execute on the
+     * EDT.</b> Therefore, using this method can dramatically improve readability
+     * and reduce boilerplate.
+     * <p>
+     * Pop-ups can be constructed and displayed within the provided
+     * {@link Supplier}, then this method will block on the current thread and await
+     * user selection. Once a selection is received, the block will release and the
+     * thread will resume.
+     * <p>
+     * <b>Example Format</b><br>
+     * Replace SelectionPopup with a subclass of choice or declare its abstract
+     * method(s) inline.
+     * 
+     * <pre>
+     * AtomicInteger choice = new AtomicInteger();
+     * showAndBlock(() -> new SelectionPopup(THEME, "Select an option.")
+     *         .setReceiver(selection -> choice.set(selection))
+     *         .moveRelTo(this).display());
+     * </pre>
+     * 
+     * @param supplier - a {@link Supplier} that executes on the EDT and provides
+     *                 the pop-up to block with.
+     * @return <code>true</code> if the block succeeded and the thread resumed
+     *         normally; <code>false</code> otherwise.
+     * @see {@link #showAndBlock(Supplier, int)} to block with a set timeout.
+     */
+    public static boolean showAndBlock(Supplier<SelectionPopup> supplier) {
+        return showAndBlock(supplier, -1);
     }
 }
