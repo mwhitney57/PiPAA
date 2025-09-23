@@ -54,6 +54,10 @@ public abstract class PiPAARes {
     /** A String with the path containing app ffmpeg binaries, which is used as the value to the '--ffmpeg-location' argument for some binaries. */
     public static final String FFMPEG_LOC_ARG               = "\"" + APP_BIN_FOLDER + "/ffmpeg/bin\"";
     
+    // Source Strings
+    public static final String MEDIA_TRIM_EXT               = "_PiPAACrop";
+    public static final String MEDIA_TRIM_EXT_STRICT        = "_PiPAACropS";
+    
     // Internal Paths
     public static final String PATH_BIN                     = "/dev/mwhitney/resources/bin";
     public static final String PATH_SUB_FFMPEG              = "ffmpeg/bin/";

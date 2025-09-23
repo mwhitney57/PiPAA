@@ -263,17 +263,21 @@ public class PiPMedia {
                 !hasAttributes() || getAttributes().getFileExtension() == null || getAttributes().getType() == null || getAttributes().isVideo())
             return source;
         
+        // Set trim source extension based on current trim option.
+        final String trimExt = option.is(TRIM_OPTION.STRICT) ? PiPAARes.MEDIA_TRIM_EXT_STRICT : PiPAARes.MEDIA_TRIM_EXT;
+        
         // Return the source if it is already PiPAA cropped media.
         final File   inFile         = new File(source);
         final String inFileBaseName = FilenameUtils.getBaseName(inFile.getPath());
-        if (inFileBaseName.endsWith("_PiPAACrop"))
+        // Only return trimmed source if version exists for passed trim option.
+        if (inFileBaseName.endsWith(trimExt))
             return source;
         
         // Ensure trimmed folder exists in cache then build media's cropped version path.
         final String ext = FilenameUtils.getExtension(inFile.getPath());
         String cropFilePath = PiPAARes.APP_TRIMMED_FOLDER;
         PiPAAUtils.ensureExistence(cropFilePath);
-        cropFilePath += ("/" + inFileBaseName + "_PiPAACrop" + (ext.isEmpty() ? "" : "." + ext));
+        cropFilePath += ("/" + inFileBaseName + trimExt + (ext.isEmpty() ? "" : "." + ext));
         
         // Return the trimmed output if the file exists.
         final File outFile = new File(cropFilePath);
