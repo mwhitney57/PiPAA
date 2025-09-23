@@ -4,16 +4,13 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import javax.swing.JDialog;
 import javax.swing.JRootPane;
-import javax.swing.SwingUtilities;
 
 import dev.mwhitney.gui.PiPWindowState;
 import dev.mwhitney.gui.components.BetterButton;
@@ -24,6 +21,7 @@ import dev.mwhitney.listeners.simplified.MouseClickListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.util.PiPAAUtils;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -251,8 +249,10 @@ public abstract class SelectionPopup extends JDialog {
      * elapses. Pass a negative value to not use a timeout.
      * <p>
      * <b>Any code provided within the passed {@link Supplier} will execute on the
-     * EDT.</b> Therefore, using this method can dramatically improve readability
-     * and reduce boilerplate.
+     * EDT.</b> This method <b>should NOT be called from the EDT</b>, as it performs
+     * the {@link #block(int)} on the current thread. The pop-up is created safely
+     * on the EDT. Using this method can dramatically improve readability and reduce
+     * boilerplate
      * <p>
      * Pop-ups can be constructed and displayed within the provided
      * {@link Supplier}, then this method will block on the current thread and await
@@ -276,19 +276,12 @@ public abstract class SelectionPopup extends JDialog {
      *                 before the block times out.
      * @return <code>true</code> if the block succeeded and the thread resumed
      *         normally; <code>false</code> otherwise.
+     * @since 0.9.5
      * @see {@link #showAndBlock(Supplier)} to block without a set timeout.
      */
     public static boolean showAndBlock(Supplier<SelectionPopup> supplier, int timeout) {
-        final AtomicReference<SelectionPopup> ref = new AtomicReference<>();
-        try {
-            // Supplier may include Swing-related code that must run on EDT.
-            SwingUtilities.invokeAndWait(() -> ref.set(supplier.get()));
-        } catch (InvocationTargetException | InterruptedException e) {
-            // Error with pop-up. Return false due to interruption.
-            return false;
-        }
-        // Pull pop-up from supplier for easy reference.
-        final SelectionPopup popup = ref.get();
+        // Execute supplier on EDT and retrieve the created pop-up.
+        final SelectionPopup popup = PiPAAUtils.makeOnEDT(supplier);
         // Pop-up was not created or supplied properly: Error, return false.
         if (popup == null) return false;
         // Return block's return value. Use valid timeout if specified.
@@ -301,8 +294,10 @@ public abstract class SelectionPopup extends JDialog {
      * the current thread. The block will not timeout.
      * <p>
      * <b>Any code provided within the passed {@link Supplier} will execute on the
-     * EDT.</b> Therefore, using this method can dramatically improve readability
-     * and reduce boilerplate.
+     * EDT.</b> This method <b>should NOT be called from the EDT</b>, as it performs
+     * the {@link #block()} on the current thread. The pop-up is created safely
+     * on the EDT. Using this method can dramatically improve readability and reduce
+     * boilerplate where called.
      * <p>
      * Pop-ups can be constructed and displayed within the provided
      * {@link Supplier}, then this method will block on the current thread and await
@@ -324,6 +319,7 @@ public abstract class SelectionPopup extends JDialog {
      *                 the pop-up to block with.
      * @return <code>true</code> if the block succeeded and the thread resumed
      *         normally; <code>false</code> otherwise.
+     * @since 0.9.5
      * @see {@link #showAndBlock(Supplier, int)} to block with a set timeout.
      */
     public static boolean showAndBlock(Supplier<SelectionPopup> supplier) {

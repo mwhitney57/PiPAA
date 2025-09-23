@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -79,7 +80,88 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         this.lastSpawnLocation = new Point(-1, -1);
         this.lastSpawnLocationMax = new Point(-1, -1);
 
+        // Create Empty Starting Window
         addWindow();
+    }
+    
+    /**
+     * Creates a new {@link PiPWindow} safely on the event-dispatch thread (EDT),
+     * regardless of the current thread.
+     * <p>
+     * This method should always return a valid window, <b>unless</b> there is a
+     * rare, unexpected error thrown by
+     * {@link SwingUtilities#invokeAndWait(Runnable)} within
+     * {@link PiPAAUtils#makeOnEDT(Supplier)}.
+     * 
+     * @return the new {@link PiPWindow} instance.
+     * @since 0.9.5
+     */
+    private PiPWindow createWindow() {
+        // Window's Target Index in List
+        final int index = windows.size();
+        
+        // Ensure window is created on the EDT then return it.
+        return PiPAAUtils.makeOnEDT(() -> {
+            // Construct Window
+            final PiPWindow window = new PiPWindow() {
+                /** The randomly-generated serial UID for PiPWindows. */
+                private static final long serialVersionUID = 4710798365075224246L;
+                
+                @Override
+                public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindowManager.this.propertyState(prop, rtnType); }
+                @Override
+                public PiPWindowManager getManager() { return PiPWindowManager.this; }
+            };
+            
+            // Set Window Size to Default
+            window.setSize(PiPWindow.DEFAULT_SIZE);
+            
+            // Set Window Location on Screen
+            if (lastSpawnLocation.x == -1 || !userScreen.contains(lastSpawnLocation)
+                    || !userScreen.contains(lastSpawnLocationMax)) {
+                lastSpawnLocation.setLocation(0, 0);
+                lastSpawnLocationMax.setLocation(PiPWindow.DEFAULT_SIZE.width + PiPWindow.DEFAULT_MEDIA_SIZE,
+                        PiPWindow.DEFAULT_SIZE.height + PiPWindow.DEFAULT_MEDIA_SIZE);
+            } else {
+                lastSpawnLocation.translate(40, 25);
+                lastSpawnLocationMax.translate(40, 25);
+            }
+            window.setLocation(lastSpawnLocation);
+            
+            // Set Window Listeners
+            window.addWindowFocusListener((WindowFocusGainedListener) (e) -> lastWindowFocused = index);
+            window.setListener(new PiPWindowManagerAdapter() {  // Communicates back to the manager.
+                @Override
+                public PiPWindowManager get() { return PiPWindowManager.this; }
+                
+                @Override
+                public void windowCloseRequested() { PiPWindowManager.this.removeWindow(windows.indexOf(window)); }
+                
+                @Override
+                public void windowClosed() {
+                    final int index = windows.indexOf(window);
+                    if (index != -1) windows.set(index, null);
+                }
+                
+                @Override
+                public void windowMediaCrashed() {
+                    // Removes the window with crashed media, then adds a new one.
+                    // The new window has updated display text to notify the user of the crash.
+                    PiPWindowManager.this.removeWindow(windows.indexOf(window));
+                    PiPWindowManager.this.addWindow().statusUpdate("Media player crashed...");
+                }
+                
+                @Override
+                public PiPMediaAttributes requestAttributes(PiPMedia media, Flag... flags) {
+                    try {
+                        return PiPWindowManager.this.attributor.determineAttributes(media, flags);
+                    } catch (InvalidMediaException ime) { System.err.println(ime.getMessage()); }
+                    return null;
+                }
+            });
+            // Return Created Window
+            return window;
+        });
     }
 
     /**
@@ -100,65 +182,8 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
      * @return the added {@link PiPWindow}.
      */
     public PiPWindow addWindow(PiPMedia media) {
-        // Window Creation
-        final PiPWindow window = new PiPWindow() {
-            /** The randomly-generated serial UID for PiPWindows. */
-            private static final long serialVersionUID = 4710798365075224246L;
-            
-            @Override
-            public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindowManager.this.propertyState(prop, rtnType); }
-            @Override
-            public PiPWindowManager getManager() { return PiPWindowManager.this; }
-        };
-        
-        // Window Size
-        window.setSize(PiPWindow.DEFAULT_SIZE);
-
-        // Window Location on Screen
-        if (lastSpawnLocation.x == -1 || !userScreen.contains(lastSpawnLocation)
-                || !userScreen.contains(lastSpawnLocationMax)) {
-            lastSpawnLocation.setLocation(0, 0);
-            lastSpawnLocationMax.setLocation(PiPWindow.DEFAULT_SIZE.width + PiPWindow.DEFAULT_MEDIA_SIZE,
-                    PiPWindow.DEFAULT_SIZE.height + PiPWindow.DEFAULT_MEDIA_SIZE);
-        } else {
-            lastSpawnLocation.translate(40, 25);
-            lastSpawnLocationMax.translate(40, 25);
-        }
-        window.setLocation(lastSpawnLocation);
-
-        // Window Index in List
-        final int index = windows.size();
-        window.addWindowFocusListener((WindowFocusGainedListener) (e) -> lastWindowFocused = index);
-        // PiPAdapter for Communications Back to Manager
-        window.setListener(new PiPWindowManagerAdapter() {
-            @Override
-            public PiPWindowManager get() { return PiPWindowManager.this; }
-            
-            @Override
-            public void windowCloseRequested() { PiPWindowManager.this.removeWindow(windows.indexOf(window)); }
-
-            @Override
-            public void windowClosed() {
-                final int index = windows.indexOf(window);
-                if (index != -1) windows.set(index, null);
-            }
-            
-            @Override
-            public void windowMediaCrashed() {
-                // Removes the window with crashed media, then adds a new one.
-                // The new window has updated display text to notify the user of the crash.
-                PiPWindowManager.this.removeWindow(windows.indexOf(window));
-                PiPWindowManager.this.addWindow().statusUpdate("Media player crashed...");
-            }
-            
-            @Override
-            public PiPMediaAttributes requestAttributes(PiPMedia media, Flag... flags) {
-                try {
-                    return PiPWindowManager.this.attributor.determineAttributes(media, flags);
-                } catch (InvalidMediaException ime) { System.err.println(ime.getMessage()); }
-                return null;
-            }
-        });
+        // Create Window Safely on EDT
+        final PiPWindow window = createWindow();
 
         // Add Window to List
         this.windows.add(window);

@@ -2,9 +2,12 @@ package dev.mwhitney.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
 
@@ -273,5 +276,38 @@ public class PiPAAUtils {
      */
     public static void isEDT() {
         System.out.println("<?> Is on the EDT: " + SwingUtilities.isEventDispatchThread());
+    }
+
+    /**
+     * Executes the passed {@link Supplier} on the event-dispatch thread (EDT),
+     * making the component and returning the result. The returned result may be
+     * <code>null</code> if the creation fails, or if the executed code naturally
+     * returns that result.
+     * <p>
+     * This method <b>will run the {@link Supplier} on the EDT</b>, as it uses
+     * {@link SwingUtilities#invokeAndWait(Runnable)}. The calling thread can be on
+     * the EDT, such as through a {@link SwingUtilities#invokeLater(Runnable)} call,
+     * in which case {@link Supplier#get()} will be called immediately.
+     * 
+     * @param <T>      - the return type, designed to be a Swing-related class which
+     *                 must be created on the EDT.
+     * @param supplier - the {@link Supplier} which executes on the EDT and supplies
+     *                 the result.
+     * @return the supplied result, or <code>null</code>.
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+    public static <T> T makeOnEDT(Supplier<T> supplier) {
+        final AtomicReference<T> ref = new AtomicReference<>();
+        try {
+            // Supplier may include Swing-related code that must run on EDT.
+            if (SwingUtilities.isEventDispatchThread()) ref.set(supplier.get());
+            else SwingUtilities.invokeAndWait(() -> ref.set(supplier.get()));
+        } catch (InvocationTargetException | InterruptedException e) {
+            // Error with supplier execution. Return null due to interruption.
+            return null;
+        }
+        // Get object from supplier and return.
+        return ref.get();
     }
 }
