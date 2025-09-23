@@ -96,6 +96,10 @@ public enum Shortcut {
     OPEN_MEDIA_DIRECTORY(
         new KeyBind(KeyEvent.VK_O, CTRL_DOWN_MASK)
     ),
+    /** Allows & prefers showing cached versions of the media, like trimmed or converted sources. */
+    OPEN_CACHE_DIRECTORY(
+        new KeyBind(KeyEvent.VK_O, CTRL_DOWN_MASK | ALT_DOWN_MASK)
+    ),
     PASTE_MEDIA(
         new KeyBind(KeyEvent.VK_V, CTRL_DOWN_MASK)
     ),

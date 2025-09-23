@@ -745,14 +745,18 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             break;
         // OPEN LOCAL/CACHED FILE DIRECTORY
         case OPEN_MEDIA_DIRECTORY:
+        case OPEN_CACHE_DIRECTORY:
+            // Should the cached folder locations be shown over any non-cached, local location of the media?
+            final boolean showCache = shortcut == Shortcut.OPEN_CACHE_DIRECTORY;
             // Default to cache folder.
             String openSrc = PiPAARes.APP_CACHE_FOLDER;
             if (get().hasAttributedMedia()) {
                 // Determine local media location (if any)
-                if (get().getMedia().isCached())
-                    openSrc = get().getMedia().getCacheSrc();
-                else if (get().getMedia().getAttributes().isLocal())
-                    openSrc = get().getMedia().getSrc();
+                final PiPMedia media = get().getMedia();
+                openSrc = showCache && media.hasTrimSrc()    ? media.getTrimSrc()         // Use Trimmed Cache
+                        : showCache && media.hasConvertSrc() ? media.getConvertSrc()      // Use Convert Cache
+                        : media.isCached()                   ? media.getCacheSrc()        // Use Cache
+                        : media.getAttributes().isLocal()    ? media.getSrc() : openSrc;  // Use Local
             }
             // Open the cache folder or parent folder containing the media file.
             try {
