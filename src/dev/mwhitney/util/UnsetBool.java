@@ -1,14 +1,15 @@
 package dev.mwhitney.util;
 
 /**
- * A class which allows for "triple-option boolean" functionality. Typically,
- * booleans can either be <code>true</code> or <code>false</code>. If using a
- * {@link Boolean} object, one could technically achieve three options by
- * setting the object to <code>null</code>. However, not only is this
+ * A class which utilizes "triple-option boolean" functionality. It shares a
+ * similar nature to that of {@link java.util.concurrent.atomic.AtomicBoolean},
+ * but allows for an "unset" value.
+ * <p>
+ * Typically, booleans can either be <code>true</code> or <code>false</code>. If
+ * using a {@link Boolean} object, one could technically achieve three options
+ * by setting the object to <code>null</code>. However, not only is this
  * cumbersome, but it's prone to errors in multi-threaded environments, since
- * the object may not be final or effectively final. This class is similar to
- * {@link java.util.concurrent.atomic.AtomicBoolean}, but it is simpler and
- * allows for an "unset" value.
+ * the object may not be final or effectively final.
  * <p>
  * Creating an instance of this class automatically uses the value
  * {@link #UNSET}. This value can be set using {@link #set(boolean)}, but

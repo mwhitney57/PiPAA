@@ -55,6 +55,7 @@ import dev.mwhitney.gui.binds.Shortcut;
 import dev.mwhitney.gui.components.BetterTextArea;
 import dev.mwhitney.gui.popup.ArtSelectionPopup;
 import dev.mwhitney.gui.popup.LockSelectionPopup;
+import dev.mwhitney.gui.popup.SelectionPopup;
 import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.AttributeUpdateListener;
 import dev.mwhitney.listeners.PiPAttributeRequestListener;
@@ -461,13 +462,11 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         if (occupied) {
             if (get().hasAttributedMedia() && MediaExt.supportsArtwork(get().getMedia().getAttributes().getFileExtension())) {
                 // Prompt user to either replace artwork or open media.
-                new ArtSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class))).moveRelTo(get())
-                    .setReceiver((i) -> {
-                        switch (i) {
-                        case 0 -> get().replaceArtwork(outPath);
-                        case 1 -> handoff(possiblyMarkedMedia(outPath));
-                        }
-                    }).display();
+                SelectionPopup.showAndBlock(() -> new ArtSelectionPopup(
+                        PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class)))
+                        .setReceiver(i -> CompletableFuture.runAsync(i == 0 ? () -> get().replaceArtwork(outPath)
+                                : () -> handoff(possiblyMarkedMedia(outPath))))
+                        .moveRelTo(get()).display());
             }
             else handoff(possiblyMarkedMedia(outPath));
         }
@@ -502,24 +501,19 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                 if (MediaExt.supportedAsArtwork(attributes.getFileExtension())) {
                     // Prompt user to either replace artwork or open media.
                     final UnsetBool replaceArtwork = new UnsetBool();
-                    new ArtSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class))).moveRelTo(get())
-                        .setReceiver((i) -> {
-                            switch (i) {
-                            case 0 -> { // Replace Artwork
-                                replaceArtwork.set(true);
-                                get().replaceArtwork(droppedFile.getPath());
-                            }
-                            case 1 -> { // Open Media
-                                replaceArtwork.set(false);
-                                handoff(getMediaFromFile(droppedFile, fileInTemp));
-                            }
-                            }
-                        }).display().block(10);
-                    
+                    SelectionPopup.showAndBlock(() -> new ArtSelectionPopup(
+                            PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class)))
+                            .setReceiver(i -> {
+                                replaceArtwork.set(i == 0 ? true : false);
+                                CompletableFuture.runAsync(replaceArtwork.isTrue()
+                                        ? () -> get().replaceArtwork(droppedFile.getPath())
+                                        : () -> handoff(getMediaFromFile(droppedFile, fileInTemp)));
+                            }).moveRelTo(get()).display(), 10);
+
                     // Opened media. Read next files in loop.
-                    if (replaceArtwork.isFalse()) continue;     // False:       Continue to handle next files.
-                    // Replaced artwork or canceled action.
-                    else                          break;        // True/Unset:  End loop early. Ignore other files.
+                    if (replaceArtwork.isFalse()) continue;
+                    // Replaced artwork or canceled action. End loop early. Ignore other files.
+                    break;
                 }
             }
             
