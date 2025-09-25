@@ -347,25 +347,42 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
         initPoints();
         
         // Update the Zoomed Draw Size and its difference compared to the normal draw size.
-        zoomSize.setLocation(w * zoom, h * zoom);
-        zoomDiff.setLocation(zoomSize.x - w, zoomSize.y - h);
+        zoomSize.setSize(w * zoom, h * zoom);
+        zoomDiff.setSize(
+            // Formula: Subtract component size from scaled image size.
+            // If positive, bound to zero. If negative, use absolute value as zoom difference.
+            Math.abs(Math.min((compSize.width  - zoomSize.width), 0)),  
+            Math.abs(Math.min((compSize.height - zoomSize.height), 0))
+        );
         
-        // Offset the x and y to zoom centrally
-        x -= zoomDiff.x/2;
-        y -= zoomDiff.y/2;
+        // Offset the x and y to zoom centrally using the size difference from zoom scaling.
+        x -= (zoomSize.width  - w) / 2;
+        y -= (zoomSize.height - h) / 2;
         
         // Adjust the view towards the last zoom point.
         pendingZoomPan();
         
-        // Lastly, update the width and height to reflect to zoomed size.
-        w = zoomSize.x;
-        h = zoomSize.y;
+        // Lastly, update the width and height to reflect the zoomed size.
+        w = zoomSize.width;
+        h = zoomSize.height;
+
+        /*
+         * Define the x and y bounds for upcoming coordinates adjustment. The bounds
+         * help keep an image positioned in the center of the component, especially if
+         * the component's aspect-ratio does not match the image's (e.g. fullscreen mode).
+         */
+        // Must be at least 0, but can be greater when the component's dimension is larger than the zoomed image's.
+        final int boundX    = Math.max(0, (compSize.width  - w) / 2);
+        final int boundY    = Math.max(0, (compSize.height - h) / 2);
+        // Same as upper bound, unless negative, which happens when the zoomed size's dimension is greater than the component's.
+        final int boundMinX = Math.min(compSize.width  - w, boundX);
+        final int boundMinY = Math.min(compSize.height - h, boundY);
         
         // Panning Functionality
-        int offX = (int) (panOffsetPercentX * zoomDiff.x);
-        int offY = (int) (panOffsetPercentY * zoomDiff.y);
-        x = boundedAdd(x, boundedAdd(offX, this.panBuffer.x, -zoomDiff.x/2, zoomDiff.x/2), -zoomDiff.x, 0);
-        y = boundedAdd(y, boundedAdd(offY, this.panBuffer.y, -zoomDiff.y/2, zoomDiff.y/2), -zoomDiff.y, 0);
+        int offX = (int) (panOffsetPercentX * zoomDiff.width);
+        int offY = (int) (panOffsetPercentY * zoomDiff.height);
+        x = boundedAdd(x, boundedAdd(offX, this.panBuffer.width,  -zoomDiff.width/2,  zoomDiff.width/2),  boundMinX, boundX);
+        y = boundedAdd(y, boundedAdd(offY, this.panBuffer.height, -zoomDiff.height/2, zoomDiff.height/2), boundMinY, boundY);
 //        System.out.println(this.toString("(x: " + x + ", y:" + y + ", w: " + w + ", h: " + h + ")"));
     }
     
@@ -482,18 +499,18 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
   private boolean pendingZoomPan;
   /** A float with the zoom ratio, which is always at least <code>1.0f</code>. */
   private float zoom;
-  /** A Point with the x (width) and y (height) zoom size. The zoom size is calculated by multiplying the regular size by the zoom ratio. */
-  private Point zoomSize;
-  /** A Point with the x (width) and y (height) difference in icon size after zooming. */
-  private Point zoomDiff;
-  /** A Point with x and y coordinates for where the last zoom action took place. */
+  /** A {@link Dimension} with the x (width) and y (height) zoom size. The zoom size is calculated by multiplying the regular size by the zoom ratio. */
+  private Dimension zoomSize;
+  /** A {@link Dimension} with the x (width) and y (height) difference in a zoomed icon's size against its displaying component. */
+  private Dimension zoomDiff;
+  /** A {@link Point} with x and y coordinates for where the last zoom action took place. */
   private Point zoomPoint;
-  /** A Point with the x and y coordinate offsets for an active pan. There can only be a pan if the zoom is greater than <code>1.0f</code>. */
-  private Point panOffset;
+  /** A {@link Dimension} with the x (width) and y (height) offsets for an active pan. There can only be a pan if the zoom is greater than <code>1.0f</code>. */
+  private Dimension panOffset;
   /** The pan offset, represented as a percentage of the zoom difference. */
   private double panOffsetPercentX, panOffsetPercentY;
-  /** A Point with the x and y coordinate offset buffers for an active pan. These numbers are applied to the pan offset when the pan action is stopped. */
-  private Point panBuffer;
+  /** A {@link Dimension} with the x (width) and y (height) offset buffers for an active pan. These numbers are applied to the pan offset when the pan action stops. */
+  private Dimension panBuffer;
   /**
    * The most recent scaled version of the {@link ImageIcon}. The latest scale is
    * cached to prevent having to re-scale the image on every call of
@@ -644,10 +661,10 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
   }
 
   /**
-   * Acts upon a pending zoom pan, with a maximum amount of <code>+-20</code>. The
-   * "zoom pan" effect is when a user attempts to zoom in on a specific area of
-   * the icon, as opposed to just zooming into the center. This effect feels more
-   * responsive and allows for finer control of the viewport.
+   * Acts upon a pending zoom pan. The "zoom pan" effect is when a user attempts
+   * to zoom in on a specific area of the icon, as opposed to just zooming into
+   * the center. This effect feels more responsive and allows for finer control of
+   * the viewport.
    */
   private void pendingZoomPan() {
       if (pendingZoomPan) {
@@ -701,15 +718,15 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
    */
   private void initPoints() {
       if (this.zoomSize == null)
-          this.zoomSize = new Point(0, 0);
+          this.zoomSize = new Dimension();
       if (this.zoomPoint == null)
           this.zoomPoint = new Point(0, 0);
       if (this.zoomDiff == null)
-          this.zoomDiff = new Point(0, 0);
+          this.zoomDiff = new Dimension();
       if (this.panBuffer == null)
-          this.panBuffer = new Point(0, 0);
+          this.panBuffer = new Dimension();
       if (this.panOffset == null)
-          this.panOffset = new Point(0, 0);
+          this.panOffset = new Dimension();
   }
 
   /**
@@ -741,7 +758,7 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
    * seemed to interfere with the accuracy of itself and the buffer.
    */
   private void syncPan() {
-      this.panOffset.setLocation((int) (panOffsetPercentX * zoomDiff.getX()), (int) (panOffsetPercentY * zoomDiff.getY()));
+      this.panOffset.setSize((int) (panOffsetPercentX * zoomDiff.getWidth()), (int) (panOffsetPercentY * zoomDiff.getHeight()));
   }
   
   /**
@@ -759,7 +776,7 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
       
 //      System.out.println("Pan CMD Received: (" + x + ", " + y + ")");
 //      System.out.println("PAN OFFSET: " + panOffset);
-      this.panBuffer.setLocation(x, y);
+      this.panBuffer.setSize(x, y);
 //      System.out.println("PAN OFFSET AFTER: " + panOffset);
   }
   
@@ -773,14 +790,14 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
       // Ensure pan offset amounts are still accurate before performing calculations.
       syncPan();
       
-      this.panOffset.setLocation(
-              boundedAdd(this.panOffset.x, this.panBuffer.x, -zoomDiff.x/2, zoomDiff.x/2),
-              boundedAdd(this.panOffset.y, this.panBuffer.y, -zoomDiff.y/2, zoomDiff.y/2));
-      this.panBuffer.setLocation(0, 0);
+      this.panOffset.setSize(
+              boundedAdd(this.panOffset.width,  this.panBuffer.width,  -zoomDiff.width/2,  zoomDiff.width/2),
+              boundedAdd(this.panOffset.height, this.panBuffer.height, -zoomDiff.height/2, zoomDiff.height/2));
+      this.panBuffer.setSize(0, 0);
       
       // Recalculate percentage offsets using new numbers.
-      this.panOffsetPercentX = (panOffset.getX() / zoomDiff.getX());
-      this.panOffsetPercentY = (panOffset.getY() / zoomDiff.getY());
+      this.panOffsetPercentX = (panOffset.getWidth()  / zoomDiff.getWidth());
+      this.panOffsetPercentY = (panOffset.getHeight() / zoomDiff.getHeight());
   }
   
   /**
@@ -813,6 +830,33 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
   }
   
   /**
+   * A helper method for cleanly printing a {@link Point}'s x and y values.
+   * 
+   * @param p - the {@link Point} to print.
+   * @return a String with the neatly formatted x and y values, or an empty String
+   *         if the point was <code>null</code>.
+   */
+  private String asStr(Point p) {
+      if (p == null) return "";
+      
+      return "(" + p.x + "," + p.y + ")";
+  }
+  
+  /**
+   * A helper method for cleanly printing a {@link Dimension}'s width and height
+   * values.
+   * 
+   * @param d - the {@link Dimension} to print.
+   * @return a String with the neatly formatted width and height values, or an
+   *         empty String if the point was <code>null</code>.
+   */
+  private String asStr(Dimension d) {
+      if (d == null) return "";
+      
+      return "(" + d.width + "," + d.height + ")";
+  }
+  
+  /**
    * Gets a String representation of this StretchIcon, while including some String
    * filler. The String filler can be <code>null</code>, in which case it will
    * just ultimately be appended as an empty String.
@@ -823,10 +867,14 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
    *         filler.
    */
   public String toString(String fill) {
-      return String.format("%s (%s: %s,%s) %s%n> %4s: %s | %s | %s | %s%n> %4s: %s (%s,%s) | %s | %s%n",
-          "StretchIcon", "Size", this.getImgWidth(), this.getImgHeight(), Objects.toString(fill, ""),
-          "Zoom", this.zoom, this.zoomSize, this.zoomDiff, this.zoomPoint,
-          "Pan", this.panOffset, this.panOffsetPercentX, this.panOffsetPercentY, this.panBuffer, this.pendingZoomPan);
+      return String.format("""
+              StretchIcon (Size: %s,%s) %s
+              > Zoom: %s | Size: %s | Diff: %s | Point: %s
+              >  Pan: Offset: %s at Percent: (%.4f,%.4f) | Buffer: %s | Pending: %s
+              """,
+              this.getImgWidth(), this.getImgHeight(), Objects.toString(fill, ""),
+              this.zoom, asStr(this.zoomSize), asStr(this.zoomDiff), asStr(this.zoomPoint),
+              asStr(this.panOffset), this.panOffsetPercentX, this.panOffsetPercentY, asStr(this.panBuffer), this.pendingZoomPan);
   }
   
   @Override
