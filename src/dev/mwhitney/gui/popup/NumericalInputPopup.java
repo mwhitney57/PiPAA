@@ -1,6 +1,7 @@
 package dev.mwhitney.gui.popup;
 
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import dev.mwhitney.gui.components.NumberWheelButton;
@@ -189,6 +190,54 @@ public class NumericalInputPopup extends SelectionPopup {
                 btn.next();
                 // Refresh sequence data to ensure it matches the button's new value.
                 refreshSequence();
+            });
+            btn.addMouseListener(new MouseAdapter() {
+                /**
+                 * A boolean for whether the RMB is primed. A button is "primed" if it is
+                 * pressed and was the last button pressed. Therefore, RMB may become unprimed
+                 * if another button is pressed in between pressing and releasing the RMB.
+                 */
+                private boolean rmbPrimed = false;
+                
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    // Ensure button shows pressed visuals on RMB presses as well.
+                    if (e.getButton() == MouseEvent.BUTTON3) {
+                        btn.getModel().setArmed(true);
+                        btn.getModel().setPressed(true);
+                        rmbPrimed = true;
+                    }
+                    // Not primed if last press was not RMB.
+                    else rmbPrimed = false;
+                }
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    // Do nothing for non-RMB buttons or if RMB isn't primed.
+                    if (e.getButton() != MouseEvent.BUTTON3 || !rmbPrimed) return;
+                    
+                    // Step wheel backwards.
+                    btn.previous();
+                    // Ensure pressed visuals are off on release. Do after value change so next paint shows new value.
+                    btn.getModel().setArmed(false);
+                    btn.getModel().setPressed(false);
+                    // Reset primed value.
+                    rmbPrimed = false;
+                    
+                    // Refresh sequence data to ensure it matches the button's new value.
+                    refreshSequence();
+                }
+            });
+            btn.addMouseWheelListener(e -> {
+                // Adjust wheel up or down depending on scroll direction. Negated to make direction proper.
+                final double scroll = -e.getPreciseWheelRotation();
+                if      (scroll > 0) btn.next();
+                else if (scroll < 0) btn.previous();
+                else return;  // Ignore if scroll is zero somehow.
+                
+                // Refresh sequence data to ensure it matches the button's new value.
+                refreshSequence();
+                // Repaint. Scroll actions don't seem to cause repaints on their own like button presses do.
+                btn.repaint();
             });
             
             // Add to buttons array and content pane.

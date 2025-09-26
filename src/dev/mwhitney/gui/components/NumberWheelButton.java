@@ -112,11 +112,16 @@ public class NumberWheelButton extends BetterButton implements ThemedComponent {
         x = (width  - textWidth)  / 2;
         y = (height + textHeight) / 2 - fm.getDescent(); // Subtract fm.getDescent() to adjust baseline to the vertical center.
         
-        // Only draw above and below digits if the current digit isn't at either end of the loop.
+        // Draw above and below digits based on current digit.
         if (loop.current() != 0)
-            g2d.drawString(""+(loop.current()-1), x, height/3 - fm.getDescent());
+            g2d.drawString(String.valueOf(loop.current()-1), x, height/3 - fm.getDescent());
+        else
+            g2d.drawString(String.valueOf(9), x, height/3 - fm.getDescent());
         if (loop.current() != 9)
-            g2d.drawString(""+(loop.current()+1), x, height/2 + (height/3) + fm.getDescent());
+            g2d.drawString(String.valueOf(loop.current()+1), x, height/2 + (height/3) + fm.getDescent());
+        else
+            g2d.drawString(String.valueOf(0), x, height/2 + (height/3) + fm.getDescent());
+            
         
         // Setup gradient values for fade overlay.
         float midPoint  = height / 2f;   // Controls the size of the middle point.
