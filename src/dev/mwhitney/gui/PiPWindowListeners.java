@@ -211,8 +211,8 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                         // Get the dragged window's new and current position.
                         final Point currPos = get().getLocation();
                         get().getManager().callInLiveWindows(window -> {
-                            // Don't set location again for window which drag originated in.
-                            if (window == get()) return;
+                            // Don't set location again for window which drag originated in. Also skip if window is in fullscreen or position locked.
+                            if (window == get() || window.state().any(FULLSCREEN, LOCKED_POSITION)) return;
                             // Get window's X/Y distance from originating window's previous position.
                             final int distX = window.getX() - prevPos.x;
                             final int distY = window.getY() - prevPos.y;
