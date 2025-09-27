@@ -1,4 +1,4 @@
-package dev.mwhitney.main;
+package dev.mwhitney.util.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

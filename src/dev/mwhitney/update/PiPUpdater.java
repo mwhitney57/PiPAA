@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 import dev.mwhitney.exceptions.PiPUpdateException;
 import dev.mwhitney.main.Binaries;
-import dev.mwhitney.main.PiPProperty.FREQUENCY_OPTION;
-import dev.mwhitney.main.PiPProperty.PropDefault;
-import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.properties.PiPProperty.FREQUENCY_OPTION;
+import dev.mwhitney.properties.PiPProperty.PropDefault;
+import dev.mwhitney.properties.PiPProperty.TYPE_OPTION;
 import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.update.api.APICommunicator;
 import dev.mwhitney.update.api.APICommunicator.UpdatePayload;

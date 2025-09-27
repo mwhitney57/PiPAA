@@ -1,6 +1,6 @@
 package dev.mwhitney.update.api;
 
-import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.properties.PiPProperty.TYPE_OPTION;
 
 /**
  * A specific build or update of the application, containing a {@link Version}

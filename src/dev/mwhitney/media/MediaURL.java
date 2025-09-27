@@ -13,8 +13,8 @@ import java.util.Objects;
 import java.util.Properties;
 
 import de.malkusch.whoisServerList.publicSuffixList.PublicSuffixListFactory;
-import dev.mwhitney.exceptions.InvalidMediaExtensionException;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
+import dev.mwhitney.media.exceptions.InvalidMediaExtensionException;
 
 /**
  * A wrapper for the {@link URL} class specifically designed for links to media.

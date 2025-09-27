@@ -22,10 +22,10 @@ import javax.swing.Timer;
 import dev.mwhitney.gui.viewer.SubImageObserver;
 import dev.mwhitney.gui.viewer.ZoomPanSnapshot;
 import dev.mwhitney.listeners.PaintRequester;
-import dev.mwhitney.listeners.PropertyListener;
-import dev.mwhitney.main.PiPProperty;
-import dev.mwhitney.main.PiPProperty.PropDefault;
-import dev.mwhitney.main.PiPProperty.SCALING_OPTION;
+import dev.mwhitney.properties.PiPProperty;
+import dev.mwhitney.properties.PropertyListener;
+import dev.mwhitney.properties.PiPProperty.PropDefault;
+import dev.mwhitney.properties.PiPProperty.SCALING_OPTION;
 
 /**
  * An <CODE>Icon</CODE> that scales its image to fill the component area,

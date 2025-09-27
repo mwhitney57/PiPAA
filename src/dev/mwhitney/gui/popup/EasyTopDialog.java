@@ -6,13 +6,13 @@ import javax.swing.JRootPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import dev.mwhitney.gui.components.BetterPanel;
-import dev.mwhitney.gui.components.BetterTextPane;
+import dev.mwhitney.gui.components.better.BetterPanel;
+import dev.mwhitney.gui.components.better.BetterTextPane;
 import dev.mwhitney.listeners.simplified.KeyPressListener;
 import dev.mwhitney.listeners.simplified.MousePressListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
-import dev.mwhitney.main.PiPProperty.THEME_OPTION;
-import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION.COLOR;
 import dev.mwhitney.resources.AppRes;
 import net.miginfocom.swing.MigLayout;
 

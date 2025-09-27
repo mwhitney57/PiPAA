@@ -1,6 +1,4 @@
-package dev.mwhitney.listeners;
-
-import dev.mwhitney.main.PiPProperty;
+package dev.mwhitney.properties;
 
 /**
  * A basic listener for application property changes.

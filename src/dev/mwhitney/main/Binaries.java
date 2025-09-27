@@ -15,7 +15,8 @@ import java.util.regex.Pattern;
 
 import dev.mwhitney.exceptions.UnsupportedBinActionException;
 import dev.mwhitney.listeners.BinRunnable;
-import dev.mwhitney.listeners.PropertyListener;
+import dev.mwhitney.properties.PiPProperty;
+import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.PiPAAUtils;
 import net.codejava.utility.UnzipUtility;

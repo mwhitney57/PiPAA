@@ -1,4 +1,4 @@
-package dev.mwhitney.gui.popup;
+package dev.mwhitney.gui.popup.interfaces;
 
 /**
  * An interface for receiving selections with a specific value.

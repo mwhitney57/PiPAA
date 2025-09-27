@@ -1,4 +1,4 @@
-package dev.mwhitney.main;
+package dev.mwhitney.util.interfaces;
 
 /**
  * A {@link Runnable} which is meant to be executed more than once. Many

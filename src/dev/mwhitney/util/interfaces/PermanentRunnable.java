@@ -1,4 +1,4 @@
-package dev.mwhitney.main;
+package dev.mwhitney.util.interfaces;
 
 /**
  * An extension upon {@link RecurringRunnable} which is meant to exist

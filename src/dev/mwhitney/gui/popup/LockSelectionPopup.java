@@ -11,11 +11,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 import dev.mwhitney.gui.PiPWindowState;
-import dev.mwhitney.gui.components.BetterButton;
+import dev.mwhitney.gui.components.better.BetterButton;
 import dev.mwhitney.listeners.simplified.KeyPressListener;
 import dev.mwhitney.listeners.simplified.MouseClickListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
-import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
 import dev.mwhitney.resources.AppRes;
 
 /**

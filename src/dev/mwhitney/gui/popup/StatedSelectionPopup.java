@@ -3,7 +3,7 @@ package dev.mwhitney.gui.popup;
 import java.awt.Color;
 
 import dev.mwhitney.gui.PiPWindowState;
-import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
 
 /**
  * A simple, stated, pop-up for displaying the user with multiple selections.

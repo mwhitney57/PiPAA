@@ -7,9 +7,9 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import dev.mwhitney.main.PiPEnum;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
+import dev.mwhitney.util.interfaces.PiPEnum;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 
 /**

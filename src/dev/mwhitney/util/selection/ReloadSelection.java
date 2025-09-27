@@ -3,7 +3,7 @@ package dev.mwhitney.util.selection;
 import org.apache.commons.lang3.ArrayUtils;
 
 import dev.mwhitney.gui.PiPWindowSnapshot.SnapshotData;
-import dev.mwhitney.main.PiPEnum;
+import dev.mwhitney.util.interfaces.PiPEnum;
 
 /**
  * A selection which dictates how a reload should operate.

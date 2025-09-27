@@ -12,19 +12,19 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.regex.Pattern;
 
-import dev.mwhitney.exceptions.InvalidMediaException;
 import dev.mwhitney.listeners.PiPSupplier;
-import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries;
-import dev.mwhitney.main.CFExec;
-import dev.mwhitney.main.PiPEnum;
-import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.main.Binaries.Bin;
+import dev.mwhitney.main.CFExec;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_TYPE;
 import dev.mwhitney.media.PiPMediaAttributes.TYPE;
 import dev.mwhitney.media.WebMediaFormat.FORMAT;
+import dev.mwhitney.media.exceptions.InvalidMediaException;
+import dev.mwhitney.properties.PiPProperty;
+import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.resources.AppRes;
+import dev.mwhitney.util.interfaces.PiPEnum;
 
 /**
  * Attributes PiPMedia sources and returns the attribution results.

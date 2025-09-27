@@ -1,4 +1,4 @@
-package dev.mwhitney.main;
+package dev.mwhitney.gui.decor;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;

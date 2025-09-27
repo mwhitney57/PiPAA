@@ -1,4 +1,4 @@
-package dev.mwhitney.gui.components;
+package dev.mwhitney.gui.components.better;
 
 import java.awt.Insets;
 
@@ -7,7 +7,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
 import dev.mwhitney.resources.AppRes;
 
 /**

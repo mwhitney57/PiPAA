@@ -1,4 +1,4 @@
-package dev.mwhitney.main;
+package dev.mwhitney.properties;
 
 import java.io.File;
 import java.io.FileReader;
@@ -10,7 +10,6 @@ import java.util.Properties;
 import javax.swing.JOptionPane;
 
 import dev.mwhitney.gui.popup.TopDialog;
-import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.resources.AppRes;
 
 /**

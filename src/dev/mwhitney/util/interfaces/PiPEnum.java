@@ -1,4 +1,4 @@
-package dev.mwhitney.main;
+package dev.mwhitney.util.interfaces;
 
 /**
  * An interface for PiPAA enums.

@@ -1,4 +1,6 @@
-package dev.mwhitney.main;
+package dev.mwhitney.properties;
+
+import dev.mwhitney.util.interfaces.PiPEnum;
 
 /**
  * An interface for PiPAA property-related enums.

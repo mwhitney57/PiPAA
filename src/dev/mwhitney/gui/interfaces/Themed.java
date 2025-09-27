@@ -1,6 +1,6 @@
-package dev.mwhitney.gui;
+package dev.mwhitney.gui.interfaces;
 
-import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
 
 /**
  * An interface representing objects which can be "themed." Such objects respect

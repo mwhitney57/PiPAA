@@ -1,4 +1,4 @@
-package dev.mwhitney.main;
+package dev.mwhitney.properties;
 
 /**
  * The descriptions for each {@link PiPProperty}.

@@ -3,7 +3,7 @@ package dev.mwhitney.media;
 import java.awt.Dimension;
 import java.util.Objects;
 
-import dev.mwhitney.main.PiPEnum;
+import dev.mwhitney.util.interfaces.PiPEnum;
 
 /**
  * A set of web media-specific attributes.

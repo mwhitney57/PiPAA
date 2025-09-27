@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import dev.mwhitney.main.PermanentRunnable;
-import dev.mwhitney.main.RecurringRunnable;
+import dev.mwhitney.util.interfaces.PermanentRunnable;
+import dev.mwhitney.util.interfaces.RecurringRunnable;
 
 /**
  * The state of a PiPWindow, which contains numerous fields relating to its status.

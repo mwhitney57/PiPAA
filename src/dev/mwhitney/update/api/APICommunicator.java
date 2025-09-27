@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.properties.PiPProperty.TYPE_OPTION;
 
 /**
  * Communicates with the PiPAA API.

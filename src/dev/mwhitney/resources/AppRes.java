@@ -6,7 +6,7 @@ import java.awt.Image;
 
 import javax.swing.ImageIcon;
 
-import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.properties.PiPProperty.TYPE_OPTION;
 import dev.mwhitney.update.api.Build;
 import dev.mwhitney.update.api.Version;
 

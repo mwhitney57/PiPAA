@@ -1,4 +1,4 @@
-package dev.mwhitney.exceptions;
+package dev.mwhitney.media.exceptions;
 
 /**
  * An exception thrown when transfer media is invalid.

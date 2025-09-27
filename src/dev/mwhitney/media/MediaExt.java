@@ -2,9 +2,9 @@ package dev.mwhitney.media;
 
 import java.util.Objects;
 
-import dev.mwhitney.exceptions.InvalidMediaExtensionException;
-import dev.mwhitney.main.PiPEnum;
+import dev.mwhitney.media.exceptions.InvalidMediaExtensionException;
 import dev.mwhitney.util.PiPAAUtils;
+import dev.mwhitney.util.interfaces.PiPEnum;
 
 /**
  * File extensions for different media types and containers. All extensions

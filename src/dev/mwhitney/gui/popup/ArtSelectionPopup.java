@@ -5,12 +5,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-import dev.mwhitney.gui.components.BetterButton;
+import dev.mwhitney.gui.components.better.BetterButton;
 import dev.mwhitney.listeners.simplified.KeyPressListener;
 import dev.mwhitney.listeners.simplified.MouseClickListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
-import dev.mwhitney.main.PiPProperty.THEME_OPTION;
-import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION.COLOR;
 
 /**
  * A simple pop-up for displaying the user with two options when <b>an image is

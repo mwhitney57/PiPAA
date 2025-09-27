@@ -2,7 +2,7 @@ package dev.mwhitney.gui.interfaces;
 
 import java.awt.Component;
 
-import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
 
 /**
  * An interface for components or visual elements which can be "themed." Theming

@@ -9,10 +9,11 @@ import java.awt.Graphics2D;
 import java.awt.LinearGradientPaint;
 import java.awt.RenderingHints;
 
+import dev.mwhitney.gui.components.better.BetterButton;
 import dev.mwhitney.gui.interfaces.ThemedComponent;
-import dev.mwhitney.main.PiPProperty.PropDefault;
-import dev.mwhitney.main.PiPProperty.THEME_OPTION;
-import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.properties.PiPProperty.PropDefault;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION.COLOR;
 import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.Loop;
 

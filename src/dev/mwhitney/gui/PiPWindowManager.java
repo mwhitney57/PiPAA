@@ -15,7 +15,6 @@ import java.util.function.Supplier;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import dev.mwhitney.exceptions.InvalidMediaException;
 import dev.mwhitney.gui.PiPWindowState.StateProp;
 import dev.mwhitney.gui.binds.BindController;
 import dev.mwhitney.gui.binds.BindControllerFetcher;
@@ -24,14 +23,15 @@ import dev.mwhitney.gui.binds.BindHandler;
 import dev.mwhitney.gui.binds.Shortcut;
 import dev.mwhitney.listeners.PiPWindowCountListener;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
-import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.listeners.WindowFocusGainedListener;
 import dev.mwhitney.main.CFExec;
-import dev.mwhitney.main.PiPProperty;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaAttributor;
 import dev.mwhitney.media.PiPMediaAttributor.Flag;
+import dev.mwhitney.media.exceptions.InvalidMediaException;
+import dev.mwhitney.properties.PiPProperty;
+import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.util.PiPAAUtils;
 
 /**

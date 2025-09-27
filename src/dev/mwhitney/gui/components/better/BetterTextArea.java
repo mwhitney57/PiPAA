@@ -1,8 +1,8 @@
-package dev.mwhitney.gui.components;
+package dev.mwhitney.gui.components.better;
 
 import javax.swing.JTextArea;
 
-import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
 import dev.mwhitney.resources.AppRes;
 
 /**
