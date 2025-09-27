@@ -57,7 +57,7 @@ public class Tray implements PropertyListener {
     
     @SuppressWarnings("unused")
     /** The default background color for tray elements. */
-    private static final Color DEFAULT_BG_COLOR   = new Color(240, 240, 240);
+    private static final Color DEFAULT_BG_COLOR   = AppRes.COLOR_OFF_WHITE;
     /** The default shadow color for tray elements. */
     private static final Color DEFAULT_SHDW_COLOR = new Color(160, 160, 160);
     /** The default check mark color. */

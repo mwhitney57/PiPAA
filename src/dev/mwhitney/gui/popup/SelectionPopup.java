@@ -1,6 +1,5 @@
 package dev.mwhitney.gui.popup;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
@@ -95,7 +94,7 @@ public abstract class SelectionPopup extends JDialog {
         this.setUndecorated(true);
         this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         this.setResizable(false);
-        this.setBackground(new Color(0, 0, 0, 0));
+        this.setBackground(AppRes.COLOR_TRANSPARENT);
         
         // Panel Setup
         final BetterPanel panel = new BetterPanel(new MigLayout(getLayoutConstraints())).useDropShadow();

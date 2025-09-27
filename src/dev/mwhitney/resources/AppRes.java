@@ -1,5 +1,6 @@
 package dev.mwhitney.resources;
 
+import java.awt.Color;
 import java.awt.Font;
 
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
@@ -116,6 +117,10 @@ public abstract class AppRes {
     public static final String FILE_LIBVLC                  = PATH_BIN + "/" + NAME_LIBVLC;
     public static final String FILE_LIBVLCCORE              = PATH_BIN + "/" + NAME_LIBVLCCORE;
     public static final String FILE_LIBVLCPLUGINS           = PATH_BIN + "/" + NAME_LIBVLCPLUGINS;
+    
+    // Colors
+    public static final Color COLOR_TRANSPARENT             = new Color(0, 0, 0, 0);
+    public static final Color COLOR_OFF_WHITE               = new Color(240, 240, 240);
     
     // Fonts
     public static final Font FONT_POPUP                     = new Font("Dialog", Font.BOLD, 16);

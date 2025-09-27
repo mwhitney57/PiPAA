@@ -144,7 +144,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         setResizable(false);
-        setBackground(new Color(0, 0, 0, 0));
+        setBackground(AppRes.COLOR_TRANSPARENT);
         setBounds(Math.max(0, screen.width - 530), Math.max(0, screen.height - 650), 520, 600);
         addWindowFocusListener((WindowFocusLostListener) (e) -> setVisible(false));
         

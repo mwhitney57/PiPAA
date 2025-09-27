@@ -2,6 +2,8 @@ package dev.mwhitney.main;
 
 import java.awt.Color;
 
+import dev.mwhitney.resources.AppRes;
+
 /**
  * Properties for the PiPAA application.
  * 
@@ -203,7 +205,7 @@ public enum PiPProperty {
         }
         
         /* LIGHT COLORS */
-        public static final Color LIGHT_BG           = new Color(240, 240, 240);
+        public static final Color LIGHT_BG           = AppRes.COLOR_OFF_WHITE;
         public static final Color LIGHT_BG_ACCENT    = new Color(210, 210, 210);
         public static final Color LIGHT_TXT          = Color.BLACK;
         public static final Color LIGHT_BTN          = new Color(0, 120, 215);

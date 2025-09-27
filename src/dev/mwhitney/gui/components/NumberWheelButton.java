@@ -13,6 +13,7 @@ import dev.mwhitney.gui.interfaces.ThemedComponent;
 import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.Loop;
 
 /**
@@ -128,7 +129,7 @@ public class NumberWheelButton extends BetterButton implements ThemedComponent {
         float fadeRange = height / 4f;  // Controls the height of the transparent area.
 
         // Transparency Color
-        final Color transparency = new Color(0, 0, 0, 0);
+        final Color transparency = AppRes.COLOR_TRANSPARENT;
 
         // Creates a gradient that goes:  BG → Transparency → BG
         final LinearGradientPaint gradient = new LinearGradientPaint(

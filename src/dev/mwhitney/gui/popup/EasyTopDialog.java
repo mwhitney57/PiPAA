@@ -1,7 +1,5 @@
 package dev.mwhitney.gui.popup;
 
-import java.awt.Color;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
@@ -55,7 +53,7 @@ public class EasyTopDialog {
         parent.setResizable(false);
 //        parent.setFocusable(false);
 //        parent.setFocusableWindowState(false);
-        parent.setBackground(new Color(0, 0, 0, 0));
+        parent.setBackground(AppRes.COLOR_TRANSPARENT);
         parent.addWindowFocusListener((WindowFocusLostListener) (e) -> close(parent));
         parent.addKeyListener((KeyPressListener) (e) -> close(parent));
         final MousePressListener mouseListener = (e) -> close(parent);

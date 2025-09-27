@@ -21,6 +21,9 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
     /** The randomly-generated serial UID for the FadingLineBorder class. */
     private static final long serialVersionUID = -960971844424714747L;
 
+    /** The default {@link Color} for the line border. */
+    private static final Color COLOR_DEFAULT = new Color(255, 0, 0, 200);
+    
     /** The repeating Timer used for the border fading process which stops once the border has faded. */
     private Timer fadeTimer;
     /** The Color when the border is completely normal and not faded. */
@@ -47,7 +50,7 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
         fadeTimer = new Timer(10, (e) -> {
             // Apply Default Color if null
             if (this.lineColor == null)
-                this.lineColor = new Color(255, 0, 0, 200);
+                this.lineColor = COLOR_DEFAULT;
             // Stop Timer if Alpha has Reached 0 (Faded)
             if (this.lineColor.getAlpha() == 0) {
                 ((Timer) e.getSource()).stop();

@@ -5,7 +5,6 @@ import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_MEDIA;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_POSITION;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_SIZE;
 
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -17,6 +16,7 @@ import dev.mwhitney.listeners.simplified.KeyPressListener;
 import dev.mwhitney.listeners.simplified.MouseClickListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.resources.AppRes;
 
 /**
  * A simple, stated, pop-up for displaying the user with multiple <b>lock</b>
@@ -63,7 +63,7 @@ public class LockSelectionPopup extends StatedSelectionPopup {
         for (int i = 0; i < this.buttons.length; i++) {
             final BetterButton btn = this.buttons[i];
             btn.getActionListeners()[0].actionPerformed(null);  // ONLY refreshes colors of buttons based on state, since null.
-            btn.setForeground(new Color(240, 240, 240));
+            btn.setForeground(AppRes.COLOR_OFF_WHITE);
             btn.setPreferredSize(null);
             btn.setRoundedArc(20);
             btn.setBorderRoundedArc(10);
