@@ -1,6 +1,5 @@
 package dev.mwhitney.gui.components;
 
-import java.awt.Font;
 import java.awt.Insets;
 
 import javax.swing.JTextPane;
@@ -9,6 +8,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.resources.AppRes;
 
 /**
  * An incredibly-basic extension upon JTextPane that changes a few default settings/behaviors.
@@ -34,7 +34,7 @@ public class BetterTextPane extends JTextPane {
         this.setText(text);
         this.setEditable(false);
         this.setBackground(THEME_OPTION.LIGHT_BG);
-        this.setFont(new Font("Monospaced", Font.BOLD, 14));
+        this.setFont(AppRes.FONT_TEXT_COMPONENT);
         
         // Custom padding surrounding text.
         this.setMargin(new Insets(PAD_T, PAD_L, PAD_B, PAD_R));

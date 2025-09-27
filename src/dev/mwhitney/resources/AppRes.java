@@ -1,5 +1,7 @@
 package dev.mwhitney.resources;
 
+import java.awt.Font;
+
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
 import dev.mwhitney.update.api.Build;
 import dev.mwhitney.update.api.Version;
@@ -114,6 +116,10 @@ public abstract class AppRes {
     public static final String FILE_LIBVLC                  = PATH_BIN + "/" + NAME_LIBVLC;
     public static final String FILE_LIBVLCCORE              = PATH_BIN + "/" + NAME_LIBVLCCORE;
     public static final String FILE_LIBVLCPLUGINS           = PATH_BIN + "/" + NAME_LIBVLCPLUGINS;
+    
+    // Fonts
+    public static final Font FONT_POPUP                     = new Font("Dialog", Font.BOLD, 16);
+    public static final Font FONT_TEXT_COMPONENT            = new Font("Monospaced", Font.BOLD, 14);
     
     // Shortcuts Printout - Temporary Until Shortcuts Customization
     public static final String SHORTCUTS                    = """

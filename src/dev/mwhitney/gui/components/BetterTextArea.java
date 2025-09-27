@@ -1,10 +1,9 @@
 package dev.mwhitney.gui.components;
 
-import java.awt.Font;
-
 import javax.swing.JTextArea;
 
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
+import dev.mwhitney.resources.AppRes;
 
 /**
  * An incredibly-basic extension upon JTextArea that changes a few default settings/behaviors.
@@ -25,6 +24,6 @@ public class BetterTextArea extends JTextArea {
         
         this.setEditable(false);
         this.setBackground(THEME_OPTION.LIGHT_BG);
-        this.setFont(new Font("Monospaced", Font.BOLD, 14));
+        this.setFont(AppRes.FONT_TEXT_COMPONENT);
     }
 }

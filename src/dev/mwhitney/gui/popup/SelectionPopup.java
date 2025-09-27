@@ -21,6 +21,7 @@ import dev.mwhitney.listeners.simplified.MouseClickListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.PiPAAUtils;
 import net.miginfocom.swing.MigLayout;
 
@@ -38,9 +39,9 @@ public abstract class SelectionPopup extends JDialog {
     private static final long serialVersionUID = 8397925600523455895L;
     
     /** The default {@link Font} for button text in pop-ups. */
-    protected static final Font FONT_BTN   = new Font(Font.DIALOG, Font.BOLD, 16);
+    protected static final Font FONT_BTN   = AppRes.FONT_POPUP;
     /** The default {@link Font} for title text in pop-ups. */
-    protected static final Font FONT_TITLE = new Font(Font.DIALOG, Font.BOLD, 18);
+    protected static final Font FONT_TITLE = FONT_BTN.deriveFont(18f);
 
     /** The {@link CountDownLatch} used for blocking threads while waiting for a selection. */
     private final CountDownLatch latch = new CountDownLatch(1);

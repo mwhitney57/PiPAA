@@ -1,7 +1,6 @@
 package dev.mwhitney.gui.popup;
 
 import java.awt.Color;
-import java.awt.Font;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -16,6 +15,7 @@ import dev.mwhitney.listeners.simplified.MousePressListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION;
 import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.resources.AppRes;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -69,7 +69,7 @@ public class EasyTopDialog {
         textPane.setFocusable(false);
         textPane.setBackground(theme.color(COLOR.BG));
         textPane.setForeground(theme.color(COLOR.TXT));
-        textPane.setFont(new Font("Dialog", Font.BOLD, 16));
+        textPane.setFont(AppRes.FONT_POPUP);
         textPane.addMouseListener(mouseListener);
         panel.add(textPane);
         
