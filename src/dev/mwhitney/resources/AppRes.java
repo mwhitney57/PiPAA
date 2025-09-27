@@ -2,6 +2,9 @@ package dev.mwhitney.resources;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Image;
+
+import javax.swing.ImageIcon;
 
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
 import dev.mwhitney.update.api.Build;
@@ -117,6 +120,20 @@ public abstract class AppRes {
     public static final String FILE_LIBVLC                  = PATH_BIN + "/" + NAME_LIBVLC;
     public static final String FILE_LIBVLCCORE              = PATH_BIN + "/" + NAME_LIBVLCCORE;
     public static final String FILE_LIBVLCPLUGINS           = PATH_BIN + "/" + NAME_LIBVLCPLUGINS;
+    
+    // ImageIcons – Largely used to load images, but some are used directly as well.
+    public static final ImageIcon IMGICON_APP_16            = new ImageIcon(AppRes.class.getResource(ICON_APP_16));
+    public static final ImageIcon IMGICON_APP_32            = new ImageIcon(AppRes.class.getResource(ICON_APP_32));
+    public static final ImageIcon IMGICON_APP_32_WORK       = new ImageIcon(AppRes.class.getResource(ICON_APP_32_WORKING));
+    public static final ImageIcon IMGICON_APP_32_DOWNLOAD   = new ImageIcon(AppRes.class.getResource(ICON_APP_32_DOWNLOADING));
+    public static final ImageIcon IMGICON_APP_32_TRIM       = new ImageIcon(AppRes.class.getResource(ICON_APP_32_TRIMMING));
+    
+    // Images – Pulled from ImageIcons. Preferred loading method over Toolkit approach.
+    public static final Image IMG_APP_16                    = IMGICON_APP_16.getImage();
+    public static final Image IMG_APP_32                    = IMGICON_APP_32.getImage();
+    public static final Image IMG_APP_32_WORK               = IMGICON_APP_32_WORK.getImage();
+    public static final Image IMG_APP_32_DOWNLOAD           = IMGICON_APP_32_DOWNLOAD.getImage();
+    public static final Image IMG_APP_32_TRIM               = IMGICON_APP_32_TRIM.getImage();
     
     // Colors
     public static final Color COLOR_TRANSPARENT             = new Color(0, 0, 0, 0);

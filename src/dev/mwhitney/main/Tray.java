@@ -62,6 +62,11 @@ public class Tray implements PropertyListener {
     private static final Color DEFAULT_SHDW_COLOR = new Color(160, 160, 160);
     /** The default check mark color. */
     private static final Color DEFAULT_CHCK_COLOR = new Color(8, 144, 0);
+    
+    /** The tray {@link ImageIcon}, which uses a higher, 32x32 resolution. */
+    private static final ImageIcon TRAY_IMAGEICON_32 = AppRes.IMGICON_APP_32;
+    /** The tray image in normal, 16x16 resolution. */
+    private static final Image     TRAY_IMAGE        = AppRes.IMG_APP_16;
 
     /** The configuration window that can be opened from the tray. */
     private ConfigWindow configWin;
@@ -78,10 +83,6 @@ public class Tray implements PropertyListener {
     private List<JComponent> itemComps;
     /** The menu checkbox for enabling/disabling global mute. */
     private Checkbox entryGlobalMute;
-    /** The tray image in normal resolution. */
-    private Image trayImage;
-    /** The tray image in 32x32 resolution. */
-    private Image trayImage32;
 
     /** The listener for the tray which communicates back up and to other objects, primarily a {@link PiPWindowManager}. */
     private PiPTrayAdapter listener;
@@ -157,10 +158,6 @@ public class Tray implements PropertyListener {
         tray = SystemTray.get();
         if (tray == null) throw new RuntimeException("Unable to get the system tray!");
         
-        // Create Tray Images
-        trayImage   = Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(AppRes.ICON_APP_16));
-        trayImage32 = Toolkit.getDefaultToolkit().getImage(Tray.class.getResource(AppRes.ICON_APP_32));
-        
         // Create Context Menu
         menu = tray.getMenu();
         
@@ -172,7 +169,7 @@ public class Tray implements PropertyListener {
         entryGlobalMute.setText("Global Mute " + (entryGlobalMute.getChecked() ? "Enabled" : "Disabled"));
 
         // Add Tray Icon to System Tray
-        tray.setImage(trayImage);
+        tray.setImage(TRAY_IMAGE);
         tray.setTooltip(AppRes.APP_NAME);
         tray.setStatus("Running Windows: 1");
     }
@@ -196,7 +193,7 @@ public class Tray implements PropertyListener {
                     Tray Menu Icons by:
                     Icons8 @ icons8.com
                     """, AppRes.VERS_VLC, Bin.YT_DLP.version(), Bin.GALLERY_DL.version(), Bin.FFMPEG.version(), Bin.IMGMAGICK.version()),
-                    "PiPAA Info", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(trayImage32));
+                    "PiPAA Info", JOptionPane.INFORMATION_MESSAGE, TRAY_IMAGEICON_32);
         }));
         final MenuItem configItem = new MenuItem("Config...",   ((evt) -> SwingUtilities.invokeLater(() -> configWin.setVisible(true))));
         final Menu globalItem     = new Menu("Global");

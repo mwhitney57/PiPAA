@@ -1,7 +1,6 @@
 package dev.mwhitney.gui.components;
 
 import java.awt.Font;
-import java.awt.Toolkit;
 
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
@@ -19,11 +18,9 @@ public class BetterCheckbox extends JCheckBox {
     private static final long serialVersionUID = -1593603022271144819L;
     
     /** A custom {@link ImageIcon} for the checkbox. */
-    private static final ImageIcon ICON = new ImageIcon(Toolkit.getDefaultToolkit()
-            .getImage(BetterCheckbox.class.getResource(AppRes.ICON_CHECKBOX)));
+    private static final ImageIcon ICON     = new ImageIcon(BetterCheckbox.class.getResource(AppRes.ICON_CHECKBOX));
     /** A custom {@link ImageIcon} for the checkbox when it's selected. */
-    private static final ImageIcon ICON_SEL = new ImageIcon(Toolkit.getDefaultToolkit()
-            .getImage(BetterCheckbox.class.getResource(AppRes.ICON_CHECKBOX_SELECTED)));
+    private static final ImageIcon ICON_SEL = new ImageIcon(BetterCheckbox.class.getResource(AppRes.ICON_CHECKBOX_SELECTED));
 
     /**
      * Creates a BetterCheckbox with the passed label, default checked state, and

@@ -34,7 +34,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -141,13 +140,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     public static final Color BORDER_ERROR    = new Color(247, 64,  66,  200);
     
     /** The normal icon for each PiPWindow. */
-    private static final Image ICON_NORMAL   = new ImageIcon(PiPWindow.class.getResource(AppRes.ICON_APP_32)).getImage();
-    /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_WORK     = new ImageIcon(PiPWindow.class.getResource(AppRes.ICON_APP_32_WORKING)).getImage();
-    /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_DOWNLOAD = new ImageIcon(PiPWindow.class.getResource(AppRes.ICON_APP_32_DOWNLOADING)).getImage();
-    /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_TRIM     = new ImageIcon(PiPWindow.class.getResource(AppRes.ICON_APP_32_TRIMMING)).getImage();
+    private static final Image ICON_NORMAL   = AppRes.IMG_APP_32;
+    /** The work icon for PiPWindows that are doing a background task. */
+    private static final Image ICON_WORK     = AppRes.IMG_APP_32_WORK;
+    /** The download icon for PiPWindows that are downloading something, typically media. */
+    private static final Image ICON_DOWNLOAD = AppRes.IMG_APP_32_DOWNLOAD;
+    /** The trim icon for PiPWindows that are trimming media. */
+    private static final Image ICON_TRIM     = AppRes.IMG_APP_32_TRIM;
 
     /** Manages user resizing of this window, despite its undecorated state. */
     private ComponentResizer cr;
