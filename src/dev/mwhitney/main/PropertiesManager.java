@@ -11,7 +11,7 @@ import javax.swing.JOptionPane;
 
 import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.PropertyListener;
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 
 /**
  * Manages the properties and configuration of PiPAA.
@@ -32,9 +32,9 @@ public class PropertiesManager {
     private final Properties props;
     
     /** A String containing the properties file name. */
-    private static final String CONFIG_FILE      = PiPAARes.APP_FOLDER + "/config.properties";
+    private static final String CONFIG_FILE      = AppRes.APP_FOLDER + "/config.properties";
     /** A String containing the properties file description. */
-    private static final String CONFIG_FILE_DESC = PiPAARes.APP_NAME_SHORT + " Configuration\nDon't make modifications manually unless you know what you're doing.";
+    private static final String CONFIG_FILE_DESC = AppRes.APP_NAME_SHORT + " Configuration\nDon't make modifications manually unless you know what you're doing.";
     
     /**
      * Constructs the PropertiesManager. Automatically performs internal properties
@@ -62,7 +62,7 @@ public class PropertiesManager {
                 // Since the properties file is essential for the application, notify the user of the error and close.
                 e.printStackTrace();
                 TopDialog.showMsg("Cannot access application properties file. To troubleshoot, ensure this folder exists and can be modified:"
-                        + "\n" + PiPAARes.APP_FOLDER
+                        + "\n" + AppRes.APP_FOLDER
                         + "\n\nIf this issue persists, please contact the developer:"
                         + "\nhttps://github.com/mwhitney57/PiPAA/issues", "Fatal error occurred.", JOptionPane.ERROR_MESSAGE);
                 System.exit(0);

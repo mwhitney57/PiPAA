@@ -19,7 +19,7 @@ import dev.mwhitney.main.CroppedBufferedImage;
 import dev.mwhitney.main.Initializer;
 import dev.mwhitney.main.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.media.PiPMediaAttributes.TYPE;
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.PiPAAUtils;
 
 /**
@@ -112,11 +112,11 @@ public class PiPMedia {
             return source;
         
         // Ensure conversion cache folder exists.
-        PiPAAUtils.ensureExistence(PiPAARes.APP_CONVERTED_FOLDER);
+        PiPAAUtils.ensureExistence(AppRes.APP_CONVERTED_FOLDER);
         
         // Setup then determine converted media format and what to use to convert the media.
         final File sourceFile = new File(source);
-        String out = PiPAAUtils.slashFix(PiPAARes.APP_CONVERTED_FOLDER + "/") + FilenameUtils.removeExtension(sourceFile.getName());
+        String out = PiPAAUtils.slashFix(AppRes.APP_CONVERTED_FOLDER + "/") + FilenameUtils.removeExtension(sourceFile.getName());
         Bin convBin = null;
         final MediaExt ext = getAttributes().getFileExtension();
         switch (ext) {
@@ -221,7 +221,7 @@ public class PiPMedia {
      */
     public boolean isFromCache() {
         return (hasAttributes() && getAttributes().isLocal() && hasSrc()
-                && new File(getSrc()).getPath().startsWith(PiPAAUtils.slashFix(PiPAARes.APP_CACHE_FOLDER)));
+                && new File(getSrc()).getPath().startsWith(PiPAAUtils.slashFix(AppRes.APP_CACHE_FOLDER)));
     }
     
     /**
@@ -240,7 +240,7 @@ public class PiPMedia {
      */
     public String existsInClipboardCache(final File media) {
         if (!hasAttributes() || getAttributes().getFileExtension() == null
-                || !media.getPath().startsWith(PiPAAUtils.slashFix(PiPAARes.APP_CLIPBOARD_FOLDER)))
+                || !media.getPath().startsWith(PiPAAUtils.slashFix(AppRes.APP_CLIPBOARD_FOLDER)))
             return null;
         
         // Either get the path of the duplicate file, or return null (no duplicates).
@@ -264,7 +264,7 @@ public class PiPMedia {
             return source;
         
         // Set trim source extension based on current trim option.
-        final String trimExt = option.is(TRIM_OPTION.STRICT) ? PiPAARes.MEDIA_TRIM_EXT_STRICT : PiPAARes.MEDIA_TRIM_EXT;
+        final String trimExt = option.is(TRIM_OPTION.STRICT) ? AppRes.MEDIA_TRIM_EXT_STRICT : AppRes.MEDIA_TRIM_EXT;
         
         // Return the source if it is already PiPAA cropped media.
         final File   inFile         = new File(source);
@@ -275,7 +275,7 @@ public class PiPMedia {
         
         // Ensure trimmed folder exists in cache then build media's cropped version path.
         final String ext = FilenameUtils.getExtension(inFile.getPath());
-        String cropFilePath = PiPAARes.APP_TRIMMED_FOLDER;
+        String cropFilePath = AppRes.APP_TRIMMED_FOLDER;
         PiPAAUtils.ensureExistence(cropFilePath);
         cropFilePath += ("/" + inFileBaseName + trimExt + (ext.isEmpty() ? "" : "." + ext));
         

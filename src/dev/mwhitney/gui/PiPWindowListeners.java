@@ -73,7 +73,7 @@ import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaAttributor.Flag;
 import dev.mwhitney.media.PiPMediaCMD;
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.util.UnsetBool;
 import dev.mwhitney.util.selection.ReloadSelection.ReloadSelections;
@@ -364,7 +364,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         final boolean PREFER_LINK = get().propertyState(PiPProperty.DND_PREFER_LINK, Boolean.class);
         
         // Ensure clipboard directory exists.
-        if (clipboardSrc) PiPAAUtils.ensureExistence(PiPAARes.APP_CLIPBOARD_FOLDER);
+        if (clipboardSrc) PiPAAUtils.ensureExistence(AppRes.APP_CLIPBOARD_FOLDER);
 
         final boolean hasFlavorOverrides = flavorOverrides != null && flavorOverrides.length > 0;
         final MediaFlavorPicker picker = new MediaFlavorPicker(hasFlavorOverrides
@@ -432,7 +432,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             // Delete leftover URL files placed in cache, if any are present.
             if (dataFile  != null) dataFile.stream()
                 .filter(f -> f.getPath().toLowerCase().endsWith(".url"))
-                .filter(f -> f.getPath().startsWith(new File(PiPAARes.APP_CLIPBOARD_FOLDER).getPath()))
+                .filter(f -> f.getPath().startsWith(new File(AppRes.APP_CLIPBOARD_FOLDER).getPath()))
                 .forEach(f -> f.delete());
             // Flush image at the end if not null, ensuring no memory leak.
             if (dataImage != null) dataImage.flush();
@@ -452,7 +452,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         File outFile = null;
         while (outFile == null || outFile.exists()) {
             name = "/cachedImg" + (int) (Math.random() * 100000) + ".png";
-            outFile = new File(PiPAARes.APP_CLIPBOARD_FOLDER + name);
+            outFile = new File(AppRes.APP_CLIPBOARD_FOLDER + name);
         }
         outFile.mkdirs();
         ImageIO.write(img, "png", outFile);
@@ -492,7 +492,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
 //            System.out.println(new File(Initializer.APP_CLIPBOARD_FOLDER).getPath());
 //            System.out.println(System.getProperty("java.io.tmpdir"));
             /* Since 0.9.4-SNAPSHOT, it is assumed that temporary directory files have already been moved to the cache prior to calling this method. */
-            final boolean fileInTemp = droppedFile.getPath().startsWith(new File(PiPAARes.APP_CLIPBOARD_FOLDER).getPath());
+            final boolean fileInTemp = droppedFile.getPath().startsWith(new File(AppRes.APP_CLIPBOARD_FOLDER).getPath());
             
             // Only prompt the user for artwork replacement if on the first file and the window has attributed, artwork-supporting media. 
             if (f == 0 && get().hasAttributedMedia() && MediaExt.supportsArtwork(get().getMedia().getAttributes().getFileExtension())) {
@@ -734,7 +734,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             break;
         // SHOW KEYBOARD SHORTCUTS
         case KEYBOARD_SHORTCUTS:
-            final BetterTextArea shortcutsComp = new BetterTextArea(PiPAARes.SHORTCUTS);
+            final BetterTextArea shortcutsComp = new BetterTextArea(AppRes.SHORTCUTS);
             TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
             break;
         // OPEN LOCAL/CACHED FILE DIRECTORY
@@ -743,7 +743,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             // Should the cached folder locations be shown over any non-cached, local location of the media?
             final boolean showCache = shortcut == Shortcut.OPEN_CACHE_DIRECTORY;
             // Default to cache folder.
-            String openSrc = PiPAARes.APP_CACHE_FOLDER;
+            String openSrc = AppRes.APP_CACHE_FOLDER;
             if (get().hasAttributedMedia()) {
                 // Determine local media location (if any)
                 final PiPMedia media = get().getMedia();
@@ -755,7 +755,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             // Open the cache folder or parent folder containing the media file.
             try {
                 File openFile = new File(openSrc);
-                if (openSrc.equals(PiPAARes.APP_CACHE_FOLDER)) {
+                if (openSrc.equals(AppRes.APP_CACHE_FOLDER)) {
                     openFile.mkdirs();
                     Desktop.getDesktop().open(openFile);
                 } else {

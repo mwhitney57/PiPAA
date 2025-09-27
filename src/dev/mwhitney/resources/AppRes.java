@@ -5,18 +5,19 @@ import dev.mwhitney.update.api.Build;
 import dev.mwhitney.update.api.Version;
 
 /**
- * PiPAA internal resource information, including names, versions, and paths.
- * The ability to refactor the project, or at least the ease of doing so, is
- * greatly improved through the use of this class.
+ * Application internal resource information, including names, versions, paths,
+ * and other application-wide resources. The ability to refactor the project, or
+ * at least the ease of doing so, is greatly improved through the use of this
+ * class.
  * <p>
  * Mainly contains information regarding <b>internal</b> resources, meaning
- * resources packed within PiPAA. Other classes may define information about
- * external resources.
+ * resources packed within the application. Other classes may define information
+ * about external resources.
  * 
  * @author mwhitney57
  * @since 0.9.4
  */
-public abstract class PiPAARes {
+public abstract class AppRes {
     /*
      * DEVELOPER NOTE:
      * Refraining from defining documentation for *every* variable in this class.

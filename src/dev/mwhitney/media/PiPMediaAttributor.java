@@ -24,7 +24,7 @@ import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_TYPE;
 import dev.mwhitney.media.PiPMediaAttributes.TYPE;
 import dev.mwhitney.media.WebMediaFormat.FORMAT;
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 
 /**
  * Attributes PiPMedia sources and returns the attribution results.
@@ -240,7 +240,7 @@ public class PiPMediaAttributor implements PropertyListener {
         
         // Pre-attribution checks. Platform-specific and Audio-only.
         final PiPSupplier<String> platSupplier = switch (platform) {
-        case X  -> () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.GALLERY_DL), "--cookies", PiPAARes.COOKIES_PATH_ARG, "-K", "\"" + src + "\"");
+        case X  -> () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.GALLERY_DL), "--cookies", AppRes.COOKIES_PATH_ARG, "-K", "\"" + src + "\"");
         default -> null;
         };
         
@@ -429,7 +429,7 @@ public class PiPMediaAttributor implements PropertyListener {
             webArgs.add(useYTDLP ? Binaries.bin(Bin.YT_DLP) : Binaries.bin(Bin.GALLERY_DL));
             if (useCookies) {
                 webArgs.add("--cookies");
-                webArgs.add(PiPAARes.COOKIES_PATH_ARG);
+                webArgs.add(AppRes.COOKIES_PATH_ARG);
             }
             
             // Platform-Specific Intermediate Arguments
@@ -456,7 +456,7 @@ public class PiPMediaAttributor implements PropertyListener {
                     webArgs.add("aext");
                 }
                 webArgs.add("--ffmpeg-location");       // yt-dlp can use to help select the best format.
-                webArgs.add(PiPAARes.FFMPEG_LOC_ARG);
+                webArgs.add(AppRes.FFMPEG_LOC_ARG);
                 webArgs.add("--no-playlist");
                 webArgs.add("-I");
                 webArgs.add("1");
@@ -695,9 +695,9 @@ public class PiPMediaAttributor implements PropertyListener {
             
             // Determine command arguments based on binary selection.
             if (useYTDLP)
-                args = new String[] { Binaries.bin(Bin.YT_DLP), "--cookies", PiPAARes.COOKIES_PATH_ARG, "\"" + src + "\"", "--get-url", "-I", "1", "-f", "b" };
+                args = new String[] { Binaries.bin(Bin.YT_DLP), "--cookies", AppRes.COOKIES_PATH_ARG, "\"" + src + "\"", "--get-url", "-I", "1", "-f", "b" };
             else
-                args = new String[] { Binaries.bin(Bin.GALLERY_DL), "--cookies", PiPAARes.COOKIES_PATH_ARG, "\"" + src + "\"", "--get-url" };
+                args = new String[] { Binaries.bin(Bin.GALLERY_DL), "--cookies", AppRes.COOKIES_PATH_ARG, "\"" + src + "\"", "--get-url" };
             
             // Check for command execution failure or error, in which case try another binary.
             final String cmdOutput = Binaries.execAndFetchSafe(false, args);

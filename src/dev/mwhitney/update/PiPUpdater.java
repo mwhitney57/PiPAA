@@ -15,7 +15,7 @@ import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.PiPProperty.FREQUENCY_OPTION;
 import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.update.api.APICommunicator;
 import dev.mwhitney.update.api.APICommunicator.UpdatePayload;
 import dev.mwhitney.update.api.Build;
@@ -197,8 +197,8 @@ public class PiPUpdater {
             final Version updVersion   = updBuild.version();
             final TYPE_OPTION updType  = updBuild.type();
             // Get Current Build Information
-            final Version currVersion  = PiPAARes.APP_BUILD.version();
-            final TYPE_OPTION currType = PiPAARes.APP_BUILD.type();
+            final Version currVersion  = AppRes.APP_BUILD.version();
+            final TYPE_OPTION currType = AppRes.APP_BUILD.type();
             
             // Compare Current Version to Version from API -- Eventually Get User Confirmation Before Proceeding with Update
             final boolean updVerNewer  =  updVersion.newerThan(currVersion),
@@ -227,7 +227,7 @@ public class PiPUpdater {
             // Set user prompted and prompt user.
             final BooleanSupplier userConfirm = () -> {
                 result.setUserPrompted(true);
-                return JOptionPane.showConfirmDialog(null, prompt.toString() + "\nCurrent: " + PiPAARes.APP_BUILD + "\nLatest: " + update.build()
+                return JOptionPane.showConfirmDialog(null, prompt.toString() + "\nCurrent: " + AppRes.APP_BUILD + "\nLatest: " + update.build()
                 + "\n\nWould you like to update? PiPAA will restart automatically.", "PiPAA Update Available", JOptionPane.YES_NO_OPTION) == 0;
             };
             // Only process the update if the prompt was given a value and the user confirmed.

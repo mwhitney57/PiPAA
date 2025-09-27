@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 import dev.mwhitney.exceptions.UnsupportedBinActionException;
 import dev.mwhitney.listeners.BinRunnable;
 import dev.mwhitney.listeners.PropertyListener;
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.PiPAAUtils;
 import net.codejava.utility.UnzipUtility;
 
@@ -29,13 +29,13 @@ public class Binaries {
     /** The set of binaries used by PiPAA. */
     public enum Bin {
         /** The yt-dlp executable for downloading media, typically videos. */
-        YT_DLP(PiPAARes.NAME_YTDLP, PiPAARes.VERS_YTDLP),
+        YT_DLP(AppRes.NAME_YTDLP, AppRes.VERS_YTDLP),
         /** The gallery-dl executable for downloading media, typically images. */
-        GALLERY_DL(PiPAARes.NAME_GALLERYDL, PiPAARes.VERS_GALLERYDL),
+        GALLERY_DL(AppRes.NAME_GALLERYDL, AppRes.VERS_GALLERYDL),
         /** The ffmpeg executable for media conversions. */
-        FFMPEG(PiPAARes.PATH_SUB_FFMPEG, PiPAARes.NAME_FFMPEG, PiPAARes.VERS_FFMPEG),
+        FFMPEG(AppRes.PATH_SUB_FFMPEG, AppRes.NAME_FFMPEG, AppRes.VERS_FFMPEG),
         /** The ImageMagick executable for image/GIF conversions. */
-        IMGMAGICK(PiPAARes.PATH_SUB_IMAGEMAGICK, PiPAARes.NAME_IMAGEMAGICK, PiPAARes.VERS_IMAGEMAGICK);
+        IMGMAGICK(AppRes.PATH_SUB_IMAGEMAGICK, AppRes.NAME_IMAGEMAGICK, AppRes.VERS_IMAGEMAGICK);
         
         /** The path within the bin folder to the binary. */
         private String path;
@@ -168,7 +168,7 @@ public class Binaries {
      * @return a String with the "binned" result.
      */
     public static String binned(String s) {
-        return new StringBuilder(PiPAARes.APP_BIN_FOLDER).append("/").append(s).toString();
+        return new StringBuilder(AppRes.APP_BIN_FOLDER).append("/").append(s).toString();
     }
     
     /**
@@ -289,8 +289,8 @@ public class Binaries {
      */
     public static boolean extract(Bin b) throws IOException {
         System.out.println("<!> Extracting bin: " + b.exeless() + "...");
-        final StringBuilder pathIn  = new StringBuilder(PiPAARes.PATH_BIN).append("/");
-        final StringBuilder pathOut = new StringBuilder(PiPAARes.APP_BIN_FOLDER).append("/");
+        final StringBuilder pathIn  = new StringBuilder(AppRes.PATH_BIN).append("/");
+        final StringBuilder pathOut = new StringBuilder(AppRes.APP_BIN_FOLDER).append("/");
         
         // Binary extraction
         switch (b) {
@@ -321,12 +321,12 @@ public class Binaries {
         case IMGMAGICK -> {
             // Use try-with-resources to ensure closing of streams.
             try (final InputStream main    = Initializer.class.getResourceAsStream(binIn + b);
-                 final InputStream license = Initializer.class.getResourceAsStream(binIn + PiPAARes.NAME_IMAGEMAGICKLICENSE);
-                 final InputStream notice  = Initializer.class.getResourceAsStream(binIn + PiPAARes.NAME_IMAGEMAGICKNOTICE)) {
+                 final InputStream license = Initializer.class.getResourceAsStream(binIn + AppRes.NAME_IMAGEMAGICKLICENSE);
+                 final InputStream notice  = Initializer.class.getResourceAsStream(binIn + AppRes.NAME_IMAGEMAGICKNOTICE)) {
                 
                 Files.copy(main,    Paths.get(Binaries.binned(b)), StandardCopyOption.REPLACE_EXISTING);
-                Files.copy(license, Paths.get(binOut + PiPAARes.NAME_IMAGEMAGICKLICENSE), StandardCopyOption.REPLACE_EXISTING);
-                Files.copy(notice,  Paths.get(binOut + PiPAARes.NAME_IMAGEMAGICKNOTICE), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(license, Paths.get(binOut + AppRes.NAME_IMAGEMAGICKLICENSE), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(notice,  Paths.get(binOut + AppRes.NAME_IMAGEMAGICKNOTICE), StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException ioe) { throw ioe; }
         }
         default -> {

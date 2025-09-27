@@ -1,8 +1,8 @@
 package dev.mwhitney.main;
 
-import static dev.mwhitney.resources.PiPAARes.APP_BIN_FOLDER;
-import static dev.mwhitney.resources.PiPAARes.APP_BUILD;
-import static dev.mwhitney.resources.PiPAARes.VLC_PLUGINS_FOLDER;
+import static dev.mwhitney.resources.AppRes.APP_BIN_FOLDER;
+import static dev.mwhitney.resources.AppRes.APP_BUILD;
+import static dev.mwhitney.resources.AppRes.VLC_PLUGINS_FOLDER;
 
 import java.awt.Insets;
 import java.io.File;
@@ -32,7 +32,7 @@ import dev.mwhitney.listeners.PropertyListener;
 import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.PiPProperty.PropDefault;
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.update.PiPUpdater;
 import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
 import dev.mwhitney.update.api.Build;
@@ -244,7 +244,7 @@ public class Initializer {
      */
     private static void extractLibResources(PropertiesManager propsManager) throws ExtractionException {
         // Ensure bin and plugins folders exists.
-        PiPAAUtils.ensureExistence(APP_BIN_FOLDER, PiPAARes.YTDLP_PLUGINS_FOLDER);
+        PiPAAUtils.ensureExistence(APP_BIN_FOLDER, AppRes.YTDLP_PLUGINS_FOLDER);
         
         // Check if each binary exists within the application bin folder.
         final String useSysVLC      = propsManager.get(PiPProperty.USE_SYS_VLC);
@@ -291,36 +291,36 @@ public class Initializer {
         // System VLC installation is not to be used and OS is Windows.
         if (!vlcReady && System.getProperty("os.name").startsWith("Windows")) {
             // Ensure that VLC files are extracted and present.
-            final boolean vlcFilesPresent = (new File(APP_BIN_FOLDER + "/" + PiPAARes.NAME_LIBVLC).exists()
-                             && new File(APP_BIN_FOLDER + "/" + PiPAARes.NAME_LIBVLCCORE).exists()
+            final boolean vlcFilesPresent = (new File(APP_BIN_FOLDER + "/" + AppRes.NAME_LIBVLC).exists()
+                             && new File(APP_BIN_FOLDER + "/" + AppRes.NAME_LIBVLCCORE).exists()
                              && new File(VLC_PLUGINS_FOLDER).exists());
             // VLC version not in configuration, or the versions don't match, or the required VLC files do not exist.
-            if (vlcVersion == null || !vlcVersion.equals(PiPAARes.VERS_VLC) || !vlcFilesPresent) {
+            if (vlcVersion == null || !vlcVersion.equals(AppRes.VERS_VLC) || !vlcFilesPresent) {
                 // Extract Windows LibVlc DLLs to Bin Folder
                 System.out.println("<!> Extracting VLC libraries...");
                 // Use try-with-resources to ensure closing of streams.
-                try (final InputStream libvlc     = Initializer.class.getResourceAsStream(PiPAARes.FILE_LIBVLC);
-                     final InputStream libvlccore = Initializer.class.getResourceAsStream(PiPAARes.FILE_LIBVLCCORE);
-                     final InputStream plugins    = Initializer.class.getResourceAsStream(PiPAARes.FILE_LIBVLCPLUGINS)) {
+                try (final InputStream libvlc     = Initializer.class.getResourceAsStream(AppRes.FILE_LIBVLC);
+                     final InputStream libvlccore = Initializer.class.getResourceAsStream(AppRes.FILE_LIBVLCCORE);
+                     final InputStream plugins    = Initializer.class.getResourceAsStream(AppRes.FILE_LIBVLCPLUGINS)) {
                     
                     // Attempt to copy and unzip all LibVlc-related files. Throw extraction exception if any had errors.
                     CFExec.run(
                             (BinRunnable) () -> Files.copy(libvlc,
-                                    Paths.get(APP_BIN_FOLDER + "/" + PiPAARes.NAME_LIBVLC),
+                                    Paths.get(APP_BIN_FOLDER + "/" + AppRes.NAME_LIBVLC),
                                     StandardCopyOption.REPLACE_EXISTING),
                             (BinRunnable) () -> Files.copy(libvlccore,
-                                    Paths.get(APP_BIN_FOLDER + "/" + PiPAARes.NAME_LIBVLCCORE),
+                                    Paths.get(APP_BIN_FOLDER + "/" + AppRes.NAME_LIBVLCCORE),
                                     StandardCopyOption.REPLACE_EXISTING),
                             (BinRunnable) () -> UnzipUtility.unzip(plugins, VLC_PLUGINS_FOLDER))
                         .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting LibVlc libraries."));
-                    propsManager.set("LibVlc_BIN", PiPAARes.VERS_VLC);
+                    propsManager.set("LibVlc_BIN", AppRes.VERS_VLC);
                 } catch (IOException ioe) { /* Thrown while closing streams. Ignore. */
                 } catch (ExtractionException ee) { throw ee; } // Forward exception throw.
             }
             // Change NativeLibrary search path to app bin folder, check if extracted already.
             NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), PiPAAUtils.slashFix(APP_BIN_FOLDER));
             vlcReady = true;
-            PiPAARes.USING_BACKUP_LIBVLC = true;
+            AppRes.USING_BACKUP_LIBVLC = true;
         }
         // VLC Installation Doesn't Exist and Windows LibVlc DLLs Cannot Be Used
         if (!vlcReady) throw new ExtractionException("Could not find or extract a LibVlc installation.");

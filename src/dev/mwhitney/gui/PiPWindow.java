@@ -87,7 +87,7 @@ import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.media.PiPMediaCMDArgs;
 import dev.mwhitney.media.WebMediaFormat;
 import dev.mwhitney.media.WebMediaFormat.FORMAT;
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.Loop;
 import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.util.ScalingDimension;
@@ -141,13 +141,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     public static final Color BORDER_ERROR    = new Color(247, 64,  66,  200);
     
     /** The normal icon for each PiPWindow. */
-    private static final Image ICON_NORMAL   = new ImageIcon(PiPWindow.class.getResource(PiPAARes.ICON_APP_32)).getImage();
+    private static final Image ICON_NORMAL   = new ImageIcon(PiPWindow.class.getResource(AppRes.ICON_APP_32)).getImage();
     /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_WORK     = new ImageIcon(PiPWindow.class.getResource(PiPAARes.ICON_APP_32_WORKING)).getImage();
+    private static final Image ICON_WORK     = new ImageIcon(PiPWindow.class.getResource(AppRes.ICON_APP_32_WORKING)).getImage();
     /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_DOWNLOAD = new ImageIcon(PiPWindow.class.getResource(PiPAARes.ICON_APP_32_DOWNLOADING)).getImage();
+    private static final Image ICON_DOWNLOAD = new ImageIcon(PiPWindow.class.getResource(AppRes.ICON_APP_32_DOWNLOADING)).getImage();
     /** The working icon for PiPWindows that are doing a background task. */
-    private static final Image ICON_TRIM     = new ImageIcon(PiPWindow.class.getResource(PiPAARes.ICON_APP_32_TRIMMING)).getImage();
+    private static final Image ICON_TRIM     = new ImageIcon(PiPWindow.class.getResource(AppRes.ICON_APP_32_TRIMMING)).getImage();
 
     /** Manages user resizing of this window, despite its undecorated state. */
     private ComponentResizer cr;
@@ -415,7 +415,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         }
         
         // Create player with arguments.
-        final MediaPlayerFactory fac = (PiPAARes.USING_BACKUP_LIBVLC
+        final MediaPlayerFactory fac = (AppRes.USING_BACKUP_LIBVLC
                 ? new MediaPlayerFactory((NativeDiscovery) null, playerArgs.toArray(new String[0]))
                 : new MediaPlayerFactory(playerArgs.toArray(new String[0])));
         this.mediaPlayer = new EmbeddedMediaPlayerComponent(fac, null, new Win32FullScreenStrategy(this), null, null) {
@@ -515,7 +515,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                                 file = new File(URI.create(mediaPlayer.media().meta().get(Meta.ARTWORK_URL)));
                         } catch (Exception e) { System.err.println("Warning: Couldn't load media artwork, it may not exist. Using default..."); }
                         try {
-                            setImgViewerSrc((file != null ? file.getPath() : null), PiPWindow.class.getResource(PiPAARes.ICON_AUDIO_128));
+                            setImgViewerSrc((file != null ? file.getPath() : null), PiPWindow.class.getResource(AppRes.ICON_AUDIO_128));
                             if (file == null) PiPWindow.this.cr.setMaximumSize(MAXIMUM_AUDIO_SIZE);
                         } catch (InvalidMediaException e) { e.printStackTrace(); }
                         
@@ -1107,7 +1107,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     titleStatusUpdate("[Converting...]");
                     iconUpdate(ICON_WORK);
                     final String mediaNameID = media.getAttributes().getFileTitleID();
-                    final String result = convertGIFToVideo(args[0], PiPAARes.APP_CONVERTED_FOLDER + "/" + mediaNameID + ".mp4");
+                    final String result = convertGIFToVideo(args[0], AppRes.APP_CONVERTED_FOLDER + "/" + mediaNameID + ".mp4");
                     if (result == null) {
                         // Unable to Convert Media -- Use Fallback Method
                         System.err.println("RESULT IS NULL !_-1--11- RESULT IS NULL using fallback and setting adv playback to false");
@@ -1631,7 +1631,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             platformArgs.add(useYTDLP ? "--force-overwrites" : "--no-skip");
             if (useCookies) {
                 platformArgs.add("--cookies");
-                platformArgs.add(PiPAARes.COOKIES_PATH_ARG);
+                platformArgs.add(AppRes.COOKIES_PATH_ARG);
             }
             
             // Platform-Specific Intermediate Arguments
@@ -1666,7 +1666,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     platformArgs.add("aext");
                 }
                 platformArgs.add("--ffmpeg-location");
-                platformArgs.add(PiPAARes.FFMPEG_LOC_ARG);
+                platformArgs.add(AppRes.FFMPEG_LOC_ARG);
                 platformArgs.add("--no-playlist");
                 platformArgs.add("-I");
                 platformArgs.add(multiMedia ? "" + wmf.item() : "1");
@@ -1719,7 +1719,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         }
         
         // Prepare Media Information, Cache Folder, and Arguments for Commands
-        final StringBuilder cacheFolder = new StringBuilder(PiPAARes.APP_CACHE_FOLDER + "/web");
+        final StringBuilder cacheFolder = new StringBuilder(AppRes.APP_CACHE_FOLDER + "/web");
         // Update the Specific Location Within the Cache Folder Based on Platform and Media Type
         if (!attributes.isGenericPlatform())
             cacheFolder.append("/").append(attributes.getSrcPlatform().toString().toLowerCase());

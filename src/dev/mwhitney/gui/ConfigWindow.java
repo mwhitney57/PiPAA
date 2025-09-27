@@ -50,7 +50,7 @@ import dev.mwhitney.main.PiPProperty.THEME_OPTION.COLOR;
 import dev.mwhitney.main.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.main.PiPProperty.TYPE_OPTION;
 import dev.mwhitney.main.PiPPropertyDesc;
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.update.PiPUpdater;
 import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
 import dev.mwhitney.util.PiPAAUtils;
@@ -191,11 +191,11 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblTrimTransparency = new BetterLabel(PiPPropertyDesc.TRIM_TRANSPARENCY, textFont);
         final BetterButton btnOpenFolder = new BetterButton("Open Application Folder", titleFont, (e) -> {
             try {
-                Desktop.getDesktop().open(new File(PiPAARes.APP_FOLDER));
+                Desktop.getDesktop().open(new File(AppRes.APP_FOLDER));
             } catch (IOException ioe) { ioe.printStackTrace(); }
         });
         final BetterButton btnShowShortcuts = new BetterButton("Show Keyboard and Mouse Shortcuts", titleFont, (e) -> {
-            final BetterTextArea shortcutsComp = new BetterTextArea(PiPAARes.SHORTCUTS);
+            final BetterTextArea shortcutsComp = new BetterTextArea(AppRes.SHORTCUTS);
             TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
         });
         
@@ -252,7 +252,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblMediaCache = new BetterLabel("Open, prune, or delete the media cache. Prune deletes empty folders and subfolders from the cache.", textFont);
         final BetterButton btnOpenCache = new BetterButton("Open", titleFont, (e) -> {
             // Ensure cache folder exists before trying to open it.
-            final File cacheFolder = new File(PiPAARes.APP_CACHE_FOLDER);
+            final File cacheFolder = new File(AppRes.APP_CACHE_FOLDER);
             cacheFolder.mkdirs();
             
             try {
@@ -271,7 +271,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             });
         });
         final BetterButton btnClearCache = new BetterButton("Clear", titleFont, (e) -> {
-            final File cacheDir = new File(PiPAARes.APP_CACHE_FOLDER);
+            final File cacheDir = new File(AppRes.APP_CACHE_FOLDER);
             cacheDir.mkdirs();
             CompletableFuture.runAsync(() -> {
                 if (JOptionPane.YES_OPTION == TopDialog.showConfirm("Are you sure you want to irreversibly clear your media cache?\nSize: "
@@ -289,7 +289,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblVLCCache      = new BetterLabel("Open or delete the VLC artwork cache. Artwork (or album art) is cached here occasionally when media is played.", textFont);
         final BetterButton btnOpenVLCCache = new BetterButton("Open", titleFont, (e) -> {
             // Ensure cache folder exists before trying to open it.
-            final File vlcFolder = new File(PiPAARes.VLC_ART_CACHE_FOLDER);
+            final File vlcFolder = new File(AppRes.VLC_ART_CACHE_FOLDER);
             vlcFolder.mkdirs();
             
             try {
@@ -297,7 +297,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             } catch (IOException ioe) { ioe.printStackTrace(); }
         });
         final BetterButton btnClearVLCCache = new BetterButton("Clear", titleFont, (e) -> {
-            final File vlcFolder = new File(PiPAARes.VLC_ART_CACHE_FOLDER);
+            final File vlcFolder = new File(AppRes.VLC_ART_CACHE_FOLDER);
             vlcFolder.mkdirs();
             CompletableFuture.runAsync(() -> {
                 if (JOptionPane.YES_OPTION == TopDialog.showConfirm("Are you sure you want to irreversibly clear your VLC artwork cache?\nSize: "
@@ -342,7 +342,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
                             result.hasException() ? 2500 : 1500, false);
                 }
                 if (result.updated()) {
-                    propertyChanged(PiPProperty.APP_UPDATING_FROM, (force ? "FORCED-" : "") + PiPAARes.APP_BUILD.toString());
+                    propertyChanged(PiPProperty.APP_UPDATING_FROM, (force ? "FORCED-" : "") + AppRes.APP_BUILD.toString());
                     System.exit(0);
                 }
                 if (result.hasException()) System.err.println("Warning, app update process failed: " + result.exception().getTotalMessage());

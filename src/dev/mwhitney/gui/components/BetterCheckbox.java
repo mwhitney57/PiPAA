@@ -6,7 +6,7 @@ import java.awt.Toolkit;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 
-import dev.mwhitney.resources.PiPAARes;
+import dev.mwhitney.resources.AppRes;
 
 /**
  * An incredibly-basic extension upon JCheckBox that changes a few default
@@ -20,10 +20,10 @@ public class BetterCheckbox extends JCheckBox {
     
     /** A custom {@link ImageIcon} for the checkbox. */
     private static final ImageIcon ICON = new ImageIcon(Toolkit.getDefaultToolkit()
-            .getImage(BetterCheckbox.class.getResource(PiPAARes.ICON_CHECKBOX)));
+            .getImage(BetterCheckbox.class.getResource(AppRes.ICON_CHECKBOX)));
     /** A custom {@link ImageIcon} for the checkbox when it's selected. */
     private static final ImageIcon ICON_SEL = new ImageIcon(Toolkit.getDefaultToolkit()
-            .getImage(BetterCheckbox.class.getResource(PiPAARes.ICON_CHECKBOX_SELECTED)));
+            .getImage(BetterCheckbox.class.getResource(AppRes.ICON_CHECKBOX_SELECTED)));
 
     /**
      * Creates a BetterCheckbox with the passed label, default checked state, and
