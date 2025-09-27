@@ -542,22 +542,29 @@ public enum PiPProperty {
         }
     }
     /**
-     * Options within the {@link PiPProperty#APP_UPDATE_TYPE} property.
+     * Options within the {@link PiPProperty#APP_UPDATE_TYPE} property. Release types such as {@link #RELEASE}, {@link #BETA}, or {@link #SNAPSHOT}.
      */
     public enum TYPE_OPTION implements PiPPropertyEnum<TYPE_OPTION> {
-        /** Standard releases. */
+        /** Standard releases. Most stable. */
         RELEASE(0),
         /** Beta versions, which may contain glaring bugs. */
         BETA(1),
         /** Snapshot versions, which are undergoing testing. May contain bugs, crashes, and incomplete features. */
         SNAPSHOT(2);
         
+        /** An int which indicates stability relative to other release types. Lower is more stable. */
         private int stability;
         
         TYPE_OPTION(int stability) {
             this.stability = stability;
         }
         
+        /**
+         * Gets this release type's stability value. Lower values indicate greater
+         * stability.
+         * 
+         * @return an int with the stability value.
+         */
         public int stability() {
             return this.stability;
         }
@@ -574,6 +581,33 @@ public enum PiPProperty {
             if (type == null) return true;
             
             return (this.stability < type.stability());
+        }
+        
+        /**
+         * Checks if this TYPE_OPTION is considered as stable as the passed instance.
+         * 
+         * @param type - another TYPE_OPTION to compare stability against.
+         * @return <code>true</code> if this TYPE_OPTION is as stable as the passed
+         *         TYPE_OPTION; <code>false</code> otherwise.
+         */
+        public boolean asStableAs(TYPE_OPTION type) {
+            if (type == null) return true;
+            
+            return (this.stability == type.stability());
+        }
+        
+        /**
+         * Checks if this TYPE_OPTION is considered less stable than the passed
+         * instance.
+         * 
+         * @param type - another TYPE_OPTION to compare stability against.
+         * @return <code>true</code> if this TYPE_OPTION is less stable than the passed
+         *         TYPE_OPTION; <code>false</code> otherwise.
+         */
+        public boolean lessStableThan(TYPE_OPTION type) {
+            if (type == null) return true;
+            
+            return (this.stability > type.stability());
         }
         
         /**
@@ -631,8 +665,8 @@ public enum PiPProperty {
         public String description() {
             return switch (this) {
             case RELEASE  -> "Standard application releases.";
-            case BETA     -> "Beta versions are more recent, but may contain bugs.";
-            case SNAPSHOT -> "Snapshot versions are the most recent, but may contain major bugs or incomplete features.";
+            case BETA     -> "Beta versions are still being tested and may contain more bugs.";
+            case SNAPSHOT -> "Snapshot versions are being heavily tested with new changes. May contain major bugs or incomplete features.";
             };
         }
     }

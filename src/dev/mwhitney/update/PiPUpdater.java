@@ -188,23 +188,37 @@ public class PiPUpdater {
         try {
             // Get Latest Version from API
             final UpdatePayload update = APICommunicator.request(type);
-            if (update == null)    return result.setException(new PiPUpdateException("Could not fetch latest update. Connection issue or API may be down."));
-            if (!update.hasLink()) return result.setException(new PiPUpdateException("Latest update contains no download link with current file extension."));
+            if (update == null)     return result.setException(new PiPUpdateException("Could not fetch latest update. Connection issue or API may be down."));
+            if (!update.hasLink())  return result.setException(new PiPUpdateException("Latest update contains no download link with current file extension."));
+            if (!update.hasBuild()) return result.setException(new PiPUpdateException("Unexpected error while fetching latest update. No Build received in payload."));
             
-            // Compare Current Version to Version from API -- Get User Confirmation Before Proceeding
-            final Version currVersion = PiPAARes.APP_BUILD.version();
+            // Get Build Information from Payload
+            final Build updBuild = update.build();
+            final Version updVersion   = updBuild.version();
+            final TYPE_OPTION updType  = updBuild.type();
+            // Get Current Build Information
+            final Version currVersion  = PiPAARes.APP_BUILD.version();
+            final TYPE_OPTION currType = PiPAARes.APP_BUILD.type();
+            
+            // Compare Current Version to Version from API -- Eventually Get User Confirmation Before Proceeding with Update
+            final boolean updVerNewer  =  updVersion.newerThan(currVersion),
+                          updVerOlder  =  updVersion.olderThan(currVersion),
+                          updVerSame   = !updVerNewer && !updVerOlder;
+            
             final StringBuilder prompt = new StringBuilder();
-            final boolean updVerNewer =  update.build().version().newerThan(currVersion),
-                    updVerSameOrNewer = !update.build().version().olderThan(currVersion);
             
-            // Only update to a less stable type if the version is newer and the type configuration covers it.
-            if (update.build().lessStableThan(PiPAARes.APP_BUILD) && updVerNewer && type.covers(update.build().type()))
+            // Type configuration should cover the update — This is handled on the API's end.
+            // Is the update less stable, with a newer version? It should anyway, but does the type configuration cover it?
+            if (updType.lessStableThan(currType) && updVerNewer)
                 prompt.append("A newer, but less stable update is available!");
-            // Always update to a more stable type, except when the new version is older and the current type isn't covered by type configuration.
-            else if (update.build().moreStableThan(PiPAARes.APP_BUILD) && (updVerSameOrNewer || !type.covers(PiPAARes.APP_BUILD.type())))
+            // Is the update version older, but more stable?
+            else if (updType.stablerThan(currType) && updVerOlder)
                 prompt.append("An older, but more stable update is available!");
-            // Only update when the version is newer and the type is the same.
-            else if (update.build().type() == PiPAARes.APP_BUILD.type() && updVerNewer)
+            // Is the update version the same, but more stable?
+            else if (updType.stablerThan(currType) && updVerSame)
+                prompt.append("A more stable update is available!");
+            // Is the update version newer and at least as stable as the current version?
+            else if (updVerNewer)
                 prompt.append("A new update is available!");
             // Prompt anyway if forced by passed boolean.
             else if (force)
