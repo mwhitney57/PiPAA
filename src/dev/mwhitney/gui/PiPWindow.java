@@ -123,9 +123,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     public  static final int BORDER_SIZE = 20;
     /** The window insets where the user can drag and resize the window. */
     private static final Insets BORDER_RESIZE_INSETS  = new Insets(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE);
-    /** The minimum width and height of PiPWindows. */
+    /** The <b>absolute</b> minimum width and height of window content. The minimum size cannot adapt to display media at a lower size. */
+    private static final int ABSOLUTE_MINIMUM_SIZE    = 4;
+    /** The minimum width and height of window content. */
     public  static final int MINIMUM_SIZE_VALUE       = 64;
-    /** The minimum size of PiPWindows. */
+    /** The minimum size of PiPWindows. Includes window borders. */
     private static final Dimension MINIMUM_SIZE       = new Dimension(MINIMUM_SIZE_VALUE + (BORDER_SIZE*2), MINIMUM_SIZE_VALUE + (BORDER_SIZE*2));
     /** The default size of PiPWindows. */
     public  static final Dimension DEFAULT_SIZE       = new Dimension(320, 200);
@@ -149,6 +151,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     /** The trim icon for PiPWindows that are trimming media. */
     private static final Image ICON_TRIM     = AppRes.IMG_APP_32_TRIM;
 
+    /** The default minimum media size for all windows, with width and height values equivalent to {@link #MINIMUM_SIZE_VALUE}. */
+    private static final Dimension DEFAULT_MIN_MEDIA_SIZE = new Dimension(MINIMUM_SIZE_VALUE, MINIMUM_SIZE_VALUE);
+    /** This window's minimum media size. This differs from the usual minimum size, as it adapts to lower values if necessary to accommodate smaller media. */
+    private Dimension minMediaSize = new Dimension(DEFAULT_MIN_MEDIA_SIZE);
     /** Manages user resizing of this window, despite its undecorated state. */
     private ComponentResizer cr;
 
@@ -370,6 +376,37 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     }
     
     /**
+     * Adapts the minimum size of the window depending on the current media.
+     * <p>
+     * If media is set, its width and height values will be compared to the set
+     * minimum media size. The smaller of the two is picked for both the width and
+     * height. The final values are kept at or above the
+     * {@link #ABSOLUTE_MINIMUM_SIZE} regardless, to ensure proper display of the
+     * window.
+     * <p>
+     * This method should be called after guaranteeing that the window's
+     * {@link PiPMedia} has a set size within its {@link PiPMediaAttributes}.
+     * Otherwise, the {@link #DEFAULT_MIN_MEDIA_SIZE} will be used.
+     * 
+     * @since 0.9.5
+     */
+    private void adaptMinimumSize() {
+        // Having attributed media does not guarantee a size is set. Assign variable and check for null instead of a plain attributed media check.
+        final Dimension mediaSize = hasAttributedMedia() ? this.getMedia().getAttributes().getSize() : null;
+        if (mediaSize != null)
+            // Prefer the smaller width/height between the default minimum and the media's size. Keep above the absolute minimum.
+            this.minMediaSize.setSize(
+                Math.max(ABSOLUTE_MINIMUM_SIZE, Math.min(DEFAULT_MIN_MEDIA_SIZE.width,  mediaSize.width)),
+                Math.max(ABSOLUTE_MINIMUM_SIZE, Math.min(DEFAULT_MIN_MEDIA_SIZE.height, mediaSize.height))
+            );
+        // Media unset, or this was called before size was set in media's attributes. Use default minimum.
+        else this.minMediaSize.setSize(DEFAULT_MIN_MEDIA_SIZE);
+        
+        // Adjust component resizer's minimum.
+        this.cr.setMinimumContentSize(this.minMediaSize);
+    }
+    
+    /**
      * Gets the {@link MediaPlayer} from within this window's media player
      * component.
      * <p>
@@ -459,6 +496,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                         // Scale incoming media to be a maximum size while respecting its aspect ratio.
                         PiPWindow.this.changeSize(media.getAttributes().getScaledSize(DEFAULT_MEDIA_SIZE));
                         PiPWindow.this.cr.setAspectRatio(media.getAttributes().getSize());
+                        adaptMinimumSize();
                         
                         // Ensure the window is on-screen after loading content.
                         ensureOnScreen();
@@ -1395,6 +1433,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             contentPane.remove(imgLabel);
             contentPane.remove(mediaPlayer);
             contentPane.add(textField, BorderLayout.CENTER);
+            adaptMinimumSize();
             changeSize(PiPWindow.DEFAULT_SIZE, true);
             cr.setAspectRatio(null);
             ensureOnScreen();
@@ -1862,6 +1901,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         state.on(RESIZING);
         media.getAttributes().setSize(imgLabelIcon.getImgWidth(), imgLabelIcon.getImgHeight());
         PiPWindow.this.cr.setAspectRatio(media.getAttributes().getSize());
+        adaptMinimumSize();
         resetImgViewerSnapshots();
         SwingUtilities.invokeLater(() -> {
             imgLabel.setIcon(imgLabelIcon);
@@ -2076,7 +2116,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      */
     public void scaleSize(final int size, final boolean width) {
         // Scale current dimensions to desired width/height while respecting window minimum.
-        final ScalingDimension dim = new ScalingDimension(getInnerWidth(), getInnerHeight()).setMinimumSize(MINIMUM_SIZE_VALUE);
+        final ScalingDimension dim = new ScalingDimension(getInnerWidth(), getInnerHeight()).setMinimumSize(this.minMediaSize);
         if (width) dim.scaleToWidth(size);  // Resize Based on Width
         else       dim.scaleToHeight(size); // Resize Based on Height
         SwingUtilities.invokeLater(() -> changeSize(dim));

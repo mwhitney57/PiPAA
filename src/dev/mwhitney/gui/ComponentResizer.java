@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import javax.swing.JComponent;
@@ -79,6 +80,14 @@ public class ComponentResizer extends MouseAdapter
      * @since 0.9.5
      */
 	private ArrayList<StartEndListener> resizeListeners = new ArrayList<>();
+    /**
+     * A {@link Dimension} that holds the minimum size for any content to be
+     * displayed within the component, excluding its borders. This differs from the
+     * {@link #getMinimumSize()} value, as that includes the borders.
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+	private Dimension minContentSize = new Dimension(1, 1);
 
 	private Dimension minimumSize = MINIMUM_SIZE;
 	private Dimension maximumSize = MAXIMUM_SIZE;
@@ -376,6 +385,18 @@ public class ComponentResizer extends MouseAdapter
         if (r) resizeListeners.forEach(l -> l.started());
         else   resizeListeners.forEach(l -> l.ended());
     }
+    
+    /**
+     * Sets the minimum size for content shown within this component, excluding the
+     * borders.
+     * 
+     * @param d - a {@link Dimension} with the minimum content size.
+     * @author mwhitney57
+     * @since 0.9.5
+     */
+    public void setMinimumContentSize(Dimension d) {
+        this.minContentSize = Objects.requireNonNullElseGet(d, () -> new Dimension(1, 1));
+    }
 	
 	/**
 	 *  When the components minimum size is less than the drag insets then
@@ -563,8 +584,8 @@ public class ComponentResizer extends MouseAdapter
 		if (isUsingRatio()) {
     		// Use media's aspect ratio and minimum size without borders for accuracy in initial calculations.
     		final ScalingDimension sd = ScalingDimension.from(getAspectRatio())
-    		        .setMinimumSize(PiPWindow.MINIMUM_SIZE_VALUE)
-    		        .scaleToHeight(PiPWindow.MINIMUM_SIZE_VALUE);
+    		        .setMinimumSize(minContentSize)
+    		        .scaleToMinimum();
     	    // Set ratio-preserving minimums, which consist of the scaled values with the borders added back.
     	    adaptedMinimumWidth  = sd.width  + (PiPWindow.BORDER_SIZE*2);
     	    adaptedMinimumHeight = sd.height + (PiPWindow.BORDER_SIZE*2);

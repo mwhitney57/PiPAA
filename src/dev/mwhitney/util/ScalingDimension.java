@@ -45,7 +45,42 @@ public class ScalingDimension extends Dimension {
     }
     
     /**
-     * Sets the minimum size for both the width and height.
+     * Sets the size to the minimum width and height values for scaling.
+     * <p>
+     * It's important to remember that {@link ScalingDimension}'s <b>minimum size
+     * only affects scaling operations</b>, such as {@link #scaleToWidth(int)} or
+     * {@link #scaleToHeight(int)}. Therefore methods like
+     * {@link #setSize(int, int)} can still be used to set the dimensions below the
+     * minimum. Calling this method will reset those dimensions to the minimum
+     * scaling size.
+     * <p>
+     * This method simply performs {@link #setSize(int, int)} using the current
+     * minimums, with no additional checks or scaling logic.
+     * 
+     * @return this {@link ScalingDimension} instance.
+     */
+    public ScalingDimension setSizeToMinimum() {
+        this.setSize(this.minimumWidth, this.minimumHeight);
+        return this;
+    }
+    
+    /**
+     * Sets the minimum scaling size for both the width and height, deriving them from the
+     * passed {@link Dimension}.
+     * 
+     * @param d - a {@link Dimension} with the width and height sizes in pixels.
+     * @return this {@link ScalingDimension} instance.
+     */
+    public ScalingDimension setMinimumSize(Dimension d) {
+        if (d != null) {
+            setMinimumWidth(d.width);
+            setMinimumHeight(d.height);
+        }
+        return this;
+    }
+    
+    /**
+     * Sets the minimum scaling size for both the width and height.
      * 
      * @param size - an int with the size in pixels.
      * @return this {@link ScalingDimension} instance.
@@ -57,21 +92,40 @@ public class ScalingDimension extends Dimension {
     }
     
     /**
-     * Sets the minimum size for the width.
+     * Sets the minimum scaling size for the width.
      * 
      * @param size - an int with the size in pixels.
+     * @return this {@link ScalingDimension} instance.
      */
-    public void setMinimumWidth(int size) {
+    public ScalingDimension setMinimumWidth(int size) {
         this.minimumWidth = Math.max(0, size);
+        return this;
     }
     
     /**
-     * Sets the minimum size for the height.
+     * Sets the minimum scaling size for the height.
      * 
      * @param size - an int with the size in pixels.
+     * @return this {@link ScalingDimension} instance.
      */
-    public void setMinimumHeight(int size) {
+    public ScalingDimension setMinimumHeight(int size) {
         this.minimumHeight = Math.max(0, size);
+        return this;
+    }
+    
+    /**
+     * Scales the dimension to the set minimum width and height, maintaining the
+     * current aspect ratio.
+     * 
+     * @return this {@link ScalingDimension} instance.
+     * @see {@link #setMinimumWidth(int)} to set a minimum width.
+     * @see {@link #setMinimumHeight(int)} to set a minimum height.
+     * @see {@link #setMinimumSize(Dimension)} or {@link #setMinimumSize(int)} to
+     *      set the minimum width and height simultaneously.
+     */
+    public ScalingDimension scaleToMinimum() {
+        // Even if a minimum is unset, this single call will ensure both are respected, keeping the size at or above both minimums.
+        return scaleToWidth(this.minimumWidth);
     }
     
     /**
