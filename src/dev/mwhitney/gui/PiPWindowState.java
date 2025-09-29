@@ -564,6 +564,9 @@ public class PiPWindowState {
      *             hooks.
      */
     private void runHooks(final StateProp prop, final boolean val) {
+        // Return early if hooks are destroyed and cannot be modified.
+        if (destroyedHooks()) return;
+        
         final ArrayList<Runnable> runs = this.hooks.get(prop).get(Boolean.valueOf(val));
         if (runs.size() > 0) {
             final Iterator<Runnable> runsIter = runs.iterator();
@@ -577,23 +580,30 @@ public class PiPWindowState {
             }
         }
     }
-    
+
     /**
-     * Creates a hook into the window state which executes the passed Runnable when the
-     * passed {@link StateProp} is set to be equal to the passed boolean.
+     * Creates a hook into the window state which executes the passed Runnable when
+     * the passed {@link StateProp} is set to be equal to the passed boolean.
+     * <p>
+     * This method will not add the hook if the hooks have been destroyed via
+     * {@link #destroyHooks()}.
      * 
      * @param prop - the {@link StateProp} to hook into.
      * @param val  - the boolean value of the {@link StateProp} when the hook should
      *             activate.
      * @param run  - a {@link Runnable} with the code to execute when the hook
      *             condition is met.
-     * @return a {@link PiPWindowHook} which contains the data within the new hook.
+     * @return a {@link PiPWindowHook} which contains the data within the new hook,
+     *         or <code>null</code> if the hook could not be created.
      * @see {@link RecurringRunnable} for usage in recurring hooks that are not
      *      removed after first execution.
      * @see {@link PermanentRunnable} for usage in permanent hooks that cannot be
      *      removed.
      */
     public PiPWindowHook hook(final StateProp prop, final boolean val, final Runnable run) {
+        // Return null if hooks are destroyed and cannot be modified.
+        if (destroyedHooks()) return null;
+        
         this.hooks.get(prop).get(Boolean.valueOf(val)).add(run);
         return createHook(prop, val, run);
     }
@@ -607,6 +617,9 @@ public class PiPWindowState {
      * returned to indicate what this method accomplished. This method will
      * typically not be preferred over using an <code>if</code> statement, but will
      * be preferable for readability on occasion.
+     * <p>
+     * This method will not add the hook if the hooks have been destroyed via
+     * {@link #destroyHooks()}.
      * 
      * @param b    - the boolean to check before applying the hook if <code>true</code>.
      * @param prop - the {@link StateProp} to hook into.
@@ -634,7 +647,7 @@ public class PiPWindowState {
      *         otherwise.
      */
     public boolean hooked(final PiPWindowHook hook) {
-        if (hook == null || hook.prop() == null || hook.run() == null) return false;
+        if (!hookValid(hook) || destroyedHooks()) return false;
         return this.hooks.get(hook.prop()).get(hook.value()).contains(hook.run());
     }
     
@@ -648,6 +661,9 @@ public class PiPWindowState {
      * <p>
      * If the specified hook is <b>permanent</b>, meaning it uses a
      * {@link PermanentRunnable}, or it is not found, then this method does nothing.
+     * <p>
+     * This method cannot unhook if the hooks have been destroyed via
+     * {@link #destroyHooks()}.
      * 
      * @param hook - the {@link PiPWindowHook} to remove.
      * @return <code>true</code> if the hook was removed; <code>false</code>
@@ -655,7 +671,7 @@ public class PiPWindowState {
      * @see {@link #unhookEvery(PiPWindowHook)} to unhook every found instance of the passed hook.
      */
     public boolean unhook(final PiPWindowHook hook) {
-        if (hook == null || hook.prop() == null || hook.run() == null) return false;
+        if (!hookValid(hook) || destroyedHooks()) return false;
         
         // Don't unhook if permanent.
         if (hook.run() instanceof PermanentRunnable) return false;
@@ -678,7 +694,7 @@ public class PiPWindowState {
      * @see {@link #unhook(PiPWindowHook)} to only unhook the first found instance of the passed hook.
      */
     public boolean unhookEvery(final PiPWindowHook hook) {
-        if (hook == null || hook.prop() == null || hook.run() == null) return false;
+        if (!hookValid(hook)) return false;
         
         // Continue unhooking so long as there exists an instance of the passed hook.
         boolean removedAny = false;
@@ -707,6 +723,9 @@ public class PiPWindowState {
     /**
      * Removes every hook attached to the passed {@link StateProp} and boolean
      * value, except for permanent hooks using {@link PermanentRunnable}.
+     * <p>
+     * This method cannot unhook if the hooks have been destroyed via
+     * {@link #destroyHooks()}.
      * 
      * @param prop - the {@link StateProp} to unhook.
      * @param val  - the corresponding boolean value of the {@link StateProp}'s
@@ -715,6 +734,9 @@ public class PiPWindowState {
      *      of the {@link StateProp}.
      */
     public void unhook(final StateProp prop, final boolean val) {
+        // Return early if hooks are destroyed and cannot be modified.
+        if (destroyedHooks()) return;
+        
         // Save all permanent hooks before clearing, then add them back afterwards -- permanent hooks are not to be removed.
         final List<Runnable> permanentHooks = this.hooks.get(prop).get(Boolean.valueOf(val)).stream().filter((r) -> r instanceof PermanentRunnable).toList();
         this.hooks.get(prop).get(Boolean.valueOf(val)).clear();
@@ -746,6 +768,23 @@ public class PiPWindowState {
     public PiPWindowHook createHook(final StateProp prop, final boolean val, final Runnable run) {
         return new PiPWindowHook(prop, val, run);
     }
+
+    /**
+     * Checks if the passed {@link PiPWindowHook} is valid.
+     * <p>
+     * A valid hook will have set, non-<code>null</code>
+     * {@link PiPWindowHook#prop()} and {@link PiPWindowHook#run()} values, as well
+     * as being non-<code>null</code> itself. The hook's
+     * {@link PiPWindowHook#value()} is simply a primitive boolean, which is never
+     * <code>null</code>, and therefore requires no validation.
+     * 
+     * @param hook - the {@link PiPWindowHook} to validate.
+     * @return <code>true</code> if the hook is valid; <code>false</code> otherwise.
+     * @since 0.9.5
+     */
+    private boolean hookValid(final PiPWindowHook hook) {
+        return hook != null && hook.prop() != null && hook.run() != null;
+    }
     
     /**
      * Destroys hooks within this PiPWindowState instance by removing and clearing
@@ -760,9 +799,30 @@ public class PiPWindowState {
      *      afterwards.
      */
     public void destroyHooks() {
+        // Return early if hooks are already destroyed.
+        if (destroyedHooks()) return;
+        
         unhookAll();
         this.hooks.clear();
         this.hooks = null;
+    }
+
+    /**
+     * Checks if the hooks within this PiPWindowState instance have been destroyed,
+     * meaning they have been cleared and, most importantly, nullified.
+     * <p>
+     * This method is public, but is also used privately to ensure that new
+     * {@link #hook(StateProp, boolean, Runnable)} operations only execute if not
+     * yet destroyed.
+     * 
+     * @return <code>true</code> if the hooks have been destroyed;
+     *         <code>false</code> otherwise.
+     * @since 0.9.5
+     */
+    public boolean destroyedHooks() {
+        // Hooks map should not be used if null or empty.
+        // If empty, calls to get the sub-maps may throw exceptions.
+        return this.hooks == null || this.hooks.isEmpty();
     }
     
     @Override
