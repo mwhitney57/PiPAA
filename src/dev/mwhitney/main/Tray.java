@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
@@ -320,6 +321,11 @@ public class Tray implements PropertyListener {
             themeMap.put("Separator.background", theme.color(COLOR.BG));
             themeMap.put("Separator.shadow", new ColorUIResource(DEFAULT_SHDW_COLOR));
             themeMap.put("TabbedPane.tabAreaBackground", new ColorUIResource(theme.color(COLOR.BG)));
+            themeMap.put("ToolTip.background", theme.color(COLOR.BG));
+            themeMap.put("ToolTip.foreground", theme.color(COLOR.TXT));
+            themeMap.put("ToolTip.border", BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(theme.color(COLOR.BG_ACCENT), 3),   // Outside
+                    BorderFactory.createEmptyBorder(5, 5, 5, 5)));                     // Inside
             uiPropsMap.put(theme.toString(), themeMap);
         }
     }

@@ -141,6 +141,7 @@ public abstract class AppRes {
     
     // Fonts
     public static final Font FONT_POPUP                     = new Font("Dialog", Font.BOLD, 16);
+    public static final Font FONT_TOOLTIP                   = FONT_POPUP.deriveFont(Font.PLAIN, 14f);
     public static final Font FONT_TEXT_COMPONENT            = new Font("Monospaced", Font.BOLD, 14);
     
     // Shortcuts Printout - Temporary Until Shortcuts Customization

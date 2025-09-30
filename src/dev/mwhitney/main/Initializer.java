@@ -30,10 +30,10 @@ import dev.mwhitney.listeners.BinRunnable;
 import dev.mwhitney.listeners.PiPTrayAdapter;
 import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.properties.PiPProperty;
-import dev.mwhitney.properties.PropertiesManager;
-import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.properties.PiPProperty.PropDefault;
 import dev.mwhitney.properties.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.properties.PropertiesManager;
+import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.update.PiPUpdater;
 import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
@@ -225,6 +225,7 @@ public class Initializer {
                 UIManager.getLookAndFeelDefaults().put("MenuItem.opaque", true);
                 UIManager.getLookAndFeelDefaults().put("TabbedPane.contentOpaque", false);
                 UIManager.getLookAndFeelDefaults().put("TabbedPane.tabInsets", new Insets(2, 10, 0, 10));
+                UIManager.getLookAndFeelDefaults().put("ToolTip.font", AppRes.FONT_TOOLTIP);
             });
         } catch (InvocationTargetException | InterruptedException e) {
             e.printStackTrace();
