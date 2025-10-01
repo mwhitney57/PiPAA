@@ -69,7 +69,7 @@ public enum Shortcut {
         new KeyBind(KeyEvent.VK_B)
     ),
     FLASH_BORDERS_ALL(
-        new KeyBind(KeyEvent.VK_B, CTRL_DOWN_MASK | SHIFT_DOWN_MASK)
+        new KeyBind(KeyEvent.VK_B, SHIFT_DOWN_MASK)
     ),
     FULLSCREEN(
         new KeyBind(KeyEvent.VK_F),
@@ -118,7 +118,7 @@ public enum Shortcut {
         new MouseBind(BindOptions.build().useDelay(250), MouseEvent.BUTTON1)
     ),
     PLAY_PAUSE_ALL(
-        new KeyBind(KeyEvent.VK_SPACE, CTRL_DOWN_MASK | SHIFT_DOWN_MASK)
+        new KeyBind(KeyEvent.VK_SPACE, SHIFT_DOWN_MASK)
     ),
     PLAYBACK_RATE_0(
         new KeyBind(KeyEvent.VK_0, ALT_DOWN_MASK),
@@ -202,11 +202,14 @@ public enum Shortcut {
     RELOCATE_WINDOW(
         new KeyBind(KeyEvent.VK_L)
     ),
+    RELOCATE_WINDOWS(
+        new KeyBind(KeyEvent.VK_L, SHIFT_DOWN_MASK)
+    ),
     RESET_SIZE(
         new KeyBind(BindOptions.build().onHit(2), KeyEvent.VK_Z)
     ),
     RESET_SIZE_ALL(
-        new KeyBind(BindOptions.build().onHit(2), KeyEvent.VK_Z, CTRL_DOWN_MASK | SHIFT_DOWN_MASK)
+        new KeyBind(BindOptions.build().onHit(2), KeyEvent.VK_Z, SHIFT_DOWN_MASK)
     ),
     RESET_ZOOM(
         new KeyBind(KeyEvent.VK_OPEN_BRACKET, CTRL_DOWN_MASK | SHIFT_DOWN_MASK),

@@ -716,10 +716,6 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             if (get().hasMedia()) setWindowMedia(null);
             else CompletableFuture.runAsync(() -> get().requestClose());
             break;
-        // RELOCATE WINDOW ON SCREEN IF OFF
-        case RELOCATE_WINDOW:
-            get().ensureOnScreen();
-            break;
         // Pop-up with lock selection options for user to decide.
         case LOCK_WINDOW_MENU:
             new LockSelectionPopup(PropDefault.THEME.matchAny(get().propertyState(PiPProperty.THEME, String.class)), get().state()).moveRelTo(get()).display();

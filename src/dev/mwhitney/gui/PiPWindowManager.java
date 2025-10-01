@@ -587,6 +587,9 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         case PLAY_PAUSE_ALL:
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.PLAY_PAUSE)));
             break;
+        case RELOCATE_WINDOWS:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.RELOCATE_WINDOW)));
+            break;
         case RESET_SIZE_ALL:
             callInLiveWindows(window -> SwingUtilities.invokeLater(() -> window.resetSize()));
             break;

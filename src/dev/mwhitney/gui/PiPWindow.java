@@ -232,12 +232,12 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         };
         
         // Establish Permanent Locked Hooks
-        state.hook(LOCKED_SIZE, true,  (PermanentRunnable) () -> {
-            SwingUtilities.invokeLater(() -> PiPWindow.this.setResizable(false));
-        });
-        state.hook(LOCKED_SIZE, false, (PermanentRunnable) () -> {
-            SwingUtilities.invokeLater(() -> PiPWindow.this.setResizable(true));
-        });
+        state.hook(LOCKED_SIZE, true,  (PermanentRunnable) () ->
+            SwingUtilities.invokeLater(() -> PiPWindow.this.setResizable(false))
+        );
+        state.hook(LOCKED_SIZE, false, (PermanentRunnable) () ->
+            SwingUtilities.invokeLater(() -> PiPWindow.this.setResizable(true))
+        );
         // Establish Permanent Full Screen Border Hooks
         state.hook(FULLSCREEN, true,  (PermanentRunnable) () -> {
             // Only use media player to set fullscreen if VLC video.
@@ -607,7 +607,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * @return <code>true</code> if valid; <code>false</code> otherwise.
      */
     private boolean mediaPlayerValid() {
-        return (this.mediaPlayer != null);
+        return this.mediaPlayer != null;
     }
     
     @Override
@@ -954,6 +954,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 } catch (InvocationTargetException | InterruptedException ex) { ex.printStackTrace(); }
                 if (!imgLoc.isEmpty()) replaceArtwork(imgLoc.toString());
                 break;
+            case RELOCATE_WINDOW:
+                SwingUtilities.invokeLater(() -> ensureOnScreen());
+                break;
             case RESIZE_WINDOW:
             case RESIZE_WINDOWS:
                 // ♦ EDT Safe ♦ Verified: 2025-09-21
@@ -1070,9 +1073,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         final Supplier<Boolean> cmdCode = () -> {
 //            System.out.println(Objects.toString(cmdArgs, "<null cmd args>"));   //Debug - Print arguments.
             // Determine if there are any arguments and if they are Strings.
-            final boolean anyArgs   = cmdArgs != null && !cmdArgs.isEmpty();
-            final String[] args     = (anyArgs && cmdArgs.isOfType(String.class) ? cmdArgs.raw().toArray(new String[0]) : null);
-            final boolean strArgs   = args != null;
+            final boolean anyArgs = cmdArgs != null && !cmdArgs.isEmpty();
+            final String[] args   = (anyArgs && cmdArgs.isOfType(String.class) ? cmdArgs.raw().toArray(new String[0]) : null);
+            final boolean strArgs = args != null;
             
             switch (cmd) {
             case SET_SRC: {
