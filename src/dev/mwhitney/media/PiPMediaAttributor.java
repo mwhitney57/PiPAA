@@ -77,21 +77,21 @@ public class PiPMediaAttributor implements PropertyListener {
     
     // REGEX PATTERNS -- Saved as member variables and pre-compiled during construction for performance.
     /** The RegEx Pattern for fixing spacing issues. */
-    private Pattern rgxSpacer;
+    private final Pattern rgxSpacer;
     /** The RegEx Pattern for finding an extension in URL queries. */
-    private Pattern rgxSrcQueryExt;
+    private final Pattern rgxSrcQueryExt;
     /** The RegEx Pattern for validating a title and fixing invalid characters. */
-    private Pattern rgxTextValidator;
+    private final Pattern rgxTextValidator;
     /** The RegEx Pattern for attributing a local media title. */
-    private Pattern rgxTitleLocal;
+    private final Pattern rgxTitleLocal;
     /** The RegEx Pattern for attributing a media title ID. */
-    private Pattern rgxTitleID;
+    private final Pattern rgxTitleID;
     /** The RegEx Pattern for attributing a local media's file extension. */
-    private Pattern rgxLocalExt;
+    private final Pattern rgxLocalExt;
     /** The RegEx Pattern for determining if the media is WEB_DIRECT. */
-    private Pattern rgxSrcWebDirect;
+    private final Pattern rgxSrcWebDirect;
     /** The RegEx Pattern for determining if the media is WEB_INDIRECT. */
-    private Pattern rgxSrcWebIndirect;
+    private final Pattern rgxSrcWebIndirect;
     
     /**
      * Creates a new PiPMediaAttributor for attributing media sources.
@@ -408,7 +408,8 @@ public class PiPMediaAttributor implements PropertyListener {
         Objects.requireNonNull(src, "The String source must be non-null to retrieve web attribution arguments.");
         
         /*
-         * Create ArrayList ahead of time with a greater initial capacity, default is 10 after adding an element. Increase as args are added.
+         * Create ArrayList ahead of time with a greater initial capacity, default is 10 after adding an element.
+         * Increase as arguments are added in development. Amount must meet/exceed maximum number of possible arguments.
          * Otherwise, the list will grow in size as added elements reach the capacity, which is costly by comparison.
          */
         final ArrayList<String> webArgs = new ArrayList<String>(25);

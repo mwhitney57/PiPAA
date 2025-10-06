@@ -482,7 +482,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     System.err.println("> Started applying video.");
                     // Get Media Size and Update Attributes
                     final List<VideoTrackInfo> tracks = mediaPlayer.media().info().videoTracks();
-                    if (tracks.size() < 1) {
+                    if (tracks.isEmpty()) {
                         System.err.println("Warning: Couldn't apply video as there are no video tracks.");
                         return;
                     }

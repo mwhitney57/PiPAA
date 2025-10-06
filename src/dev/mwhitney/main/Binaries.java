@@ -121,6 +121,23 @@ public class Binaries {
     /** The PropertyListener to get property states from. */
     private static volatile PropertyListener propertyListener;
     
+    /** The regular expression {@link Pattern} used for retrieving version information when yt-dlp is updated. */
+    private static final Pattern PATTERN_YTDLP_UPDATED      = Pattern.compile(
+            ".*(?:Current version: )([a-zA-Z0-9\\.@]+).*(?:Latest version: )([a-zA-Z0-9\\.@]+).*",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** The regular expression {@link Pattern} used for retrieving version information when yt-dlp is not updated. */
+    private static final Pattern PATTERN_YTDLP_NOUPDATE     = Pattern.compile(
+            ".*(?:Latest version: )([a-zA-Z0-9\\.@]+).*",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** The regular expression {@link Pattern} used for retrieving version information when gallery-dl is updated. */
+    private static final Pattern PATTERN_GALLERYDL_UPDATED  = Pattern.compile(
+            ".*(?:Updating from )([a-zA-Z0-9\\\\.]+)(?: to )([a-zA-Z0-9\\\\.]+).*",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    /** The regular expression {@link Pattern} used for retrieving version information when gallery-dl is not updated. */
+    private static final Pattern PATTERN_GALLERYDL_NOUPDATE = Pattern.compile(
+            ".*(?:up to date \\()([a-zA-Z0-9\\.]+)(?:\\)).*",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    
     /**
      * Returns the passed Bin binary command.
      * The appropriate command is chosen based on the user configuration.
@@ -360,14 +377,12 @@ public class Binaries {
             
             // Check if updated at all and determine version retrieval regex.
             final boolean didUpdate = !cmdResult.contains("up to date");
-            Pattern regex = null;
-            if (b == Bin.YT_DLP) {
-                if (didUpdate) regex = Pattern.compile(".*(?:Current version: )([a-zA-Z0-9\\.@]+).*(?:Latest version: )([a-zA-Z0-9\\.@]+).*", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-                else           regex = Pattern.compile(".*(?:Latest version: )([a-zA-Z0-9\\.@]+).*", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-            } else {
-                if (didUpdate) regex = Pattern.compile(".*(?:Updating from )([a-zA-Z0-9\\\\.]+)(?: to )([a-zA-Z0-9\\\\.]+).*", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-                else           regex = Pattern.compile(".*(?:up to date \\()([a-zA-Z0-9\\.]+)(?:\\)).*", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-            }
+            final Pattern regex = switch (b) {
+            case YT_DLP     -> didUpdate ? PATTERN_YTDLP_UPDATED     : PATTERN_YTDLP_NOUPDATE;
+            case GALLERY_DL -> didUpdate ? PATTERN_GALLERYDL_UPDATED : PATTERN_GALLERYDL_NOUPDATE;
+            // Should never occur due to outer switch.
+            default -> throw new UnsupportedBinActionException("That binary cannot be updated automatically or OTA.");
+            };
             
             // Retrieve version number(s) using regex and return binary update result.
             final String oldVersion = regex.matcher(cmdResult).replaceAll("$1");

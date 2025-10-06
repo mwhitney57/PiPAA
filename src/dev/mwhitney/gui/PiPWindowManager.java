@@ -333,11 +333,11 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
     }
     
     /**
-     * Clears (removes) all windows managed by this window manager. Runs
-     * <b>synchronously</b>. However, each window closing operation is handled
-     * asynchronously and near-simultaneously instead of happening sequentially.
-     * This allows for much quicker clearing of windows, even when some of the
-     * windows hang during close.
+     * Clears (removes) all windows managed by this window manager. Runs each window
+     * close operation <b>synchronously</b> (together). However, these operations
+     * are handled asynchronously, off of the calling thread, and
+     * near-simultaneously instead of happening sequentially. This allows for much
+     * quicker clearing of windows, even when some of the windows hang during close.
      * 
      * @since 0.9.5
      */
@@ -416,10 +416,8 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         
         // Wait a maximum of 3 seconds for windows to close properly, then forcibly continue with exit.
         try {
-            if (exitLatch.await(3, TimeUnit.SECONDS))
-                System.out.println("[EXIT] Window manager exited normally.");
-            else
-                System.err.println("[EXIT] Window manager exited forcibly: Took too long to clear windows.");
+            if (exitLatch.await(3, TimeUnit.SECONDS)) System.out.println("[EXIT] Window manager exited normally.");
+            else System.err.println("[EXIT] Window manager exited forcibly: Took too long to clear windows.");
         } catch (InterruptedException e) {
             System.err.println("[EXIT] Window manager exited OK, but was interrupted while closing windows.");
         }
