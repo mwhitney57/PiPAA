@@ -28,7 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -103,6 +102,7 @@ import uk.co.caprica.vlcj.media.MetaApi;
 import uk.co.caprica.vlcj.media.VideoTrackInfo;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
+import uk.co.caprica.vlcj.player.base.State;
 import uk.co.caprica.vlcj.player.base.TrackDescription;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.embedded.fullscreen.windows.Win32FullScreenStrategy;
@@ -241,7 +241,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         // Establish Permanent Full Screen Border Hooks
         state.hook(FULLSCREEN, true,  (PermanentRunnable) () -> {
             // Only use media player to set fullscreen if VLC video.
-            if (state.is(PLAYER_VLC))
+            if (state.is(PLAYER_VLC) && state.not(CRASHED))
                 mediaPlayer.mediaPlayer().fullScreen().set(true);
             // Use standard fullscreen approach for other players, even combo player.
             else SwingUtilities.invokeLater(() -> setExtendedState(JFrame.MAXIMIZED_BOTH));
@@ -249,7 +249,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         });
         state.hook(FULLSCREEN, false, (PermanentRunnable) () -> {
             // Only use media player to set fullscreen if VLC video.
-            if (state.is(PLAYER_VLC))
+            if (state.is(PLAYER_VLC) && state.not(CRASHED))
                 mediaPlayer.mediaPlayer().fullScreen().set(false);
             // Use standard fullscreen approach for other players, even combo player.
             else SwingUtilities.invokeLater(() -> setExtendedState(JFrame.NORMAL));
@@ -609,7 +609,25 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     private boolean mediaPlayerValid() {
         return this.mediaPlayer != null;
     }
-    
+
+    /**
+     * Checks if the media player can be stopped. The player can be stopped if
+     * {@link #mediaPlayerValid()} and it is either playing or paused, meaning it
+     * has media and is not stopped.
+     * <p>
+     * Getting technical, while a media player <i>can</i> be ordered to stop even if
+     * it doesn't have loaded media, it might cause problems. For example, during
+     * media and window close, this check can be performed, potentially reducing an
+     * unnecessary native call and improving performance.
+     * 
+     * @return <code>true</code> if it can be stopped; <code>false</code> otherwise.
+     * @since 0.9.5
+     */
+    private boolean mediaPlayerCanBeStopped() {
+        return mediaPlayerValid() && (mediaPlayer.mediaPlayer().status().state() == State.PLAYING
+                || mediaPlayer.mediaPlayer().status().state() == State.PAUSED);
+    }
+
     @Override
     public void handleShortcutBind(final BindDetails<?> bind) {
         // Null safety check.
@@ -1358,29 +1376,27 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 state.off(LOADING);
                 state.on(CLOSING_MEDIA, MANUALLY_STOPPED);
                 if (state.is(PLAYER_SWING)) {
-                    final Runnable run = () -> clearImgViewer();
                     try {
-                        if (SwingUtilities.isEventDispatchThread()) run.run();
-                        else SwingUtilities.invokeAndWait(run);
+                        if (SwingUtilities.isEventDispatchThread()) clearImgViewer();
+                        else SwingUtilities.invokeAndWait(this::clearImgViewer);
                     } catch (InvocationTargetException | InterruptedException e) { e.printStackTrace(); }
-                    state.off(FULLSCREEN);
                 }
-                else {
-                    final ExecutorService executor = Executors.newSingleThreadExecutor();
-                    @SuppressWarnings("unchecked")
-                    final Future<Void> future = (Future<Void>) executor.submit(() -> mediaPlayer.mediaPlayer().controls().stop());
-                    try {
-                        // Give the media player a max runtime to execute the command. If exceeded, it has likely crashed.
-                        future.get(2000, TimeUnit.MILLISECONDS);
-                        state.off(FULLSCREEN);  // Call here -- there are hooks into this prop with mediaPlayer commands which could crash it.
-                    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                        future.cancel(true);
-                        System.err.println("Error: Media player crashed in window. Opening replacement...");
-                        mediaPlayer = null;
-                        state.on(CRASHED);
-                        managerListener.windowMediaCrashed();
-                    }
+                else if (mediaPlayerCanBeStopped()) {
+                    // Not using a virtual thread, as this operation may use native code.
+                    try (final ExecutorService executor = Executors.newSingleThreadExecutor()) {
+                        final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> mediaPlayer.mediaPlayer().controls().stop(), executor);
+                        try {
+                            // Give the media player a max runtime to execute the command. If exceeded, it has likely crashed.
+                            future.get(2000, TimeUnit.MILLISECONDS);
+                        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                            future.cancel(true);
+                            mediaPlayer = null;
+                            state.on(CRASHED);
+                            managerListener.windowMediaCrashed();
+                        }
+                    }   // Executor closed via try-with-resources.
                 }
+                state.off(FULLSCREEN);  // Fullscreen hooks have native call, but if it crashes, it will happen asynchronously.
                 if (state.not(CRASHED) && !replacing) setMedia(null);
                 System.out.println("Close req stopped media player.");
                 

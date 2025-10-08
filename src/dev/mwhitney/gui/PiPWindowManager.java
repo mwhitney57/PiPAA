@@ -147,8 +147,13 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
                 public void windowMediaCrashed() {
                     // Removes the window with crashed media, then adds a new one.
                     // The new window has updated display text to notify the user of the crash.
+                    final boolean wasClosing = window.state().any(StateProp.CLOSING, StateProp.CLOSED);
                     PiPWindowManager.this.removeWindow(windows.indexOf(window));
-                    PiPWindowManager.this.addWindow().statusUpdate("Media player crashed...");
+                    if (!wasClosing) {
+                        System.err.println("Error: Media player crashed in window. Opening replacement...");
+                        PiPWindowManager.this.addWindow().statusUpdate("Media player crashed...");
+                    }
+                    else System.err.println("Warning: Media player crashed in window during close. Can safely ignore.");
                 }
                 
                 @Override
