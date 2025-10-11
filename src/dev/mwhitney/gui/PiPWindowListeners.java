@@ -773,11 +773,11 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             break;
         // RESTART/RELOAD
         case RELOAD:
-            get().flashBorderEDT(PiPWindow.BORDER_OK);
+            get().flashBorder(PiPWindow.BORDER_OK);
             sendMediaCMD(PiPMediaCMD.RELOAD, ReloadSelections.REGULAR);
             break;
         case RELOAD_QUICK:
-            get().flashBorderEDT(PiPWindow.BORDER_OK);
+            get().flashBorder(PiPWindow.BORDER_OK);
             sendMediaCMD(PiPMediaCMD.RELOAD, ReloadSelections.QUICK);
             break;
         // DELETE & CONTINUE (CLOSE MEDIA) OR DUPLICATE WINDOW

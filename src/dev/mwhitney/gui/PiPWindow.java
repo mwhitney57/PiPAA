@@ -659,7 +659,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 if (!hasAttributedMedia() && !ctrlDown) {
                     // TODO Consider adding quick dialog message here as well: "No media."
                     System.out.println("Cancelling request to print info: Window is missing attributed media.");
-                    flashBorderEDT(BORDER_WARNING);
+                    flashBorder(BORDER_WARNING);
                     break;
                 }
                 
@@ -862,7 +862,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 break;
             // VOLUME MUTE/UNMUTE
             case VOLUME_MUTE_UNMUTE:
-                flashBorderEDT(state.is(LOCALLY_MUTED) ? BORDER_OK : BORDER_ERROR);
+                flashBorder(state.is(LOCALLY_MUTED) ? BORDER_OK : BORDER_ERROR);
                 mediaCommand(PiPMediaCMD.MUTEUNMUTE);
                 break;
             case CYCLE_AUDIO_TRACKS:
@@ -911,21 +911,21 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 if (state.not(SAVING_MEDIA) && hasAttributedMedia() && !media.getAttributes().isLocal()) {
                     // Cancel if media is already cached.
                     if (media.isCached()) {
-                        flashBorderEDT(BORDER_WARNING);
+                        flashBorder(BORDER_WARNING);
                         EasyTopDialog.showMsg(this, "Media is already cached.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)));
                         break;
                     }
                     
                     iconUpdate(ICON_WORK);
                     state.on(SAVING_MEDIA).hook(SAVING_MEDIA, false, () -> iconUpdate(ICON_NORMAL));
-                    flashBorderEDT(BORDER_PROGRESS);
+                    flashBorder(BORDER_PROGRESS);
                     titleStatusUpdate("[Attempting to Cache...]");
                     
                     // Alternative Method -- Uses current media and attributes, sometimes resulting in a generic file name.
                     if (shortcut == Shortcut.SAVE_MEDIA_ALT) {
                         titleStatusUpdate("[Caching...]");
                         if (setRemoteMedia(media.getSrc(), media, true, false) != null) {
-                            flashBorderEDT(BORDER_OK);
+                            flashBorder(BORDER_OK);
                             EasyTopDialog.showMsg(this, "Saved to Cache!", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)));
                         }
                     }
@@ -935,7 +935,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                         if (updateMediaAttributes(mediaCopy, Flag.RAW_ATTRIBUTION)) {
                             titleStatusUpdate("[Caching...]");
                             if (setRemoteMedia(mediaCopy.getSrc(), mediaCopy, true, true) != null) {
-                                flashBorderEDT(BORDER_OK);
+                                flashBorder(BORDER_OK);
                                 media.setCacheSrc(mediaCopy.getCacheSrc());
                                 mediaCommand(PiPMediaCMD.RELOAD, ReloadSelections.QUICK);
                             }
@@ -1130,7 +1130,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     if (result == null) {
                         // Unable to Set Remote Media -- Cancel and Close Current Media
                         mediaCommand(PiPMediaCMD.CLOSE);
-                        flashBorderEDT(BORDER_ERROR);
+                        flashBorder(BORDER_ERROR);
                         return false;
                     }
                     
@@ -1208,7 +1208,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case PLAY:
                 // Option Arguments (T/F): [0]=Flash Borders (DEFAULT: false)
                 if (strArgs && args[0] != null && Boolean.valueOf(args[0]))
-                    flashBorderEDT(BORDER_OK);
+                    flashBorder(BORDER_OK);
                 
                 // If in Single Play Mode, pause all windows first, then play this one.
                 if (propertyState(PiPProperty.SINGLE_PLAY_MODE, Boolean.class))
@@ -1220,7 +1220,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case PAUSE:
                 // Option Arguments (T/F): [0]=Flash Borders (DEFAULT: false), [1]=Manual (NO DEFAULT)
                 if (strArgs && args[0] != null && Boolean.valueOf(args[0]))
-                    flashBorderEDT(BORDER_ERROR);
+                    flashBorder(BORDER_ERROR);
                 if (strArgs && args.length > 1 && args[1] != null)
                     state.set(MANUALLY_PAUSED, Boolean.valueOf(args[1]));
 
@@ -2008,23 +2008,15 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     /**
      * Briefly flashes and displays the border of the window, then immediately
      * begins to fade it back to transparency.
+     * <p>
+     * This method automatically executes on the event-dispatch thread (EDT). Will
+     * execute immediately if already on the EDT, versus being invoked later.
      */
     public void flashBorder(final Color c) {
-        if (c == null) fadingBorder.fade();
-        else fadingBorder.fade(c);
+        if (SwingUtilities.isEventDispatchThread()) fadingBorder.fade(c);
+        else SwingUtilities.invokeLater(() -> fadingBorder.fade(c));
     }
         
-    /**
-     * Briefly flashes and displays the border of the window, then immediately
-     * begins to fade it back to transparency.
-     * <p>
-     * <b>This method executes the code on the event-dispatch thread (EDT). If the
-     * calling thread is on the EDT, then use <code>flashBorder(Color)</code>.</b>
-     */
-    public void flashBorderEDT(final Color c) {
-        SwingUtilities.invokeLater(() -> flashBorder(c));
-    }
-
     /**
      * Updates the status pretext within the window's title to the passed String. To
      * reset the title status, pass <code>null</code> or an empty String. <b>This
