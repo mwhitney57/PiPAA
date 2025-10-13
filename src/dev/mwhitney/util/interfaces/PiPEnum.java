@@ -12,6 +12,31 @@ package dev.mwhitney.util.interfaces;
  */
 public interface PiPEnum<E extends Enum<E>> {
     /**
+     * Attempts to match the passed String with a value in the enum under the
+     * provided class. If a matching value is found, it is immediately returned. If
+     * not, then <code>null</code> will be returned. This matching process is
+     * case-insensitive.
+     * <p>
+     * Methods like {@link #match(String)} or {@link #matchAny(String)} can be
+     * useful, but they require an instance/value to be called on. This static
+     * method provides a clear way to check for any match without requiring an
+     * instance to reference.
+     * 
+     * @param <P> - the {@link PiPEnum} to check for matches with.
+     * @param c   - the Class of the {@link PiPEnum} to match with.
+     * @param s   - the String to match.
+     * @return the matching value within the passed enum class; <code>null</code>
+     *         otherwise if no match exists.
+     * @since 0.9.5
+     */
+    public static <P extends PiPEnum<?>> P match(Class<P> c, String s) {
+        // Finds the first match and returns the value. Returns null if no match exists.
+        for (final P value : c.getEnumConstants()) {
+            if (value.is(s)) return value;
+        }
+        return null;
+    }
+    /**
      * Attempts to match the passed String with this enum value. If it is a match, this
      * enum value is returned. If it is not a match, then <code>null</code> is
      * returned. This matching process is case-insensitive.

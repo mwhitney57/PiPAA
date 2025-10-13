@@ -13,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import dev.mwhitney.properties.PiPProperty.TYPE_OPTION;
+import dev.mwhitney.util.interfaces.PiPEnum;
 
 /**
  * Communicates with the PiPAA API.
@@ -56,14 +57,15 @@ public class APICommunicator {
 
     /**
      * The payload returned from API requests which contains an application update.
-     * The payload consists of a {@link Build} and a String link where said
-     * {@link Build} can be accessed.
+     * The payload consists of a {@link Build}, a String link where said
+     * {@link Build} can be accessed, and the current application {@link Artifact}.
      * 
      * @author mwhitney57
      */
     public record UpdatePayload(
         Build build,
-        String link
+        String link,
+        Artifact artifact
     ) {
         /**
          * Checks if the payload has a non-<code>null</code> {@link Build}.
@@ -83,6 +85,23 @@ public class APICommunicator {
          */
         public boolean hasLink() {
             return (this.link != null && !this.link.isBlank());
+        }
+        /**
+         * Checks if the payload has a non-<code>null</code> {@link Artifact}. The
+         * artifact corresponds to a valid application download (e.g. JAR, EXE) that
+         * would replace the active application instance.
+         * <p>
+         * Since the artifact value is typically pulled from the current application
+         * instance, the value should always be valid. At a minimum, it provides context
+         * if {@link #hasLink()} returns <code>false</code>. In that case, the target
+         * update may be missing the required artifact.
+         * 
+         * @return <code>true</code> if the payload has a valid {@link Artifact};
+         *         <code>false</code> otherwise.
+         * @since 0.9.5
+         */
+        public boolean hasArtifact() {
+            return (this.artifact != null);
         }
     }
     
@@ -165,7 +184,7 @@ public class APICommunicator {
             if (((String) l).endsWith(currFileExt)) link.append(((String) l));
         });
         // Combine Build and Build Links into UpdatePayload and return it.
-        return new UpdatePayload(build, link.toString());
+        return new UpdatePayload(build, link.toString(), PiPEnum.match(Artifact.class, currFileExt));
     }
     
     /**

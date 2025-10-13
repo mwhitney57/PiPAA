@@ -10,7 +10,6 @@ import javax.swing.JOptionPane;
 
 import org.jetbrains.annotations.NotNull;
 
-import dev.mwhitney.exceptions.PiPUpdateException;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.properties.PiPProperty.FREQUENCY_OPTION;
 import dev.mwhitney.properties.PiPProperty.PropDefault;
@@ -20,6 +19,10 @@ import dev.mwhitney.update.api.APICommunicator;
 import dev.mwhitney.update.api.APICommunicator.UpdatePayload;
 import dev.mwhitney.update.api.Build;
 import dev.mwhitney.update.api.Version;
+import dev.mwhitney.update.exceptions.PiPUpdateException;
+import dev.mwhitney.update.exceptions.UpdateMissingArtifactException;
+import dev.mwhitney.update.exceptions.UpdateMissingBuildException;
+import dev.mwhitney.update.exceptions.UpdateUnknownArtifactException;
 
 /**
  * Handles updates for the application binaries and the application itself (as a whole).
@@ -188,9 +191,10 @@ public class PiPUpdater {
         try {
             // Get Latest Version from API
             final UpdatePayload update = APICommunicator.request(type);
-            if (update == null)     return result.setException(new PiPUpdateException("Could not fetch latest update. Connection issue or API may be down."));
-            if (!update.hasLink())  return result.setException(new PiPUpdateException("Latest update contains no download link with current file extension."));
-            if (!update.hasBuild()) return result.setException(new PiPUpdateException("Unexpected error while fetching latest update. No Build received in payload."));
+            if (update == null)        return result.setException(new PiPUpdateException("Could not fetch latest update. Connection issue or API may be down."));
+            if (!update.hasArtifact()) return result.setException(new UpdateUnknownArtifactException());
+            if (!update.hasLink())     return result.setException(new UpdateMissingArtifactException(update.artifact()));
+            if (!update.hasBuild())    return result.setException(new UpdateMissingBuildException());
             
             // Get Build Information from Payload
             final Build updBuild = update.build();

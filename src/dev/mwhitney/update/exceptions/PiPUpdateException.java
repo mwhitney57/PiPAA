@@ -1,14 +1,14 @@
-package dev.mwhitney.exceptions;
+package dev.mwhitney.update.exceptions;
+
+import dev.mwhitney.util.interfaces.UserFriendlyErrorMessage;
 
 /**
  * An exception thrown when an update process unexpectedly fails.
  * 
  * @author mwhitney57
  */
-public class PiPUpdateException extends Exception {
-    /**
-     * The randomly-generated serial UID for MediaModificationExceptions.
-     */
+public class PiPUpdateException extends Exception implements UserFriendlyErrorMessage {
+    /** The randomly-generated serial ID. */
     private static final long serialVersionUID = -4388741295638854571L;
     
     /** The underlying exception, if one exists. */
@@ -64,5 +64,10 @@ public class PiPUpdateException extends Exception {
      */
     public boolean hasUnderlying() {
         return (this.exception != null);
+    }
+
+    @Override
+    public String getUserFriendlyErrorMessage() {
+        return "Could not update. Is the server down?";
     }
 }
