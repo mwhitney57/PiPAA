@@ -6,6 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -301,13 +302,68 @@ public class PiPAAUtils {
         final AtomicReference<T> ref = new AtomicReference<>();
         try {
             // Supplier may include Swing-related code that must run on EDT.
-            if (SwingUtilities.isEventDispatchThread()) ref.set(supplier.get());
-            else SwingUtilities.invokeAndWait(() -> ref.set(supplier.get()));
+            invokeNowAndWait(() -> ref.set(supplier.get()));
         } catch (InvocationTargetException | InterruptedException e) {
             // Error with supplier execution. Return null due to interruption.
             return null;
         }
         // Get object from supplier and return.
         return ref.get();
+    }
+
+    /**
+     * Executes the passed {@link Runnable} now if this method is called <b>off</b>
+     * of the event-dispatch thread (EDT). Otherwise, it is run asynchronously via
+     * {@link CompletableFuture#runAsync(Runnable)}. This method inconsistently
+     * blocks, only doing so if called from outside the EDT.
+     * <p>
+     * This method helps ensure the passed code is executed off of the EDT. For
+     * Swing adjustments, use {@link #invokeNowOrLater(Runnable)} or
+     * {@link #invokeNowAndWait(Runnable)}.
+     * 
+     * @param run - the {@link Runnable} that should be executed off of the EDT.
+     * @since 0.9.5
+     */
+    public static void invokeNowOrAsync(Runnable run) {
+        if (SwingUtilities.isEventDispatchThread()) CompletableFuture.runAsync(run);
+        else run.run();
+    }
+
+    /**
+     * Executes the passed {@link Runnable} now if this method is called from the
+     * event-dispatch thread (EDT). Otherwise, it is scheduled to run later via
+     * {@link SwingUtilities#invokeLater(Runnable)}.
+     * <p>
+     * This method helps ensure the passed code is executed on the EDT. Do not
+     * include code that would slow or block the EDT.
+     * 
+     * @param run - the {@link Runnable} that should be executed on the EDT.
+     * @since 0.9.5
+     */
+    public static void invokeNowOrLater(Runnable run) {
+        if (SwingUtilities.isEventDispatchThread()) run.run();
+        else SwingUtilities.invokeLater(run);
+    }
+    
+    /**
+     * Executes the passed {@link Runnable} now if this method is called from the
+     * event-dispatch thread (EDT). Otherwise, it runs soon, in sync with the EDT,
+     * via {@link SwingUtilities#invokeAndWait(Runnable)} and blocks until
+     * completion. Either way, this method returns once the code has finished
+     * executing.
+     * <p>
+     * This method helps ensure the passed code is executed on the EDT. Do not
+     * include code that would slow or block the EDT.
+     * 
+     * @param run - the {@link Runnable} that should be executed on the EDT.
+     * @throws InterruptedException      if thrown by
+     *                                   {@link SwingUtilities#invokeAndWait(Runnable)}.
+     * @throws InvocationTargetException if thrown by
+     *                                   {@link SwingUtilities#invokeAndWait(Runnable)}.
+     * @since 0.9.5
+     */
+    public static void invokeNowAndWait(Runnable run) throws InvocationTargetException, InterruptedException {
+        if (SwingUtilities.isEventDispatchThread()) run.run();
+        else SwingUtilities.invokeAndWait(run);
     }
 }

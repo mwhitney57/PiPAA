@@ -687,10 +687,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     
     // Listener Methods
     @Override
-    public void setWindowMedia(PiPMedia media)  {
-        if (SwingUtilities.isEventDispatchThread()) CompletableFuture.runAsync(() -> get().setMedia(media));
-        else get().setMedia(media);
-    }
+    public void setWindowMedia(PiPMedia media)  { PiPAAUtils.invokeNowOrAsync(() -> get().setMedia(media)); }
     @Override
     public void transferFailed(String msg)      { get().statusUpdate(msg); }
     @Override

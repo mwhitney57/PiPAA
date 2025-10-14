@@ -636,8 +636,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             return;
         }
         
-        // Setup as Runnable.
-        final Runnable handle = () -> {
+        // Ensure code runs asynchronously (OFF of EDT).
+        PiPAAUtils.invokeNowOrAsync(() -> {
             // Debug
             // System.out.println("Handling Shortcut Bind in Window: " + bind);
             
@@ -1042,12 +1042,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 getManager().handleShortcutBind(bind);
                 break;
             }
-        };
-        
-        // Ensure code runs asynchronously (OFF of EDT).
-        if (SwingUtilities.isEventDispatchThread())
-            CompletableFuture.runAsync(handle);
-        else handle.run();
+        });
     }
 
     /**
@@ -1377,8 +1372,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 state.on(CLOSING_MEDIA, MANUALLY_STOPPED);
                 if (state.is(PLAYER_SWING)) {
                     try {
-                        if (SwingUtilities.isEventDispatchThread()) clearImgViewer();
-                        else SwingUtilities.invokeAndWait(this::clearImgViewer);
+                        PiPAAUtils.invokeNowAndWait(this::clearImgViewer);
                     } catch (InvocationTargetException | InterruptedException e) { e.printStackTrace(); }
                 }
                 else if (mediaPlayerCanBeStopped()) {
@@ -1633,8 +1627,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         
         // Fire Media Changed on EDT
         try {
-            if (SwingUtilities.isEventDispatchThread()) this.mediaChanged();
-            else     SwingUtilities.invokeAndWait(() -> this.mediaChanged());
+            PiPAAUtils.invokeNowAndWait(this::mediaChanged);
         } catch (InvocationTargetException | InterruptedException e) {
             System.err.println("Unexpected error occurred during media change.");
             e.printStackTrace();
@@ -2013,8 +2006,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * execute immediately if already on the EDT, versus being invoked later.
      */
     public void flashBorder(final Color c) {
-        if (SwingUtilities.isEventDispatchThread()) fadingBorder.fade(c);
-        else SwingUtilities.invokeLater(() -> fadingBorder.fade(c));
+        PiPAAUtils.invokeNowOrLater(() -> fadingBorder.fade(c));
     }
         
     /**
@@ -2199,7 +2191,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         if (state.is(CLOSING)) return;
         state.on(CLOSING);
 
-        final Runnable closeCode = () -> {
+        // Ensure closing code will start execution off of EDT.
+        PiPAAUtils.invokeNowOrAsync(() -> {
             // Only attempt to close and release media if it hasn't crashed.
             if (state.not(CRASHED) && hasMedia()) mediaCommand(PiPMediaCMD.CLOSE);
             if (mediaPlayerValid()) {
@@ -2218,11 +2211,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 this.managerListener.windowClosed();
             });
             System.out.println("X> should be done with close window req.");
-        };
-
-        // Ensure code will run off EDT to start.
-        if (SwingUtilities.isEventDispatchThread()) CompletableFuture.runAsync(closeCode);
-        else closeCode.run();
+        });
     }
     
     /**
