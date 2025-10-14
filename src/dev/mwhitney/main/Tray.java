@@ -92,7 +92,7 @@ public class Tray implements PropertyListener {
     public Tray() {
         // UI Theme Properties Setup and Refresh
         setupUIThemeProperties();
-        SwingUtilities.invokeLater(() -> refreshUIThemeProperties());
+        SwingUtilities.invokeLater(this::refreshUIThemeProperties);
         
         // Setup Swing Component Peers (?) of Tray Components
         itemComps = new ArrayList<JComponent>();
@@ -143,11 +143,11 @@ public class Tray implements PropertyListener {
                     
                     // Update relevant tray buttons/states to reflect property change.
                     switch(prop) {
-                    case THEME        -> CompletableFuture.runAsync(() -> refreshUITheme());
+                    case THEME        -> CompletableFuture.runAsync(Tray.this::refreshUITheme);
                     case GLOBAL_MUTED -> SwingUtilities.invokeLater(() -> {
-                            entryGlobalMute.setChecked(propertyState(prop, Boolean.class));
-                            entryGlobalMute.setText("Global Mute " + (propertyState(prop, Boolean.class) ? "Enabled" : "Disabled"));
-                        });
+                        entryGlobalMute.setChecked(propertyState(prop, Boolean.class));
+                        entryGlobalMute.setText("Global Mute " + (propertyState(prop, Boolean.class) ? "Enabled" : "Disabled"));
+                    });
                     default           -> {}
                     }
                 }
@@ -182,8 +182,7 @@ public class Tray implements PropertyListener {
      * After performing setup, this method will add each item to the <code>menu</code>.
      */
     private void setupTrayMenuItems() {
-        final MenuItem aboutItem = new MenuItem("About", ((evt) -> {
-            System.out.println("EDT? " + SwingUtilities.isEventDispatchThread());
+        final MenuItem aboutItem = new MenuItem("About", evt ->
             TopDialog.showMsg(AppRes.APP_NAME + "\nVersion: " + AppRes.APP_BUILD + "\n\n" + String.format("""
                     Packaged with:
                     - LibVlc      [%s] (video/advanced GIF playback)
@@ -195,40 +194,40 @@ public class Tray implements PropertyListener {
                     Tray Menu Icons by:
                     Icons8 @ icons8.com
                     """, AppRes.VERS_VLC, Bin.YT_DLP.version(), Bin.GALLERY_DL.version(), Bin.FFMPEG.version(), Bin.IMGMAGICK.version()),
-                    "PiPAA Info", JOptionPane.INFORMATION_MESSAGE, TRAY_IMAGEICON_32);
-        }));
-        final MenuItem configItem = new MenuItem("Config...",   ((evt) -> SwingUtilities.invokeLater(() -> configWin.setVisible(true))));
+                    "PiPAA Info", JOptionPane.INFORMATION_MESSAGE, TRAY_IMAGEICON_32)
+        );
+        final MenuItem configItem = new MenuItem("Config...",   evt -> SwingUtilities.invokeLater(() -> configWin.setVisible(true)));
         final Menu globalItem     = new Menu("Global");
-        entryGlobalMute           = new Checkbox("Global Mute", ((evt) -> {
+        entryGlobalMute           = new Checkbox("Global Mute", evt -> {
             final Checkbox srcItem = ((Checkbox) evt.getSource());
             srcItem.setText("Global Mute " + (srcItem.getChecked() ? "Enabled" : "Disabled"));
             this.propertyChanged(PiPProperty.GLOBAL_MUTED, Boolean.toString(srcItem.getChecked()));
             SwingUtilities.invokeLater(() -> configWin.handlePropertyChange(PiPProperty.GLOBAL_MUTED));
-        }));
-        final MenuItem setAllPauseItem    = new MenuItem("Pause All Windows",  ((evt) -> this.propertyChanged(PiPProperty.SET_ALL_PAUSED, "true")));
-        final MenuItem setAllPlayItem     = new MenuItem("Play All Windows",   ((evt) -> {
+        });
+        final MenuItem setAllPauseItem    = new MenuItem("Pause All Windows",  evt -> this.propertyChanged(PiPProperty.SET_ALL_PAUSED, "true"));
+        final MenuItem setAllPlayItem     = new MenuItem("Play All Windows",   evt -> {
             // Only play all windows if Single Play Mode is disabled.
             if (!this.propertyState(PiPProperty.SINGLE_PLAY_MODE, Boolean.class))
                 this.propertyChanged(PiPProperty.SET_ALL_PAUSED, "false");
-        }));
-        final MenuItem setAllMuteItem     = new MenuItem("Mute All Windows",   ((evt) -> this.propertyChanged(PiPProperty.SET_ALL_MUTED,  "true")));
-        final MenuItem setAllUnmuteItem   = new MenuItem("Unmute All Windows", ((evt) -> this.propertyChanged(PiPProperty.SET_ALL_MUTED, "false")));
-        final MenuItem setAllVolumeItem   = new MenuItem("Volume for All Windows...", ((evt) -> {
+        });
+        final MenuItem setAllMuteItem     = new MenuItem("Mute All Windows",   evt -> this.propertyChanged(PiPProperty.SET_ALL_MUTED,  "true"));
+        final MenuItem setAllUnmuteItem   = new MenuItem("Unmute All Windows", evt -> this.propertyChanged(PiPProperty.SET_ALL_MUTED, "false"));
+        final MenuItem setAllVolumeItem   = new MenuItem("Volume for All Windows...", evt -> {
             final String userInput = TopDialog.showInput("Set volume for all windows to...\nEx: 75");
             this.propertyChanged(PiPProperty.SET_ALL_VOLUME, userInput);
-        }));
-        final MenuItem setAllPlaybackItem = new MenuItem("Playback Rate for All Windows...", ((evt) -> {
+        });
+        final MenuItem setAllPlaybackItem = new MenuItem("Playback Rate for All Windows...", evt -> {
             final String userInput = TopDialog.showInput("Set playback rate for all windows to...\nEx: 1.50");
             this.propertyChanged(PiPProperty.SET_ALL_PLAYBACK_RATE, userInput);
-        }));
-        final MenuItem minAllWindowsItem  = new MenuItem("Minimize All Windows", ((evt) -> listener.minimizeWindows()));
-        final MenuItem restAllWindowsItem = new MenuItem("Restore All Windows",  ((evt) -> listener.restoreWindows()));
-        final MenuItem hideAllWindowsItem = new MenuItem("Hide All Windows",     ((evt) -> listener.hideWindows()));
-        final MenuItem showAllWindowsItem = new MenuItem("Show All Windows",     ((evt) -> listener.showWindows()));
-        final MenuItem addItem            = new MenuItem("Add Window",    ((evt) -> listener.addWindow()));
-        final MenuItem removeItem         = new MenuItem("Remove Window", ((evt) -> listener.removeWindow()));
-        final MenuItem clearItem          = new MenuItem("Clear Windows", ((evt) -> listener.clearWindows()));
-        final MenuItem exitItem           = new MenuItem("Exit",          ((evt) -> {
+        });
+        final MenuItem minAllWindowsItem  = new MenuItem("Minimize All Windows", evt -> listener.minimizeWindows());
+        final MenuItem restAllWindowsItem = new MenuItem("Restore All Windows",  evt -> listener.restoreWindows());
+        final MenuItem hideAllWindowsItem = new MenuItem("Hide All Windows",     evt -> listener.hideWindows());
+        final MenuItem showAllWindowsItem = new MenuItem("Show All Windows",     evt -> listener.showWindows());
+        final MenuItem addItem            = new MenuItem("Add Window",           evt -> listener.addWindow());
+        final MenuItem removeItem         = new MenuItem("Remove Window",        evt -> listener.removeWindow());
+        final MenuItem clearItem          = new MenuItem("Clear Windows",        evt -> listener.clearWindows());
+        final MenuItem exitItem           = new MenuItem("Exit",                 evt -> {
             // Exit/Close Application
             listener.applicationClosing();
             tray.shutdown(() -> System.exit(0));
@@ -242,7 +241,7 @@ public class Tray implements PropertyListener {
              * Therefore, the tray icon properly goes away on its own now without having to hover over it after exit.
              * However, this is just a partial, temporary improvement. The other issues described above remain, which must be fixed.
              */
-        }));
+        });
         
         // Context Menu Item Configuration
         // Context Menu Item Icon Mappings
