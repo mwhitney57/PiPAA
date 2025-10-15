@@ -11,6 +11,7 @@ import dev.mwhitney.listeners.simplified.MouseClickListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
 import dev.mwhitney.util.InputSequence;
+import dev.mwhitney.util.InputSequence.Order;
 import dev.mwhitney.util.PiPAAUtils;
 
 /**
@@ -124,6 +125,10 @@ public class NumericalInputPopup extends SelectionPopup {
             }
             // Intentional close.
             case KeyEvent.VK_ESCAPE -> close();
+            // Remove last digit.
+            case KeyEvent.VK_BACK_SPACE -> keyIntValue = -5;
+            // Remove leading non-zero digit.
+            case KeyEvent.VK_DELETE     -> keyIntValue = -4;
             // Decrement/Increment shown value.
             case KeyEvent.VK_DOWN, KeyEvent.VK_LEFT -> keyIntValue = -3;
             case KeyEvent.VK_UP,  KeyEvent.VK_RIGHT -> keyIntValue = -2;
@@ -140,8 +145,24 @@ public class NumericalInputPopup extends SelectionPopup {
             case KeyEvent.VK_9, KeyEvent.VK_NUMPAD9 -> keyIntValue = 9;
             }
             
+            // Adjust the sequence depending on the pressed key.
+            switch (keyIntValue) {
+            // Backspace – Remove last digit (rightmost).
+            case -5 -> sequence.inWithOrder(0, Order.REVERSE);
+            // Delete – Remove leading (leftmost) non-zero digit.
+            case -4 -> {
+                // Get current sequence.
+                final Integer[] seq = sequence.getSequence();
+                // Finds the first non-zero value from left → right.
+                for (int i = 0; i < seq.length; i++) {
+                    if (seq[i] != 0) {
+                        sequence.set(0, i); // Set that index's value to zero.
+                        break;
+                    }
+                }
+            }
             // Granular arrow key adjustments to value.
-            if (/* Decrement */ keyIntValue == -3 || /* Increment */ keyIntValue == -2) {
+            case -3, -2 -> {
                 final int current  = PiPAAUtils.appendInts(sequence.getSequence());
                 // Adjust current value, restricted to bounds of possible values. 
                 final int number   = keyIntValue == -3 ? current - 1 : current + 1;
@@ -164,9 +185,9 @@ public class NumericalInputPopup extends SelectionPopup {
                     digiIndex++;                        // Increment through digits index.
                 }
             }
-            else if (keyIntValue == -1) return; // No valid input.
-            // Valid specific input. Input value into sequence.
-            else this.sequence.in(keyIntValue);
+            case -1 -> { return; }                      // No valid input.
+            default -> this.sequence.in(keyIntValue);   // Valid specific input. Use raw value.
+            }
             // Refresh buttons to ensure they have the latest sequence data and are displaying it.
             refreshButtonsDisplay();
         });
