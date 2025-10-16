@@ -557,15 +557,24 @@ public class PiPMedia {
     
     @Override
     public String toString() {
-        return String.format("%s (%s)%n%14s: %s%n%14s: %s%n%14s: %s%n%14s: %s%n%14s: %s%n%14s: %s%n%14s: %s%n---- %s",
-                "Media", (hasAttributes() ? "Has Attributes" : "No Attributes"),
-                "Src", Objects.toString(this.src, "NONE"),
-                "Cache Src", Objects.toString(this.cacheSrc, "NONE"),
-                "Trim Src", Objects.toString(this.trimSrc, "NONE"),
-                "Conversion Src", Objects.toString(this.convSrc, "NONE"),
-                "Is Loading", this.loading,
-                "Del. on Close", this.markedForDeletion,
-                "Attributed", this.attributed,
+        return String.format("""
+                Media (%s)
+                           Src: %s
+                     Cache Src: %s
+                      Trim Src: %s
+                Conversion Src: %s
+                    Is Loading: %s
+                 Del. on Close: %s
+                    Attributed: %s%n%s
+                """,
+                hasAttributes() ? "Has Attributes" : "No Attributes",
+                Objects.toString(this.src,      "NONE"),
+                Objects.toString(this.cacheSrc, "NONE"),
+                Objects.toString(this.trimSrc,  "NONE"),
+                Objects.toString(this.convSrc,  "NONE"),
+                this.loading,
+                this.markedForDeletion,
+                this.attributed,
                 Objects.toString(getAttributes(), ""));
     }
 }

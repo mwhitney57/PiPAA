@@ -1,8 +1,10 @@
 package dev.mwhitney.util;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
@@ -49,6 +51,61 @@ public class PiPAAUtils {
      */
     public static String slashFix(final String path) {
         return path.replace('/', '\\');
+    }
+    
+    /**
+     * Neatly converts the passed {@link Dimension} to a String using
+     * {@link #toStringSize(int, int)}.
+     * <p>
+     * This method is useful since the default {@link Dimension#toString()}
+     * representation is not user-friendly.
+     * 
+     * @param d - the {@link Dimension} to neatly convert to a String.
+     * @return a String representation of the {@link Dimension}, or a placeholder
+     *         String if the passed object is <code>null</code>.
+     * @since 0.9.5
+     */
+    public static String toString(Dimension d) {
+        if (d == null) return "NONE";
+        return toStringSize(d.width, d.height);
+    }
+    
+    /**
+     * Neatly formats the passed width and height integers into a String.
+     * <p>
+     * The returned String is formatted as follows:
+     * <pre>
+     * (width, height)
+     * </pre>
+     * 
+     * @param width  - an int with the width value.
+     * @param height - an int with the height value.
+     * @return a String representation of the size.
+     * @since 0.9.5
+     */
+    public static String toStringSize(int width, int height) {
+        return "(" + width + ", " + height + ")";
+    }
+    
+    /**
+     * Converts the passed long of milliseconds to an hours, minutes, and seconds
+     * String with the following format:
+     * <pre>
+     * HOURS:MINUTES:SECONDS
+     * e.g. 01:54:23
+     * </pre>
+     * If there are no hours, that section will be omitted from the final String.
+     * 
+     * @param milliseconds - the long with the number of milliseconds.
+     * @return the formatted HMS String that represents the millisecond amount.
+     * @since 0.9.5
+     */
+    public static String toStringHMS(long milliseconds) {
+        final Duration duration = Duration.ofMillis(milliseconds);
+        final long hours   = duration.toHours();
+        final long minutes = duration.toMinutesPart();
+        final long seconds = duration.toSecondsPart();
+        return hours == 0 ? String.format("%02d:%02d", minutes, seconds) : String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
     
     /**

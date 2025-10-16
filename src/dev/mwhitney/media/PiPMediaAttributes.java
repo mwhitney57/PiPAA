@@ -5,6 +5,7 @@ import java.awt.Toolkit;
 import java.util.Objects;
 
 import dev.mwhitney.listeners.AttributeUpdateListener;
+import dev.mwhitney.util.PiPAAUtils;
 
 /**
  * The type of PiPMedia playing within the PiPWindow.
@@ -702,15 +703,24 @@ public class PiPMediaAttributes {
     
     @Override
     public String toString() {
-        return String.format("%s'%s'%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%s",
-                "Media Attributes for ", Objects.toString(this.title, "NONE"),
-                "File Extension", Objects.toString(this.fileExtension, "NONE"),
-                "Type", Objects.toString(this.type, "NONE"),
-                "Source Type", Objects.toString(this.srcType, "NONE"),
-                "Source Platform", Objects.toString(this.srcPlatform, "NONE"),
-                "Size", Objects.toString(this.size, "NONE"),
-                "Size Ratio", Objects.toString(this.sizeRatio, "NONE"),
-                "Adv. GIF Playback", this.usesAdvGIFPlayback,
-                Objects.toString(this.wmf, ""));
+        return String.format("""
+                ---- Media Attributes for '%s'
+                      File Extension: %s
+                                Type: %s
+                         Source Type: %s
+                     Source Platform: %s
+                                Size: %s
+                          Size Ratio: %s
+                   Adv. GIF Playback: %s%n%s
+                """,
+                Objects.toString(this.title,         "NONE"),
+                Objects.toString(this.fileExtension, "NONE"),
+                Objects.toString(this.type,          "NONE"),
+                Objects.toString(this.srcType,       "NONE"),
+                Objects.toString(this.srcPlatform,   "NONE"),
+                PiPAAUtils.toString(this.size),
+                Objects.toString(this.sizeRatio,     "NONE"),
+                this.usesAdvGIFPlayback,
+                Objects.toString(this.wmf,           ""));
     }
 }

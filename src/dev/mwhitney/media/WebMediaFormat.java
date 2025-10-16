@@ -297,15 +297,25 @@ public class WebMediaFormat {
     
     @Override
     public String toString() {
-        return String.format("%s'%s'%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s%n%20s: %s",
-                "---- Web Media Format for ", Objects.toString(title(), "NONE"),
-                "ID", Objects.toString(id(), "NONE"),
-                "Src", Objects.toString(src(), "NONE"),
-                "File Extension", Objects.toString(extension(), "NONE"),
-                "Format", Objects.toString(format(), "NONE"),
-                "Quality", Objects.toString(resolution(), "NONE"),
-                "Playlist Item", (isItem() ? item() : "N/A"),
-                "Audio Only", Objects.toString(audioOnly(), "NONE"),
-                "Used Cookies", Objects.toString(usedCookies(), "NONE"));
+        return String.format("""
+                ---- Web Media Format for '%s'
+                                  ID: %s
+                                 Src: %s
+                      File Extension: %s
+                              Format: %s
+                             Quality: %s
+                       Playlist Item: %s
+                          Audio Only: %s
+                        Used Cookies: %s
+                """,
+                Objects.toString(title(),       "NONE"),
+                Objects.toString(id(),          "NONE"),
+                Objects.toString(src(),         "NONE"),
+                Objects.toString(extension(),   "NONE"),
+                Objects.toString(format(),      "NONE"),
+                Objects.toString(resolution(),  "NONE"),
+                isItem() ?       item()    :    "N/A",
+                Objects.toString(audioOnly(),   "NONE"),
+                Objects.toString(usedCookies(), "NONE"));
     }
 }

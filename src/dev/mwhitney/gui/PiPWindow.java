@@ -2321,10 +2321,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         
         // Debug Info First (if requested)
         if (debug) {
-            info.append("   Frame Size: ").append(PiPWindow.this.getSize()).append("\n")
-                .append("ContPane Size: ").append(contentPane.getSize()).append("\n")
-                .append(" VidComp Size: ").append(mediaPlayer.videoSurfaceComponent().getSize()).append("\n")
-                .append("ImgLabel Size: ").append(imgLabel.getSize()).append("\n\n")
+            info.append("Borderless Size: ").append(PiPAAUtils.toStringSize(getInnerWidth(), getInnerHeight())).append("\n")
+                .append("     Frame Size: ").append(PiPAAUtils.toString(PiPWindow.this.getSize())).append("\n")
+                .append("  ContPane Size: ").append(PiPAAUtils.toString(contentPane.getSize())).append("\n")
+                .append("   VidComp Size: ").append(PiPAAUtils.toString(mediaPlayer.videoSurfaceComponent().getSize())).append("\n")
+                .append("  ImgLabel Size: ").append(PiPAAUtils.toString(imgLabel.getSize())).append("\n\n")
                 .append(state.toString()).append("\n\n");
             for (final String line : info.toString().split("\n")) {
                 if (line.length() > longestDebugLine)
@@ -2344,6 +2345,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 final AudioTrackInfo track = (tracks != null && tracks.size() > 0 ? tracks.get(0) : null);
                 if (track != null) {
                     info
+                    .append("Duration: ").append(PiPAAUtils.toStringHMS(mediaPlayer.mediaPlayer().media().info().duration())).append("\n")
                     .append("Quality: ").append(track.bitRate()/1000).append(" kbps").append("\n")
                     .append("Codec: ").append(track.codecDescription()).append("\n");
                 }
@@ -2364,7 +2366,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 final VideoTrackInfo track = (tracks != null && tracks.size() > 0 ? tracks.get(0) : null);
                 if (track != null) {
                     final int qualityX = track != null ? track.width() : -1, qualityY = track != null ? track.height() : -1;
-                    info.append("Quality: ").append((qualityX == -1 ? "Err" : qualityX) + "x" + (qualityY == -1 ? "Err" : qualityY))
+                    info.append("Duration: ").append(PiPAAUtils.toStringHMS(mediaPlayer.mediaPlayer().media().info().duration())).append("\n")
+                    .append("Quality: ").append((qualityX == -1 ? "Err" : qualityX) + "x" + (qualityY == -1 ? "Err" : qualityY))
                     .append(" @ ").append(String.format("%.2f", ((float) track.frameRate() / track.frameRateBase()))).append(" FPS\n")
                     .append("Codec: ").append(track.codecDescription()).append("\n")
                     .append("Bitrate: ").append(track.bitRate()).append(" kbps").append("\n");
