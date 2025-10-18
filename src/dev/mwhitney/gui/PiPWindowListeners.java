@@ -68,7 +68,7 @@ import dev.mwhitney.media.attribution.PiPAttributeRequestListener;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaCMD;
-import dev.mwhitney.media.attribution.PiPMediaAttributor.Flag;
+import dev.mwhitney.media.attribution.AttributionFlag;
 import dev.mwhitney.media.exceptions.InvalidTransferMediaException;
 import dev.mwhitney.properties.PiPProperty;
 import dev.mwhitney.properties.PiPProperty.PropDefault;
@@ -497,7 +497,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             // Only prompt the user for artwork replacement if on the first file and the window has attributed, artwork-supporting media. 
             if (f == 0 && get().hasAttributedMedia() && MediaExt.supportsArtwork(get().getMedia().getAttributes().getFileExtension())) {
                 // Perform quick attribution and only continue if the file media is supported as artwork.
-                final PiPMediaAttributes attributes = get().getListener().requestAttributes(getMediaFromFile(droppedFile, fileInTemp), Flag.QUICK);
+                final PiPMediaAttributes attributes = get().getListener().requestAttributes(getMediaFromFile(droppedFile, fileInTemp), AttributionFlag.QUICK);
                 if (MediaExt.supportedAsArtwork(attributes.getFileExtension())) {
                     // Prompt user to either replace artwork or open media.
                     final UnsetBool replaceArtwork = new UnsetBool();
@@ -693,7 +693,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     @Override
     public PiPWindow handoff(PiPMedia media)    { return get().getListener().handoff(media); }
     @Override
-    public PiPMediaAttributes requestAttributes(PiPMedia media, Flag... flags) { return get().getListener().requestAttributes(media, flags); }
+    public PiPMediaAttributes requestAttributes(PiPMedia media, AttributionFlag... flags) { return get().getListener().requestAttributes(media, flags); }
     @Override
     public void handleShortcutBind(BindDetails<?> bind) {
         // Null safety check.

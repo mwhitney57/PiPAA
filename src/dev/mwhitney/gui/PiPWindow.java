@@ -73,7 +73,7 @@ import dev.mwhitney.media.PiPMediaCMD;
 import dev.mwhitney.media.PiPMediaCMDArgs;
 import dev.mwhitney.media.WebMediaFormat;
 import dev.mwhitney.media.WebMediaFormat.FORMAT;
-import dev.mwhitney.media.attribution.PiPMediaAttributor.Flag;
+import dev.mwhitney.media.attribution.AttributionFlag;
 import dev.mwhitney.media.exceptions.InvalidMediaException;
 import dev.mwhitney.media.exceptions.MediaModificationException;
 import dev.mwhitney.properties.PiPProperty;
@@ -919,7 +919,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     // Standard Method -- Takes slightly longer but results in a more accurate/readable file name.
                     else {
                         final PiPMedia mediaCopy = new PiPMedia(media.getSrc());
-                        if (updateMediaAttributes(mediaCopy, Flag.RAW_ATTRIBUTION)) {
+                        if (updateMediaAttributes(mediaCopy, AttributionFlag.RAW_ATTRIBUTION)) {
                             titleStatusUpdate("[Caching...]");
                             if (setRemoteMedia(mediaCopy.getSrc(), mediaCopy, true, true) != null) {
                                 flashBorder(BORDER_OK);
@@ -1480,17 +1480,17 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     
     /**
      * Updates the passed media's attributes by attempting to attribute them. Raw
-     * attribution can be requested via {@link Flag#RAW_ATTRIBUTION}, which ignores
+     * attribution can be requested via {@link AttributionFlag#RAW_ATTRIBUTION}, which ignores
      * user configuration and attempts to attribute the raw media as is (no
      * pre-conversions). This method will return a boolean value which is only
      * <code>false</code> if media attribution failed.
      * 
      * @param media - the PiPMedia to attribute.
-     * @param flags - any number of attribution {@link Flag} values.
+     * @param flags - any number of attribution {@link AttributionFlag} values.
      * @return <code>true</code> if attribution succeeded; <code>false</code>
      *         otherwise.
      */
-    private boolean updateMediaAttributes(PiPMedia media, Flag... flags) {
+    private boolean updateMediaAttributes(PiPMedia media, AttributionFlag... flags) {
         if (!media.isAttributed()) {
             // Setup Attribute Listener then Request Attribution of Media.
             media.setAttributeUpdateListener(listeners.attributeListener());

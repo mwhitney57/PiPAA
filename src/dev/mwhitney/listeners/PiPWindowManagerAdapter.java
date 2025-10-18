@@ -3,8 +3,8 @@ package dev.mwhitney.listeners;
 import dev.mwhitney.gui.PiPWindow;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
+import dev.mwhitney.media.attribution.AttributionFlag;
 import dev.mwhitney.media.attribution.PiPAttributeRequestListener;
-import dev.mwhitney.media.attribution.PiPMediaAttributor.Flag;
 
 /**
  * An adapter for the {@link PiPWindowManagerListener} and other related listeners.
@@ -25,5 +25,5 @@ public abstract class PiPWindowManagerAdapter implements PiPWindowManagerListene
     @Override
     public void windowMediaCrashed() {}
     @Override
-    public PiPMediaAttributes requestAttributes(PiPMedia media, Flag... flags) { return null; }
+    public PiPMediaAttributes requestAttributes(PiPMedia media, AttributionFlag... flags) { return null; }
 }
