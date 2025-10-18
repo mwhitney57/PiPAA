@@ -11,12 +11,13 @@ import javax.imageio.ImageIO;
 import org.apache.commons.io.FilenameUtils;
 
 import dev.mwhitney.gui.decor.CroppedBufferedImage;
-import dev.mwhitney.listeners.AttributeUpdateAdapter;
-import dev.mwhitney.listeners.AttributeUpdateListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.Initializer;
 import dev.mwhitney.media.PiPMediaAttributes.TYPE;
+import dev.mwhitney.media.attribution.AttributeUpdateAdapter;
+import dev.mwhitney.media.attribution.AttributeUpdateListener;
+import dev.mwhitney.media.attribution.PiPMediaAttributor;
 import dev.mwhitney.media.exceptions.MediaModificationException;
 import dev.mwhitney.properties.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.resources.AppRes;

@@ -1,4 +1,4 @@
-package dev.mwhitney.media;
+package dev.mwhitney.media.attribution;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -16,6 +16,11 @@ import dev.mwhitney.listeners.PiPSupplier;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
 import dev.mwhitney.main.CFExec;
+import dev.mwhitney.media.MediaExt;
+import dev.mwhitney.media.MediaURL;
+import dev.mwhitney.media.PiPMedia;
+import dev.mwhitney.media.PiPMediaAttributes;
+import dev.mwhitney.media.WebMediaFormat;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_PLATFORM;
 import dev.mwhitney.media.PiPMediaAttributes.SRC_TYPE;
 import dev.mwhitney.media.PiPMediaAttributes.TYPE;

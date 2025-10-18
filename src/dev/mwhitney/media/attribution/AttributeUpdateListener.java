@@ -1,4 +1,4 @@
-package dev.mwhitney.listeners;
+package dev.mwhitney.media.attribution;
 
 /**
  * A listener for notifying objects when media attributes are updated.

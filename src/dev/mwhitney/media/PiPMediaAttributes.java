@@ -4,7 +4,8 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.util.Objects;
 
-import dev.mwhitney.listeners.AttributeUpdateListener;
+import dev.mwhitney.media.attribution.AttributeUpdateListener;
+import dev.mwhitney.media.attribution.PiPMediaAttributor;
 import dev.mwhitney.util.PiPAAUtils;
 
 /**
@@ -694,8 +695,10 @@ public class PiPMediaAttributes {
     }
     
     /**
-     * Sets the AttributeUpdateListener which fires when certain attributes are updated.
-     * @param aul - the new AttributeUpdateListener.
+     * Sets the {@link AttributeUpdateListener} which fires when certain attributes
+     * are updated.
+     * 
+     * @param aul - the new {@link AttributeUpdateListener}.
      */
     public void setAttributeUpdateListener(AttributeUpdateListener aul) {
         this.listener = aul;

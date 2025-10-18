@@ -1,8 +1,9 @@
-package dev.mwhitney.listeners;
+package dev.mwhitney.media.attribution;
 
+import dev.mwhitney.listeners.PiPListener;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
-import dev.mwhitney.media.PiPMediaAttributor.Flag;
+import dev.mwhitney.media.attribution.PiPMediaAttributor.Flag;
 
 /**
  * An interface for requesting attributes for media.

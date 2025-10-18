@@ -1,4 +1,4 @@
-package dev.mwhitney.listeners;
+package dev.mwhitney.media.attribution;
 
 /**
  * An adapter for the {@link AttributeUpdateListener}.
