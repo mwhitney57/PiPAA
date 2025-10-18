@@ -27,7 +27,7 @@ import dev.mwhitney.listeners.WindowFocusGainedListener;
 import dev.mwhitney.main.CFExec;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
-import dev.mwhitney.media.attribution.AttributionFlag;
+import dev.mwhitney.media.attribution.AttributionRequest;
 import dev.mwhitney.media.attribution.PiPMediaAttributor;
 import dev.mwhitney.media.exceptions.InvalidMediaException;
 import dev.mwhitney.properties.PiPProperty;
@@ -157,9 +157,9 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
                 }
                 
                 @Override
-                public PiPMediaAttributes requestAttributes(PiPMedia media, AttributionFlag... flags) {
+                public PiPMediaAttributes requestAttributes(AttributionRequest req) {
                     try {
-                        return PiPWindowManager.this.attributor.determineAttributes(media, flags);
+                        return PiPWindowManager.this.attributor.determineAttributes(req);
                     } catch (InvalidMediaException ime) { System.err.println(ime.getMessage()); }
                     return null;
                 }

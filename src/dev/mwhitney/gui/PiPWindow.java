@@ -1101,7 +1101,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                         args[0] = cacheFileGuess;
                         media.setSrc(args[0]);
                         media.setCacheSrc(args[0]);
-                        media.setAttributes(managerListener.requestAttributes(new PiPMedia(args[0])));
+                        media.setAttributes(managerListener.requestAttributes(PiPWindow.this, new PiPMedia(args[0])));
                     }
                     // Set as cache source if true -- allows for user deletion of media via shortcut.
                     if (media.isFromCache()) media.setCacheSrc(media.getSrc());
@@ -1494,7 +1494,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         if (!media.isAttributed()) {
             // Setup Attribute Listener then Request Attribution of Media.
             media.setAttributeUpdateListener(listeners.attributeListener());
-            media.setAttributes(managerListener.requestAttributes(media, flags));
+            media.setAttributes(managerListener.requestAttributes(PiPWindow.this, media, flags));
             if (!media.hasAttributes()) {
                 // Failed getting attributes. Cancel setting and playing of PiPMedia.
                 System.err.println("Cancelled attempt to set media: Attributor failed or returned invalid data.");

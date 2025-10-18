@@ -72,13 +72,16 @@ public class PiPMediaAttributor implements PropertyListener {
     /**
      * Determines the attributes for the passed {@link PiPMedia}.
      * 
-     * @param media - the {@link PiPMedia} to determine attributes for.
-     * @param flags - any {@link AttributionFlag} values for the attribution process.
+     * @param req - the {@link AttributionRequest} with data on the attribution
+     *            request.
      * @return a set of {@link PiPMediaAttributes} for the passed media.
      * @throws InvalidMediaException if there was an error with the passed media or
      *                               during attribution of it.
      */
-    public PiPMediaAttributes determineAttributes(PiPMedia media, AttributionFlag... flags) throws InvalidMediaException {
+    public PiPMediaAttributes determineAttributes(AttributionRequest req) throws InvalidMediaException {
+        final Object link = req.src();
+        final PiPMedia media = req.media();
+        AttributionFlag[] flags = req.flags();
         // Set flags default to be a full attribution.
         if (flags == null || flags.length == 0) flags = new AttributionFlag[] { AttributionFlag.FULL };
         
