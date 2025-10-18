@@ -14,7 +14,6 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
@@ -62,6 +61,7 @@ import dev.mwhitney.gui.viewer.ZoomPanSnapshot;
 import dev.mwhitney.listeners.ManagerFetcher;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.StartEndListener;
+import dev.mwhitney.listeners.WindowClosingListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
@@ -156,7 +156,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     /** This window's minimum media size. This differs from the usual minimum size, as it adapts to lower values if necessary to accommodate smaller media. */
     private Dimension minMediaSize = new Dimension(DEFAULT_MIN_MEDIA_SIZE);
     /** Manages user resizing of this window, despite its undecorated state. */
-    private ComponentResizer cr;
+    private final ComponentResizer cr;
 
     /** The vlcj Media Player Component object. */
     private EmbeddedMediaPlayerComponent mediaPlayer;
@@ -166,7 +166,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      */
     private volatile PiPMedia media;
     /** A boolean which is true when the current media is being saved. */
-    private PiPWindowState state;
+    private final PiPWindowState state = new PiPWindowState();
     
     /** This window's content pane. */
     private JPanel contentPane;
@@ -178,18 +178,30 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     private ZoomPanSnapshot imgSnapshotNorm = ZoomPanSnapshot.DEFAULT;
     /** The last zoom and pan snapshot taken of the image icon, shown in the Swing image viewer, while in Fullscreen mode. */
     private ZoomPanSnapshot imgSnapshotFull = ZoomPanSnapshot.DEFAULT;
+    /** The text field shown when no media is loaded to communicate with the user. */
+    private JTextField textField;
     /** The default text to reset the text field to. */
     private static final String DEFAULT_FIELD_TXT    = "Drop media here...";
     /** The text font used in the text field. */
     private static final Font DEFAULT_FIELD_TXT_FONT = new Font(Font.DIALOG, Font.ITALIC, 20);
-    /** The text field shown when no media is loaded to communicate with the user. */
-    private JTextField textField;
     /** The Timer responsible for resetting the text field's text after a set interval. */
-    private Timer textResetTimer;
+    private final Timer textResetTimer;
     /** The FadingLineBorder bordering the content pane which can show itself and fade back to transparency. */
-    private FadingLineBorder fadingBorder;
+    private final FadingLineBorder fadingBorder = new FadingLineBorder(BORDER_NORMAL, BORDER_SIZE) {
+        /** The randomly-generated serial UID for the FadingLineBorder class. */
+        private static final long serialVersionUID = 616805148296397651L;
+        @Override
+        public void requestPaint() { contentPane.repaint(); }
+    };
     /** An object for retrieving presets of various listeners used by PiPWindows. */
-    private PiPWindowListeners listeners;
+    private final PiPWindowListeners listeners = new PiPWindowListeners() {
+        @Override
+        public PiPWindow get() { return PiPWindow.this; }
+        @Override
+        public <C> void sendMediaCMD(PiPMediaCMD cmd, @SuppressWarnings("unchecked") C... args) {
+            if (cmd != null) mediaCommand(cmd, args);
+        }
+    };
     /**
      * A {@link PiPWindowManagerAdapter}, set by the manager of this PiPWindow for
      * receiving communication from this instance.
@@ -203,33 +215,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     public PiPWindow() {
         super();
 
-        // Initialize Window State
-        this.state = new PiPWindowState();
-
-        // Listeners
-        this.listeners = new PiPWindowListeners() {
-            @Override
-            public PiPWindow get() { return PiPWindow.this; }
-            @Override
-            public <C> void sendMediaCMD(PiPMediaCMD cmd, @SuppressWarnings("unchecked") C... args) {
-                if (cmd != null) mediaCommand(cmd, args);
-            }
-        };
-        
         // Warn if manager is not valid for some reason.
         if (!hasManager()) System.err.println("<!> Critical error: Window doesn't have accessible manager during construction.");
 
         // Media Player -- Start with MediaPlayerFactory to provide audio separation fix option.
         setupMediaPlayer();
-        
-        // Setup Fading Border for Content Pane
-        fadingBorder = new FadingLineBorder(BORDER_NORMAL, BORDER_SIZE) {
-            /** The randomly-generated serial UID for the FadingLineBorder class. */
-            private static final long serialVersionUID = 616805148296397651L;
-            
-            @Override
-            public void requestPaint() { contentPane.repaint(); }
-        };
         
         // Establish Permanent Locked Hooks
         state.hook(LOCKED_SIZE, true,  (PermanentRunnable) () ->
@@ -321,20 +311,17 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         this.setUndecorated(true);
         this.setBackground(TRANSPARENT_BG);
         this.setIconImage(ICON_NORMAL);
-        this.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                // Ensure PiPWindow is closed properly even if initiated unconventionally.
-                if (state.not(CLOSING)) requestClose();
-            }
+        this.addWindowListener((WindowClosingListener) e -> {
+            // Ensure PiPWindow is closed properly even if initiated unconventionally.
+            if (state.not(CLOSING)) requestClose();
         });
         
         /* 
          * Clear Key/Mouse Inputs and Tracker Data When Focus is Lost -- Prevents Lingering Inputs from Lack of "Released" Calls.
          * Also prevents two windows from having their received inputs be considered together as potentially consecutive.
          */
-        this.addWindowFocusListener((WindowFocusLostListener) (e) ->
-            CompletableFuture.runAsync(() -> PiPWindow.this.managerListener.get().getController().clearAllInputs().clearTrackers())
+        this.addWindowFocusListener((WindowFocusLostListener) e ->
+            CompletableFuture.runAsync(PiPWindow.this.managerListener.get().getController().clearAllInputs()::clearTrackers)
         );
 
         // Add Text Field (not Media Player yet), then Set Content Pane and Show
@@ -1908,7 +1895,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 @Override
                 public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindow.this.propertyState(prop, rtnType); }
             };
-        else throw new InvalidMediaException("Neither image source option is valid.");
+        else throw new InvalidMediaException("Cannot set image viewer source: Neither image source option is valid.");
             
         state.on(RESIZING);
         media.getAttributes().setSize(imgLabelIcon.getImgWidth(), imgLabelIcon.getImgHeight());
