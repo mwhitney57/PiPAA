@@ -64,11 +64,11 @@ import dev.mwhitney.media.MediaExt;
 import dev.mwhitney.media.MediaFlavorPicker;
 import dev.mwhitney.media.MediaFlavorPicker.MediaFlavor;
 import dev.mwhitney.media.attribution.AttributeUpdateListener;
-import dev.mwhitney.media.attribution.PiPAttributeRequestListener;
+import dev.mwhitney.media.attribution.AttributionFlag;
+import dev.mwhitney.media.attribution.AttributeRequestListener;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaCMD;
-import dev.mwhitney.media.attribution.AttributionFlag;
 import dev.mwhitney.media.exceptions.InvalidTransferMediaException;
 import dev.mwhitney.properties.PiPProperty;
 import dev.mwhitney.properties.PiPProperty.PropDefault;
@@ -84,7 +84,7 @@ import dev.mwhitney.util.selection.ReloadSelection.ReloadSelections;
  * 
  * @author mwhitney57
  */
-public abstract class PiPWindowListeners implements PiPWindowListener, PiPCommandListener, PiPMediaTransferListener, PiPHandoffListener, PiPAttributeRequestListener, BindHandler {
+public abstract class PiPWindowListeners implements PiPWindowListener, PiPCommandListener, PiPMediaTransferListener, PiPHandoffListener, AttributeRequestListener, BindHandler {
     /** A DataFlavor containing a web URL. */
     private DataFlavor flavorWebURL;
     
