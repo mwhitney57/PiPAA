@@ -485,6 +485,35 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
     public PiPWindow getWindow(int index) {
         return (index >= 0 && index < windowCount()) ? this.windows.get(index) : null;
     }
+    
+    /**
+     * Gets the window's number, which is derived from, but not equal to, its index.
+     * <p>
+     * The window's number is a positive integer (1 or greater) which identifies the
+     * window numerically. The higher the number, the newer the window is.
+     * <p>
+     * Any closing, crashed, or otherwise invalid windows are ignored during the
+     * numbering process. Similarly, if the passed window is invalid, a value of
+     * {@code -1} will be returned.
+     * 
+     * @param window - the {@link PiPWindow} whose number is to be retrieved.
+     * @return the window's number, or {@code -1} if the passed window is invalid.
+     */
+    public int getWindowNumber(PiPWindow window) {
+        // Return -1 if window is null, not in the list, or invalid.
+        if (window == null) return -1;
+        final int startIndex = this.windows.indexOf(window);
+        if (startIndex == -1 || window.state().any(StateProp.CLOSING, StateProp.CLOSED, StateProp.CRASHED)) return -1;
+        
+        // Get and return the window's valid number.
+        return (int) this.windows.stream()
+                // Trims and ignores elements AFTER target window, making it the last element.
+                .limit(startIndex + 1)
+                // Filters out invalid windows that precede the passed window.
+                .filter(w -> w != null && w.state().not(StateProp.CLOSING, StateProp.CLOSED, StateProp.CRASHED))
+                // Gets the last number, which is the target window.
+                .count();
+    }
 
     /**
      * Returns the size of the PiPWindow list. The list contains each and every

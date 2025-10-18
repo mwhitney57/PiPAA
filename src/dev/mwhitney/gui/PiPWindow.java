@@ -2173,7 +2173,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * the PiPListener provided by the window's manager.
      */
     public void closeWindow() {
-        System.out.println("> close window req. received");
+        System.out.println("> close window req. received for win: " + getManager().getWindowNumber(this));
         // Do not execute closing code if window has already been closed.
         if (state.is(CLOSING)) return;
         state.on(CLOSING);
@@ -2308,7 +2308,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         
         // Debug Info First (if requested)
         if (debug) {
-            info.append("Borderless Size: ").append(PiPAAUtils.toStringSize(getInnerWidth(), getInnerHeight())).append("\n")
+            info.append("PiPWindow <").append(getManager().getWindowNumber(this)).append(">\n")
+                .append("Borderless Size: ").append(PiPAAUtils.toStringSize(getInnerWidth(), getInnerHeight())).append("\n")
                 .append("     Frame Size: ").append(PiPAAUtils.toString(PiPWindow.this.getSize())).append("\n")
                 .append("  ContPane Size: ").append(PiPAAUtils.toString(contentPane.getSize())).append("\n")
                 .append("   VidComp Size: ").append(PiPAAUtils.toString(mediaPlayer.videoSurfaceComponent().getSize())).append("\n")
