@@ -81,15 +81,13 @@ public class Initializer {
                 if (!hasValue) propsManager.setDefault(prop);
                 
                 // Return a different type depending on the state request.
-                if (rtnType == Boolean.class)
-                    return (T) Boolean.valueOf(propsManager.get(prop));
-                else if (rtnType == Float.class)
-                    return (T) Float.valueOf(propsManager.get(prop));
-                else if (rtnType == Integer.class)
-                    return (T) Integer.valueOf(propsManager.get(prop));
-                else {
-                    return (T) propsManager.get(prop);
-                }
+                final String value = propsManager.get(prop);
+                return (T) switch (rtnType) {
+                case Class<T> c when c == Boolean.class -> Boolean.valueOf(value);
+                case Class<T> c when c == Integer.class -> Integer.valueOf(value);
+                case Class<T> c when c == Float.class   -> Float.valueOf(value);
+                case null, default -> value;
+                };
             }
         };
         
@@ -114,7 +112,7 @@ public class Initializer {
                 case USE_SYS_BINARIES -> {
                     // Refresh available system binaries when property is enabled.
                     if (Boolean.valueOf(value))
-                        CFExec.run(() -> Binaries.refreshOnSys()).excepts((i, e) -> e.printStackTrace());
+                        CFExec.run(Binaries::refreshOnSys).excepts((i, e) -> e.printStackTrace());
                     
                     propsManager.set(prop, value);
                 }
@@ -242,7 +240,6 @@ public class Initializer {
      * will extract and use the missing, necessary binaries.
      * 
      * @param propsManager - the PropertiesManager used to check if the use system binaries property is set.
-     * @throws IOException if there are issues reading or writing files.
      * @throws ExtractionException if another exception occurs during the extraction process.
      */
     private static void extractLibResources(PropertiesManager propsManager) throws ExtractionException {
