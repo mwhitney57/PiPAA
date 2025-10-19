@@ -81,7 +81,7 @@ public interface PiPEnum<E extends Enum<E>> {
      * Checks if the passed String is equivalent to this enum.
      * This method is <b>not</b> case sensitive.
      * 
-     * @param s     - the String to compare.
+     * @param s - the String to compare.
      * @return <code>true</code> if the String matches; <code>false</code>
      *         otherwise.
      */

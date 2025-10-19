@@ -173,18 +173,16 @@ public class APICommunicator {
         // Get the Build's available links as JSON.
         final JSONArray jsonLinks = json.getJSONArray("links");
         // Determine PiPAA's current executable name.
-        final String currFileName = new java.io.File(APICommunicator.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
+        final FileName currFileName = new FileName(new java.io.File(APICommunicator.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getName());
         // Return if running in IDE.
-        if (currFileName.equals("classes")) return null;
-        // Determine PiPAA's current executable extension.
-        final String currFileExt  = currFileName.substring(currFileName.lastIndexOf('.'));
+        if (currFileName.toString().equals("classes")) return null;
         // Save Build's available links.
-        final StringBuilder link  = new StringBuilder();
+        final StringBuilder link = new StringBuilder();
         jsonLinks.forEach(l -> {
-            if (((String) l).endsWith(currFileExt)) link.append(((String) l));
+            if (((String) l).endsWith(currFileName.getDotExt())) link.append((String) l);
         });
         // Combine Build and Build Links into UpdatePayload and return it.
-        return new UpdatePayload(build, link.toString(), PiPEnum.match(Artifact.class, currFileExt));
+        return new UpdatePayload(build, link.toString(), PiPEnum.match(Artifact.class, currFileName.getExt()));
     }
     
     /**
