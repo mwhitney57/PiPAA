@@ -41,6 +41,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
 import javax.imageio.ImageIO;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -806,12 +807,33 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         case CLOSE_MEDIA:
             setWindowMedia(null);
             break;
-        // HIDE WINDOW
+        // MINIMIZE WINDOW(S)
+        case MINIMIZE_WINDOW:
+            get().setExtendedState(JFrame.ICONIFIED);
+            break;
+        case MINIMIZE_WINDOWS:
+            get().getManager().minimizeWindows();
+            break;
+        // RESTORE WINDOW(S)
+        case RESTORE_WINDOW:
+            get().setExtendedState(JFrame.NORMAL);
+            break;
+        case RESTORE_WINDOWS:
+            get().getManager().restoreWindows();
+            break;
+        // HIDE WINDOW(S)
         case HIDE_WINDOW:
             if (get().state().not(CLOSED)) get().setVisible(false);
             break;
         case HIDE_WINDOWS:
             get().getListener().hideWindows();
+            break;
+        // SHOW WINDOW(S)
+        case SHOW_WINDOW:
+            if (get().state().not(CLOSED)) get().setVisible(true);
+            break;
+        case SHOW_WINDOWS:
+            get().getListener().showWindows();
             break;
         // CLOSE WINDOW(S)
         case CLOSE_WINDOW:

@@ -99,12 +99,6 @@ public enum Shortcut {
     MINIMIZE_WINDOWS(
         new KeyBind(KeyEvent.VK_DOWN, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
     ),
-    RESTORE_WINDOW(
-        new KeyBind(KeyEvent.VK_UP, ALT_DOWN_MASK)
-    ),
-    RESTORE_WINDOWS(
-        new KeyBind(KeyEvent.VK_UP, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
-    ),
     OPEN_MEDIA_DIRECTORY(
         new KeyBind(KeyEvent.VK_O, CTRL_DOWN_MASK)
     ),
@@ -233,6 +227,12 @@ public enum Shortcut {
     RESIZE_WINDOWS(
         new KeyBind(BindOptions.build().onHit(2), KeyEvent.VK_W, SHIFT_DOWN_MASK)
     ),
+    RESTORE_WINDOW(
+        new KeyBind(KeyEvent.VK_UP, ALT_DOWN_MASK)
+    ),
+    RESTORE_WINDOWS(
+        new KeyBind(KeyEvent.VK_UP, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
+    ),
     SAVE_MEDIA(
         new KeyBind(KeyEvent.VK_S, CTRL_DOWN_MASK)
     ),
@@ -359,6 +359,12 @@ public enum Shortcut {
     SEEK_FRAME(
         new KeyBind(KeyEvent.VK_PERIOD),
         new KeyBind(KeyEvent.VK_RIGHT, ALT_DOWN_MASK)
+    ),
+    SHOW_WINDOW(
+        new KeyBind(KeyEvent.VK_H, ALT_DOWN_MASK)
+    ),
+    SHOW_WINDOWS(
+        new KeyBind(KeyEvent.VK_H, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
     ),
     VOLUME_0(
         new KeyBind(KeyEvent.VK_0, CTRL_DOWN_MASK),
