@@ -610,6 +610,12 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         case FLASH_BORDERS_ALL:
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.FLASH_BORDERS)));
             break;
+        case MINIMIZE_WINDOWS:
+            minimizeWindows();
+            break;
+        case RESTORE_WINDOWS:
+            restoreWindows();
+            break;
         case PAUSE_ALL:
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.PAUSE)));
             break;

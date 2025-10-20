@@ -959,6 +959,12 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 } catch (InvocationTargetException | InterruptedException ex) { ex.printStackTrace(); }
                 if (!imgLoc.isEmpty()) replaceArtwork(imgLoc.toString());
                 break;
+            case MINIMIZE_WINDOW:
+                SwingUtilities.invokeLater(() -> setExtendedState(JFrame.ICONIFIED));
+                break;
+            case RESTORE_WINDOW:
+                SwingUtilities.invokeLater(() -> setExtendedState(JFrame.NORMAL));
+                break;
             case RELOCATE_WINDOW:
                 SwingUtilities.invokeLater(() -> ensureOnScreen());
                 break;

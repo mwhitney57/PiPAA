@@ -93,6 +93,18 @@ public enum Shortcut {
     LOCK_WINDOW_ALLOFF(
         new KeyBind(KeyEvent.VK_L, CTRL_DOWN_MASK | ALT_DOWN_MASK)
     ),
+    MINIMIZE_WINDOW(
+        new KeyBind(KeyEvent.VK_DOWN, ALT_DOWN_MASK)
+    ),
+    MINIMIZE_WINDOWS(
+        new KeyBind(KeyEvent.VK_DOWN, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
+    ),
+    RESTORE_WINDOW(
+        new KeyBind(KeyEvent.VK_UP, ALT_DOWN_MASK)
+    ),
+    RESTORE_WINDOWS(
+        new KeyBind(KeyEvent.VK_UP, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
+    ),
     OPEN_MEDIA_DIRECTORY(
         new KeyBind(KeyEvent.VK_O, CTRL_DOWN_MASK)
     ),
