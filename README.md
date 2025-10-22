@@ -308,10 +308,16 @@ In this case, **PiPAA does not perform any tracking or collection of data.** It 
     - For example, when PiPAA loads a video from the web, it must obviously make a request to that URL.
 
 ## 🚩 Known Issues
-PiPAA is actively being developed and not yet at a Release v1.0 state. Major known issues will be catalogued here for maximum transparency until then.
-- Background processes, such as downloading/caching media, will continue until terminated or finished executing, even after the application has closed.
-    - This is due to how PiPAA asynchronously executes these tasks. A fix is already planned.
-    - If you encounter this issue, open `Task Manager` and terminate the processes.
+PiPAA is actively being developed and not yet at a Release v1.0 state. Major known issues will be cataloged here for maximum transparency until then.
+- Background processes, such as downloading/caching media, may continue running until they complete, even after the application closes.
+    - This is due to how PiPAA asynchronously executes these tasks without tracking or monitoring them.
+    - **A fix has been implemented and is being tested.** Lookout for it in the latest Snapshot release.
+    - If you encounter this issue in the meantime, open `Task Manager` and terminate the processes. Look for processes named:
+        - `javaw`
+        - `yt-dlp`
+        - `gallery-dl`
+        - `ffmpeg`
+        - `magick`
 
 ## 🧱 Building
 PiPAA should be simple to build on your own. It requires Java 17 or later and [Maven](https://maven.apache.org/). If you already have an IDE such as [Eclipse](https://eclipseide.org/), Maven should already be available within the application.
