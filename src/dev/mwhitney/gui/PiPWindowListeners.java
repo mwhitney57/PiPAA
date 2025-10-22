@@ -1,6 +1,7 @@
 package dev.mwhitney.gui;
 
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSED;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING_MEDIA;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.FULLSCREEN;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOADING;
@@ -387,10 +388,10 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         final List<File>      dataFile = (picker.supports(FILE)    ? relocateTempFiles((List<File>) t.getTransferData(DataFlavor.javaFileListFlavor)) : null);
         final URL           dataWebURL = (picker.supports(WEB_URL) ? (URL) t.getTransferData(flavorWebURL)                                            : null);
         
-        // Pick the next supported media flavor, attempt to handle it, and repeat until completion.
+        // Pick the next supported media flavor, attempt to handle it, and repeat until completion. Don't continue if window is closing though.
         CompletableFuture.runAsync(() -> {
             MediaFlavor pick = picker.pick();
-            while(pick != null) {
+            while (pick != null && get().state().not(CLOSING)) {
                 System.err.println("##### Handling Media -- MediaFlavor Pick: " + pick);
                 try {
                     switch (pick) {
@@ -427,7 +428,11 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                     System.err.println("##### Done Handling Media");
                     break;  // Break outside of loading while loop into cleanup section below.
                 } catch (IOException | InvalidTransferMediaException e) {
-                    System.err.println("Flavor Pick [" + Objects.toString(pick, "<null>") + "]: " + "[" + e.getClass().getSimpleName() + "] " + e.getMessage());
+                    if (get().state().any(CLOSING, CLOSED)) {
+                        System.err.println("Flavor picking and media loading process aborted. Window closing...");
+                        break;
+                    }
+                    else System.err.println("Flavor Pick [" + Objects.toString(pick, "<null>") + "]: " + "[" + e.getClass().getSimpleName() + "] " + e.getMessage());
                 }
                 pick = picker.pick();
             }
