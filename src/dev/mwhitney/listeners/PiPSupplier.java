@@ -5,6 +5,7 @@ package dev.mwhitney.listeners;
  * get method. However, unlike {@link Supplier}, this is intended to be used in
  * the contexts which may throw exceptions.
  * 
+ * @param <T> - the type to retrieve from the supplier via {@link #get()}.
  * @author mwhitney57
  */
 @FunctionalInterface
