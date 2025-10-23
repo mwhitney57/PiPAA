@@ -65,6 +65,7 @@ import dev.mwhitney.listeners.WindowClosingListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
+import dev.mwhitney.main.CFExec;
 import dev.mwhitney.media.MediaExt;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
@@ -1475,7 +1476,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             }
             
             mediaCommand(PiPMediaCMD.SET_SRC, mediaNew.getSrc());
-        });
+        }, CFExec.VIRTUAL_EXECUTOR);
     }
     
     /**

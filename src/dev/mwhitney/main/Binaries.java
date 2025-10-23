@@ -405,9 +405,9 @@ public class Binaries {
         final BinUpdateResult[] results = new BinUpdateResult[2];
         
         // Check for Updates on Each Applicable Bin
-        CFExec.run((BinRunnable) () -> { if (Binaries.exists(Bin.YT_DLP))     results[0] = Binaries.update(Bin.YT_DLP); },
-                   (BinRunnable) () -> { if (Binaries.exists(Bin.GALLERY_DL)) results[1] = Binaries.update(Bin.GALLERY_DL); })
-              .excepts((i, ex) -> results[i] = new BinUpdateResult(i == 0 ? Bin.YT_DLP : Bin.GALLERY_DL, false));
+        CFExec.runVirtual((BinRunnable) () -> { if (Binaries.exists(Bin.YT_DLP))     results[0] = Binaries.update(Bin.YT_DLP); },
+                          (BinRunnable) () -> { if (Binaries.exists(Bin.GALLERY_DL)) results[1] = Binaries.update(Bin.GALLERY_DL); })
+                .excepts((i, ex) -> results[i] = new BinUpdateResult(i == 0 ? Bin.YT_DLP : Bin.GALLERY_DL, false));
         
         // Form Result
         final StringBuilder out = new StringBuilder();
@@ -440,12 +440,13 @@ public class Binaries {
      */
     public static void refreshOnSys() throws InterruptedException {
         // Run all asynchronously, leading to (basically) simultaneous execution.
-        CFExec.run((BinRunnable) () -> Binaries.HAS_YTDLP     = (Binaries.HAS_YTDLP     || existsOnSys(Bin.YT_DLP)),
-                   (BinRunnable) () -> Binaries.HAS_GALLERYDL = (Binaries.HAS_GALLERYDL || existsOnSys(Bin.GALLERY_DL)),
-                   (BinRunnable) () -> Binaries.HAS_FFMPEG    = (Binaries.HAS_FFMPEG    || existsOnSys(Bin.FFMPEG)),
-                   (BinRunnable) () -> Binaries.HAS_IMGMAGICK = (Binaries.HAS_IMGMAGICK || existsOnSys(Bin.IMGMAGICK)))
-              .excepts((i, ex) -> System.err.println("Exception occurred while refreshing system binaries: " + ex.getMessage()))
-              .throwAny(InterruptedException.class);
+        CFExec.runVirtual(
+                (BinRunnable) () -> Binaries.HAS_YTDLP     = (Binaries.HAS_YTDLP     || existsOnSys(Bin.YT_DLP)),
+                (BinRunnable) () -> Binaries.HAS_GALLERYDL = (Binaries.HAS_GALLERYDL || existsOnSys(Bin.GALLERY_DL)),
+                (BinRunnable) () -> Binaries.HAS_FFMPEG    = (Binaries.HAS_FFMPEG    || existsOnSys(Bin.FFMPEG)),
+                (BinRunnable) () -> Binaries.HAS_IMGMAGICK = (Binaries.HAS_IMGMAGICK || existsOnSys(Bin.IMGMAGICK)))
+            .excepts((i, ex) -> System.err.println("Exception occurred while refreshing system binaries: " + ex.getMessage()))
+            .throwAny(InterruptedException.class);
     }
     
     /**

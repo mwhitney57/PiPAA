@@ -130,7 +130,7 @@ public class PiPMediaAttributor implements PropertyListener {
                     .setFileExtension(wmf.extension() != null ? wmf.extension() : MediaExt.parse(murl2.format(attributes.getSrcPlatform())))
                     .setWMF(wmf);
                 } catch (InvalidMediaException ime) { throw new CompletionException(ime); }
-            });
+            }, CFExec.VIRTUAL_EXECUTOR);
             
             // Web Indirect to Direct Conversion
             // Do not convert if using raw attribution or the user configuration disallows it.
@@ -211,7 +211,7 @@ public class PiPMediaAttributor implements PropertyListener {
         
         System.out.println("Attempting web attribution gets...");
         // Execute multiple binary commands asynchronously and concurrently, including audio-only test, platform-specific and regular attribution.
-        final ArrayList<String> cmdOuts = CFExec.runAndGet(
+        final ArrayList<String> cmdOuts = CFExec.runAndGetVirtual(
                 () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.YT_DLP), "\"" + src + "\"", "-I", "1", "--print", "\"%(ext)s\""),
                 platSupplier,
                 // Not Audio-Only, Cookies Attempts -- Cookies attempts go first. If both cases work, we will likely get more media info.
