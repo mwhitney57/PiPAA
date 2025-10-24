@@ -230,17 +230,7 @@ public class Tray implements PropertyListener {
         final MenuItem exitItem           = new MenuItem("Exit",                 evt -> {
             // Exit/Close Application
             listener.applicationClosing();
-            tray.shutdown(() -> System.exit(0));
-            /* 
-             * TODO Rework threading throughout app, implement exit call in a listener that certain classes implement.
-             * Bad practice to call System.exit(...) on normal shutdowns. This is why tray icon lingers until hovered over afterwards.
-             * Commenting it out works, UNLESS an async thread is executing (non-daemon), such as downloading media. In that case the app
-             * stays running completely in the background, with no tray icon or windows, which is obviously terrible. All async thread
-             * calls must be interruptible at user-called application exit.
-             * Update (Nov. 25, 2024): Moved System.exit(0) call within the SystemTray shutdown method call. It executes after the tray has shut down.
-             * Therefore, the tray icon properly goes away on its own now without having to hover over it after exit.
-             * However, this is just a partial, temporary improvement. The other issues described above remain, which must be fixed.
-             */
+            exit();
         });
         
         // Context Menu Item Configuration
@@ -399,6 +389,23 @@ public class Tray implements PropertyListener {
             else if (ent instanceof MenuItem item)
                 item.setImage(USE_INVERSE ? img.inverse() : img.image());
         });
+    }
+    
+    /**
+     * Exits the tray, then exits the application as a whole. <b>Only call when the
+     * entire application is ready to be shutdown.</b>
+     * <p>
+     * Though calling {@link System#exit(int)} is not best practice, it prevents the
+     * application from hanging after shutdown of windows and the tray. If the
+     * application were to hang in that scenario, users would be forced to terminate
+     * it with a process/task manager application. This is not acceptable with
+     * general users in mind who may not know much about their systems.
+     * 
+     * @since 0.9.5
+     */
+    public void exit() {
+        // Shuts down the tray, then finalizes application exit.
+        tray.shutdown(() -> System.exit(0));
     }
     
     /**

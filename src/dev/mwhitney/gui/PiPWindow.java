@@ -92,6 +92,8 @@ import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.util.ScalingDimension;
 import dev.mwhitney.util.UnsetBool;
 import dev.mwhitney.util.interfaces.PermanentRunnable;
+import dev.mwhitney.util.monitor.ProcessMonitor;
+import dev.mwhitney.util.monitor.ThreadMonitor;
 import dev.mwhitney.util.selection.ReloadSelection;
 import dev.mwhitney.util.selection.ReloadSelection.ReloadSelections;
 import dev.mwhitney.util.selection.Selector;
@@ -114,7 +116,7 @@ import uk.co.caprica.vlcj.player.embedded.fullscreen.windows.Win32FullScreenStra
  * 
  * @author mwhitney57
  */
-public class PiPWindow extends JFrame implements PropertyListener, Themed, ManagerFetcher<PiPWindowManager>, BindHandler {
+public class PiPWindow extends JFrame implements PropertyListener, Themed, ManagerFetcher<PiPWindowManager>, BindHandler, ProcessMonitor {
     /** The randomly-generated serial UID for the PiPWindow class. */
     private static final long serialVersionUID = 6508277241367437180L;
     
@@ -208,7 +210,14 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * receiving communication from this instance.
      */
     private PiPWindowManagerAdapter managerListener;
-
+    
+    // Thread Monitoring
+    /** The window's monitor for asynchronous process threads. Any alive, window-related, asynchronous threads are destroyed on window close. */
+    private final ThreadMonitor monitor = new ThreadMonitor();
+    // Link Objects – Window itself is usually used. Otherwise, link objects below are used for specific functions.
+    /** The window's link object for its download operations. These can be interrupted separately from other monitored tasks. */
+    private final Object linkDL = new Object();
+    
     /**
      * Constructs a new PiPWindow. This constructor creates the window and simply
      * sits until it receives media.
@@ -1071,6 +1080,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      *      constructor.
      */
     private boolean mediaCommand(PiPMediaCMD cmd, PiPMediaCMDArgs<?> cmdArgs) {
+        // Ignore commands fired during closing logic, unless it's to close the media.
+        if (state.is(CLOSING) && cmd != PiPMediaCMD.CLOSE) return false;
+        
         final Supplier<Boolean> cmdCode = () -> {
 //            System.out.println(Objects.toString(cmdArgs, "<null cmd args>"));   //Debug - Print arguments.
             // Determine if there are any arguments and if they are Strings.
@@ -1080,106 +1092,18 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             
             switch (cmd) {
             case SET_SRC: {
+                // Set as loading, then set the window's source.
                 media.setLoading(true);
-                
-                // Declare Options
-                String[] options = {
-                    // Pause the media once the end is reached. PiPAA handles the restart/replay logic.
-                    ":play-and-pause",
-                    // Helps ensure software decoding is used in combination with previous argument.
-                    state.not(HW_ACCELERATION) ? ":avcodec-hw=none" : "",
-                    // Empty argument to be replaced if needed below.
-                    ""
-                };
-                
-                // Local Media
-                if (media.getAttributes().isLocal()) {
-                    // Check if Local Media is from the Clipboard and Has Duplicates.
-                    final File currentFile = new File(args[0]);
-                    final String cacheFileGuess = media.existsInClipboardCache(currentFile);
-                    if (cacheFileGuess != null) {
-                        currentFile.delete();
-                        args[0] = cacheFileGuess;
-                        media.setSrc(args[0]);
-                        media.setCacheSrc(args[0]);
-                        media.setAttributes(managerListener.requestAttributes(PiPWindow.this, new PiPMedia(args[0])));
-                    }
-                    // Set as cache source if true -- allows for user deletion of media via shortcut.
-                    if (media.isFromCache()) media.setCacheSrc(media.getSrc());
+                try {
+                    // Monitor the process. Multiple process executions could be made that may be interrupted.
+                    monitor.run(() -> setSrc(args)); 
+                } catch (InterruptedException e) {
+                    System.err.println("Interrupted while setting window's source.");
+                    return false;
+                } catch (InvalidMediaException ime) {
+                    System.err.println("Could not set window source: " + ime.getMessage());
+                    return false;
                 }
-                // Web Media
-                else {
-                    final String result = media.isCached() ? media.getCacheSrc() : setRemoteMedia(args[0], media, false, false);
-                    if (result == null) {
-                        // Unable to Set Remote Media -- Cancel and Close Current Media
-                        mediaCommand(PiPMediaCMD.CLOSE);
-                        flashBorder(BORDER_ERROR);
-                        return false;
-                    }
-                    
-                    args[0] = result;
-                }
-                
-                // Media Modifications and Tuning
-                args[0] = media.convertUnsupported(args[0]);
-                // Since WEBP can change between IMAGE/GIF, ensure correct player is to be used.
-                if (media.getAttributes().getFileExtension() == MediaExt.WEBP)
-                    SwingUtilities.invokeLater(() -> pickPlayer());
-                
-                // Trim Transparent Edges if Set and Applicable
-                if (propertyState(PiPProperty.TRIM_TRANSPARENCY, Boolean.class) && (media.getAttributes().isImage() || media.getAttributes().isGIF())) {
-                    titleStatusUpdate("[Trimming...]");
-                    iconUpdate(ICON_TRIM);
-                    try {
-                        final String croppedSrc = media.trimTransparency(args[0], TRIM_OPTION.NORMAL.matchAny(propertyState(PiPProperty.TRIM_TRANSPARENCY_OPTION, String.class)));
-                        if (!croppedSrc.equals(args[0])) {
-                            args[0] = croppedSrc;
-                            media.setTrimSrc(args[0]);
-                        }
-                    } catch (MediaModificationException e) {
-                        // Alert and default to regular non-cropped media
-                        flashBorder(BORDER_ERROR);
-                        TopDialog.showMsg("Transparency cropping failed! Defaulting to uncropped media.\n" + e.getMessage(), "Transparency Cropping Failed", JOptionPane.ERROR_MESSAGE);
-                        e.printStackTrace();
-                    }
-                }
-                
-                // Advanced GIF Playback Conversion
-                if (media.getAttributes().isGIF() && media.getAttributes().usesAdvancedGIFPlayback()) {
-                    titleStatusUpdate("[Converting...]");
-                    iconUpdate(ICON_WORK);
-                    final String mediaNameID = media.getAttributes().getFileTitleID();
-                    final String result = convertGIFToVideo(args[0], AppRes.APP_CONVERTED_FOLDER + "/" + mediaNameID + ".mp4");
-                    if (result == null) {
-                        // Unable to Convert Media -- Use Fallback Method
-                        System.err.println("RESULT IS NULL !_-1--11- RESULT IS NULL using fallback and setting adv playback to false");
-                        media.getAttributes().setUseAdvancedGIFPlayback(false);
-                    } else {
-                        args[0] = result;
-                    }
-                }
-                
-                // SWING and COMBO Players
-                if(state.is(PLAYER_SWING)) {
-                    // Image and Basic GIF Playback Media
-                    try {
-                        setImgViewerSrc(args[0], null);
-                    } catch (InvalidMediaException ime) {
-                        // Unable to Set Media -- Cancel and Close Current Media
-                        ime.printStackTrace();
-                        mediaCommand(PiPMediaCMD.CLOSE);
-                        return false;
-                    }
-                    media.setLoading(false);
-                    state.off(LOADING);
-                }
-                // VLC and COMBO Players
-                if(state.not(PLAYER_SWING)) {
-                    // Set repeat as false -- restart playback is handled manually for more control.
-                    mediaPlayer.mediaPlayer().controls().setRepeat(false);
-                    mediaPlayer.mediaPlayer().media().play(args[0], options);
-                }
-                titleStatusUpdate(null);
                 break;
             }
             case PLAYPAUSE:
@@ -1379,6 +1303,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     }   // Executor closed via try-with-resources.
                 }
                 state.off(FULLSCREEN);  // Fullscreen hooks have native call, but if it crashes, it will happen asynchronously.
+                
+                // Interrupt monitored asynchronous download tasks and processes.
+                this.monitor.interruptLinked(linkDL);
+                // Interrupt monitored asynchronous attribution tasks and processes handled elsewhere that are linked to this window.
+                getManager().interruptLinked(this);
+                
+                // Reset the media to nothing, so long as the window has not crashed and not immediately replacing the closed media.
                 if (state.not(CRASHED) && !replacing) setMedia(null);
                 System.out.println("Close req stopped media player.");
                 
@@ -1495,7 +1426,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         if (!media.isAttributed()) {
             // Setup Attribute Listener then Request Attribution of Media.
             media.setAttributeUpdateListener(listeners.attributeListener());
-            media.setAttributes(managerListener.requestAttributes(PiPWindow.this, media, flags));
+            media.setAttributes(managerListener.requestAttributes(this, media, flags));
             if (!media.hasAttributes()) {
                 // Failed getting attributes. Cancel setting and playing of PiPMedia.
                 System.err.println("Cancelled attempt to set media: Attributor failed or returned invalid data.");
@@ -1773,15 +1704,24 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         // Download the Remote Media and Update Source Information
         titleStatusUpdate("[Downloading...]");
         iconUpdate(ICON_DOWNLOAD);
-        String dlResult  = downloadMedia(media, cacheFolder.toString(), platformArgs.toArray(new String[0]));
-        if (dlResult == null) {
-            platformArgs = getRemoteArgs(src,   cacheFolder.toString(), media, (triedDLPFirst ? Bin.GALLERY_DL : Bin.YT_DLP));
-            dlResult     = downloadMedia(media, cacheFolder.toString(), platformArgs.toArray(new String[0]));
-            if (dlResult == null) {
-                System.err.println("Media download failed! Neither downloader succeeded.");
-                statusUpdate("Could not play media.");
-                return null;
+        String dlResult  = null;
+        try {
+            // First download attempt.
+            dlResult = downloadMedia(media, cacheFolder.toString(), platformArgs.toArray(new String[0]));
+            if (dlResult == null) { // First attempt failed. Try with other binary.
+                platformArgs = getRemoteArgs(src,   cacheFolder.toString(), media, (triedDLPFirst ? Bin.GALLERY_DL : Bin.YT_DLP));
+                dlResult     = downloadMedia(media, cacheFolder.toString(), platformArgs.toArray(new String[0]));
             }
+        } catch (InterruptedException ie) {
+            System.err.println("Media download interrupted: " + (state.is(CLOSING) ? "window" : "media") + " closing!");
+            return null;
+        }
+        
+        // Check if download process failed. Otherwise, continue to update sources.
+        if (dlResult == null) {
+            System.err.println("Media download failed! Neither downloader succeeded.");
+            statusUpdate("Could not play media.");
+            return null;
         }
         src = dlResult;
         media.setCacheSrc(src);
@@ -1802,8 +1742,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * @param outDir - a String with the download output directory.
      * @param args   - a String[] with the download command arguments.
      * @return a String with the source location of the downloaded media.
+     * @throws InterruptedException if the download process was interrupted.
      */
-    private String downloadMedia(PiPMedia media, String outDir, String[] args) {
+    private String downloadMedia(PiPMedia media, String outDir, String[] args) throws InterruptedException {
         // Setup Cache Folder and File Name
         PiPAAUtils.ensureExistence(outDir);
         final File fileOut = new File(outDir + "/" + media.getAttributes().getDownloadFileNameID());
@@ -1821,9 +1762,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         // Download Media Using Passed Arguments.
         try {
             System.out.println("Media DL CMD Executing:\n---> " + String.join(" ", args) + "\n");
-            Binaries.exec(args);
+            this.monitor.supplyLinked(linkDL, Binaries::execAndWait, args);
             System.out.println("Media DL CMD should be done.");
-        } catch (IOException | InterruptedException e) { e.printStackTrace(); return null; }
+        } catch (IOException ioe) { ioe.printStackTrace(); return null; }
         
         // If File Did Not Download, Return Null (Failed)
         if (!fileOut.exists())
@@ -1843,8 +1784,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * @param out - the String, local source location to place the converted media at.
      * @return a String with the converted media's source location, or null if
      *         conversion failed.
+     * @throws InterruptedException if the conversion process was interrupted.
      */
-    private String convertGIFToVideo(String in, String out) {
+    private String convertGIFToVideo(String in, String out) throws InterruptedException {
         // Now convert to MP4 from GIF and return its file location.
         final File outFile = new File(out);
         if (!outFile.exists()) {
@@ -1854,14 +1796,130 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             System.out.println("    Conv-OUT: " + out);
             System.out.println("ConvOUT-PATH: " + outFile.getPath());
             try {
-                Binaries.exec(Binaries.bin(Bin.FFMPEG), "-y", "-i", "\"" + in + "\"", "-movflags", "faststart",
+                Binaries.execAndWait(Binaries.bin(Bin.FFMPEG), "-y", "-i", "\"" + in + "\"", "-movflags", "faststart",
                         "-pix_fmt", "yuv420p", "-vf", "\"scale=trunc(iw/2)*2:trunc(ih/2)*2\"", outFile.getPath(),
                         "-hide_banner", "-loglevel", "error");
-            } catch (IOException | InterruptedException e) { e.printStackTrace(); return null; }
+            } catch (IOException e) { e.printStackTrace(); return null; }
         }
         return outFile.getPath();
     }
     
+    /**
+     * Sets the source based on the current media and with the passed String
+     * arguments. This method is one of the final steps in the loading process,
+     * where media is set within a player and shown to the user.
+     * <p>
+     * This method is meant to be called via a
+     * {@link #mediaCommand(PiPMediaCMD, PiPMediaCMDArgs)} call, using
+     * {@link PiPMediaCMD#SET_SRC}, which will wrap and monitor it for interruptions
+     * or other exceptions.
+     * 
+     * @param args - the String arguments array. Intended to contain the source
+     *             target at minimum.
+     * @throws InterruptedException  if an interruption occurred while setting the
+     *                               source.
+     * @throws InvalidMediaException if the media was invalid and could not be set
+     *                               as the source.
+     */
+    private void setSrc(String[] args) throws InterruptedException, InvalidMediaException {
+        // Declare Options
+        String[] options = {
+            // Pause the media once the end is reached. PiPAA handles the restart/replay logic.
+            ":play-and-pause",
+            // Helps ensure software decoding is used in combination with previous argument.
+            state.not(HW_ACCELERATION) ? ":avcodec-hw=none" : "",
+            // Empty argument to be replaced if needed below.
+            ""
+        };
+        
+        // Local Media
+        if (media.getAttributes().isLocal()) {
+            // Check if Local Media is from the Clipboard and Has Duplicates.
+            final File currentFile = new File(args[0]);
+            final String cacheFileGuess = media.existsInClipboardCache(currentFile);
+            if (cacheFileGuess != null) {
+                currentFile.delete();
+                args[0] = cacheFileGuess;
+                media.setSrc(args[0]);
+                media.setCacheSrc(args[0]);
+                media.setAttributes(managerListener.requestAttributes(this, new PiPMedia(args[0])));
+            }
+            // Set as cache source if true -- allows for user deletion of media via shortcut.
+            if (media.isFromCache()) media.setCacheSrc(media.getSrc());
+        }
+        // Web Media
+        else {
+            final String result = media.isCached() ? media.getCacheSrc() : setRemoteMedia(args[0], media, false, false);
+            if (result == null) {
+                // Unable to Set Remote Media -- Cancel and Close Current Media
+                mediaCommand(PiPMediaCMD.CLOSE);
+                flashBorder(BORDER_ERROR);
+                throw new InvalidMediaException("Unable to set remote media.");
+            }
+            args[0] = result;
+        }
+        
+        // Media Modifications and Tuning
+        args[0] = media.convertUnsupported(args[0]);
+        // Since WEBP can change between IMAGE/GIF, ensure correct player is to be used.
+        if (media.getAttributes().getFileExtension() == MediaExt.WEBP)
+            SwingUtilities.invokeLater(this::pickPlayer);
+        
+        // Trim Transparent Edges if Set and Applicable
+        if (propertyState(PiPProperty.TRIM_TRANSPARENCY, Boolean.class) && (media.getAttributes().isImage() || media.getAttributes().isGIF())) {
+            titleStatusUpdate("[Trimming...]");
+            iconUpdate(ICON_TRIM);
+            try {
+                final String croppedSrc = media.trimTransparency(args[0], TRIM_OPTION.NORMAL.matchAny(propertyState(PiPProperty.TRIM_TRANSPARENCY_OPTION, String.class)));
+                if (!croppedSrc.equals(args[0])) {
+                    args[0] = croppedSrc;
+                    media.setTrimSrc(args[0]);
+                }
+            } catch (MediaModificationException e) {
+                // Alert and default to regular non-cropped media
+                flashBorder(BORDER_ERROR);
+                TopDialog.showMsg("Transparency cropping failed! Defaulting to uncropped media.\n" + e.getMessage(), "Transparency Cropping Failed", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+        
+        // Advanced GIF Playback Conversion
+        if (media.getAttributes().isGIF() && media.getAttributes().usesAdvancedGIFPlayback()) {
+            titleStatusUpdate("[Converting...]");
+            iconUpdate(ICON_WORK);
+            final String mediaNameID = media.getAttributes().getFileTitleID();
+            final String result = convertGIFToVideo(args[0], AppRes.APP_CONVERTED_FOLDER + "/" + mediaNameID + ".mp4");
+            if (result == null) {
+                // Unable to Convert Media -- Use Fallback Method
+                System.err.println("Failed to convert GIF to video: using fallback and setting Adv. GIF Playback to false.");
+                media.getAttributes().setUseAdvancedGIFPlayback(false);
+            } else {
+                args[0] = result;
+            }
+        }
+        
+        // SWING and COMBO Players
+        if(state.is(PLAYER_SWING)) {
+            // Image and Basic GIF Playback Media
+            try {
+                setImgViewerSrc(args[0], null);
+            } catch (InvalidMediaException ime) {
+                // Unable to Set Media -- Cancel and Close Current Media
+                mediaCommand(PiPMediaCMD.CLOSE);
+                throw ime;
+            }
+            media.setLoading(false);
+            state.off(LOADING);
+        }
+        // VLC and COMBO Players
+        if(state.not(PLAYER_SWING)) {
+            // Set repeat as false -- restart playback is handled manually for more control.
+            mediaPlayer.mediaPlayer().controls().setRepeat(false);
+            mediaPlayer.mediaPlayer().media().play(args[0], options);
+        }
+        titleStatusUpdate(null);
+    }
+
     /**
      * Sets the JLabel image viewer icon to be one of the passed sources, with the
      * raw String being the preference. After setting the image, this method
@@ -2188,6 +2246,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 mediaPlayer.release();
             }
 
+            // Interrupt monitored asynchronous tasks and processes.
+            monitor.interruptAll();
+            // Interrupt monitored asynchronous tasks and processes handled elsewhere that are linked to this window.
+            getManager().interruptLinked(this);
+            
             // Remove pending window state hooks.
             state.destroyHooks();
             
@@ -2243,6 +2306,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         }
     }
     
+    @Override
+    public ThreadMonitor getMonitor() { return this.monitor; }
+
     @Override
     public void propertyChanged(PiPProperty prop, String value) {
         // Return if property value is null. This is currently not an acceptable value.

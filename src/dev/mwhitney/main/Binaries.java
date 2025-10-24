@@ -9,8 +9,6 @@ import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import dev.mwhitney.exceptions.UnsupportedBinActionException;
@@ -191,6 +189,33 @@ public class Binaries {
     
     /**
      * Executes a command with all of the passed String arguments.
+     * <p>
+     * This method starts the {@link Process} and returns. It <b>does not wait</b>
+     * for the process to finish executing or return any value.
+     * <p>
+     * Any process executions with complexity, that would take even a moderate
+     * amount of time, should be done with {@link #execAndWait(String...)}. If
+     * necessary, make that call asynchronous to prevent blocking. This method is
+     * only intended for quick and basic process executions.
+     * 
+     * @param args - one or more String arguments for the command.
+     * @throws IOException if there is an input and/or output error during command
+     *                     execution.
+     * @since 0.9.5
+     */
+    public static void exec(String... args) throws IOException {
+        // Return if arguments are null, else execute command.
+        if (args == null || args.length == 0) return;
+
+        // Build and start process.
+        new ProcessBuilder(args).redirectOutput(Redirect.DISCARD).redirectError(Redirect.DISCARD).start();
+    }
+
+    /**
+     * Executes a command with all of the passed String arguments.
+     * <p>
+     * This method waits for the execution to finish, if necessary. It returns the
+     * exit value provided by the {@link Process} used.
      * 
      * @param args - one or more String arguments for the command.
      * @return an int which represents the exit value for the command execution. A
@@ -201,71 +226,117 @@ public class Binaries {
      * @throws IOException          if there is an input and/or output error during
      *                              command execution.
      */
-    public static int exec(String... args) throws InterruptedException, IOException {
+    public static int execAndWait(String... args) throws InterruptedException, IOException {
         // Return -1 if arguments are null, else execute command.
-        return (args == null ? -1 :
-            new ProcessBuilder(args).redirectError(Redirect.INHERIT).redirectOutput(Redirect.INHERIT).start().waitFor());
+        if (args == null || args.length == 0) return -1;
+        
+        // Build and start process.
+        final Process process = new ProcessBuilder(args).redirectError(Redirect.INHERIT).redirectOutput(Redirect.INHERIT).start();
+        
+        // Block and wait for process termination. Catch any interruption to destroy process and any descendants. Prevents rogue process runs in background.
+        try {
+            return process.waitFor();
+        } finally {
+            // Destroy descendant processes and parent process. Called regardless of success to ensure all processes are terminated.
+            // If processes remain in certain cases, switch to destroying forcibly.
+            process.descendants().forEach(ProcessHandle::destroy);
+            process.destroy();
+        }
     }
     
     /**
      * Executes a command with all of the passed String arguments. This method also
      * fetches the entire String output and returns it. However, if the execution
-     * failed, then this method will return <code>null</code>. Keep in mind that an
-     * empty String is technically still possible after <b>successfully</b>
-     * executing a command, depending on the binary and the command arguments. Some
-     * commands may not print anything to the console. Therefore, a
+     * failed, then this method will return <code>null</code>. An empty String is
+     * still a possible return value after <b>successfully</b> executing a command,
+     * depending on the binary and the command arguments.
+     * <p>
+     * Some commands may not print anything to the console. Therefore, a
      * <code>null</code> return is the only reliable indicator of a command
      * succeeding.
+     * <p>
+     * The calling thread may be flagged as interrupted via
+     * {@link Thread#interrupt()} after calling this method if the execution process
+     * was interrupted. It is strongly advised to check for this.
      * 
      * @param redirError - a boolean for if the output should include error prints.
-     * @param args - the array of String arguments for command execution.
+     * @param args       - the array of String arguments for command execution.
      * @return a String with the output from the command, or <code>null</code> if
      *         command execution failed or threw an error.
      */
-    public static String execAndFetch(boolean redirError, String... args) {
-        // Do nothing if parameter is null.
-        if (args == null)
-            return null;
+    public static String execAndGet(boolean redirError, String... args) {
+        // Do nothing if there are no arguments.
+        if (args == null || args.length == 0) return null;
         
-        final AtomicBoolean succeeded = new AtomicBoolean(false);
+        boolean succeeded = false;
         final StringBuilder processOut = new StringBuilder();
         final ProcessBuilder processBuilder = new ProcessBuilder(args).redirectErrorStream(redirError);
         
-        // Attempt command execution and store each line
-        CFExec.run((BinRunnable) () -> {
-            final Process process = processBuilder.start();
-            
-            // Iterate over each line from the process and store it.
-            try (final InputStreamReader isr = new InputStreamReader(process.getInputStream()); final BufferedReader reader = new BufferedReader(isr);) {
-                reader.lines().forEach(e -> processOut.append(e).append("\n"));
-            } catch (IOException ioe) { ioe.printStackTrace(); }
+        // Build and start process. If failure or exception, return null.
+        Process process = null;
+        try { process = processBuilder.start(); }
+        catch (IOException ioe) {}
+        if (process == null) return null;
+        
+        // Reading implementation before 0.9.5 did not respect interrupts. This implementation does.
+        // Block and wait for process termination. Catch any interruption to destroy process and any descendants. Prevents rogue process runs in background.
+        try (final InputStreamReader isr = new InputStreamReader(process.getInputStream()); final BufferedReader reader = new BufferedReader(isr);) {
+            // Non-blocking read loop.
+            while (process.isAlive() || reader.ready()) {
+                // Check for interruption at the start of each iteration. Interrupt if necessary.
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+
+                // Only read if data is available to avoid blocking.
+                if (reader.ready()) {
+                    final String line = reader.readLine();
+                    if (line != null) processOut.append(line).append("\n");
+                    else              break; // End of stream. Break loop.
+                }
+                // Reader isn't ready. Briefly sleep to avoid excessive, long waits.
+                else Thread.sleep(10); // 10ms to balance responsiveness and CPU usage.
+            }
             
             // Wait for process to complete and set if succeeded.
-            if (process.waitFor() == 0) succeeded.set(true);
-        }).excepts((i, ex) -> System.err.println("Unexpected Exception occurred during binary execAndFetch: " + ex.getMessage()));
-        
+            if (process.waitFor() == 0) succeeded = true;
+        } catch (InterruptedException ie) {
+            System.err.println("Binary execAndGet process interrupted. Destroying descendants, then parent process.");
+            // Reset interrupt flag back to true after catching exception.
+            Thread.currentThread().interrupt();
+        } catch (IOException ioe) { // Can safely ignore.
+        } finally {
+            // Destroy descendant processes and parent process. Called regardless of success to ensure processes are terminated.
+            // If processes remain in certain cases, switch to destroying forcibly.
+            process.descendants().forEach(ProcessHandle::destroy);
+            process.destroy();
+        }
+            
         // Return result if command succeeded; null otherwise.
-        return (succeeded.get() ? processOut.toString().trim() : null);
+        return (succeeded ? processOut.toString().trim() : null);
     }
     
     /**
      * Executes a command with all of the passed String arguments. This method also
-     * fetches the entire String output and returns it safely. The unsafe version of
-     * this method, {@link #execAndFetch(String...)}, can return <code>null</code>
-     * if the command execution failed or threw an error. However, this method
-     * serves as a wrapper and instead returns an empty string in this case.
-     * Therefore, this method cannot return <code>null</code>. At worst, it will
-     * return an empty String. If the delineation is needed between command
-     * execution failure and successful command execution with no output, then use
-     * {@link #execAndFetch(String...)}.
+     * fetches the entire String output and returns it. However, if the execution
+     * failed, then this method will return <code>null</code>. An empty String is
+     * still a possible return value after <b>successfully</b> executing a command,
+     * depending on the binary and the command arguments.
+     * <p>
+     * Some commands may not print anything to the console. Therefore, a
+     * <code>null</code> return is the only reliable indicator of a command
+     * succeeding.
+     * <p>
+     * The calling thread may be flagged as interrupted via
+     * {@link Thread#interrupt()} after calling this method if the execution process
+     * was interrupted. It is strongly advised to check for this.
      * 
-     * @param redirError - a boolean for if the output should include error prints.
-     * @param args       - the array of String arguments for command execution.
-     * @return a String with the output from the command, or an empty String if
+     * @param args - the array of String arguments for command execution.
+     * @return a String with the output from the command, or <code>null</code> if
      *         command execution failed or threw an error.
+     * @see {@link #execAndGet(boolean, String...)} to redirect and include the
+     *      error stream. This method defaults to <code>false</code>
      */
-    public static String execAndFetchSafe(boolean redirError, String... args) {
-        return Objects.toString(Binaries.execAndFetch(redirError, args), "");
+    public static String execAndGet(String... args) {
+        return execAndGet(false, args);
     }
     
     /**
@@ -289,7 +360,7 @@ public class Binaries {
      *                              checking for the binary on the system.
      */
     public static boolean existsOnSys(Bin b) throws InterruptedException, IOException {
-        return (Binaries.exec(b.exeless(), (b == Bin.FFMPEG || b == Bin.IMGMAGICK) ? "-version" : "--version") == 0);
+        return (Binaries.execAndWait(b.exeless(), (b == Bin.FFMPEG || b == Bin.IMGMAGICK) ? "-version" : "--version") == 0);
     }
     
     /**
@@ -371,8 +442,8 @@ public class Binaries {
         switch(b) {
         case YT_DLP:
         case GALLERY_DL:
-            // Execute update command and retrieve command result.
-            final String cmdResult = Binaries.execAndFetch(true, Binaries.binned(b), "-U");
+            // Execute update command and retrieve command result. Don't worry about interrupting on exit. Process is important and short.
+            final String cmdResult = Binaries.execAndGet(true, Binaries.binned(b), "-U");
             if (cmdResult == null) return new BinUpdateResult(b, false);
             
             // Check if updated at all and determine version retrieval regex.

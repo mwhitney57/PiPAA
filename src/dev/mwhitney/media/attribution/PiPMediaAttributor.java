@@ -29,14 +29,15 @@ import dev.mwhitney.media.exceptions.InvalidMediaException;
 import dev.mwhitney.properties.PiPProperty;
 import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.resources.AppRes;
-import dev.mwhitney.util.interfaces.PiPEnum;
+import dev.mwhitney.util.monitor.ProcessMonitor;
+import dev.mwhitney.util.monitor.ThreadMonitor;
 
 /**
  * Attributes PiPMedia sources and returns the attribution results.
  * 
  * @author mwhitney57
  */
-public class PiPMediaAttributor implements PropertyListener {
+public class PiPMediaAttributor implements PropertyListener, ProcessMonitor {
     // REGEX PATTERNS -- Saved as member variables and pre-compiled during construction for performance.
     /** The RegEx Pattern for fixing spacing issues. */
     private final Pattern rgxSpacer;
@@ -54,6 +55,14 @@ public class PiPMediaAttributor implements PropertyListener {
     private final Pattern rgxSrcWebDirect;
     /** The RegEx Pattern for determining if the media is WEB_INDIRECT. */
     private final Pattern rgxSrcWebIndirect;
+    
+    /**
+     * A {@link ThreadMonitor} which monitors all attribution processes and can
+     * interrupt them when needed. Specific, linked threads can be interrupted using
+     * {@link ThreadMonitor#interruptLinked(Object)}, and all threads can be
+     * interrupted, before exit for example, by calling {@link #interruptAll()}.
+     */
+    private ThreadMonitor monitor = new ThreadMonitor();
     
     /**
      * Creates a new PiPMediaAttributor for attributing media sources.
@@ -77,8 +86,11 @@ public class PiPMediaAttributor implements PropertyListener {
      * @return a set of {@link PiPMediaAttributes} for the passed media.
      * @throws InvalidMediaException if there was an error with the passed media or
      *                               during attribution of it.
+     * @throws InterruptedException  if the attribution process was interrupted,
+     *                               which typically happens when the request's
+     *                               linked source calls for it.
      */
-    public PiPMediaAttributes determineAttributes(AttributionRequest req) throws InvalidMediaException {
+    public PiPMediaAttributes determineAttributes(AttributionRequest req) throws InvalidMediaException, InterruptedException {
         final Object link = req.src();
         final PiPMedia media = req.media();
         AttributionFlag[] flags = req.flags();
@@ -122,14 +134,18 @@ public class PiPMediaAttributor implements PropertyListener {
             
             // Attribute web media from a known (non-Generic) platform.
             final CompletableFuture<Void> cf = CompletableFuture.runAsync(() -> {
-                System.out.println("Running ASYNC Process of Attribution");
                 try {
-                    final WebMediaFormat wmf = attributeWebMedia(media.getSrc(), attributes.getSrcPlatform());
-                    System.out.println("Done web media attribution, here's WMF: \n" + wmf);
+                    // Chosen over ThreadMonitor.runLinked for brevity/readability.
+                    monitor.addLinked(Thread.currentThread(), link);
+                        
+                    System.out.println("Running asynchronous web attribution process...");
+                    final WebMediaFormat wmf = attributeWebMedia(req.src(), media.getSrc(), attributes.getSrcPlatform());
+                    System.out.println("Web media attribution results: \n" + wmf);
                     attributes.setTitle(wmf.title())
                     .setFileExtension(wmf.extension() != null ? wmf.extension() : MediaExt.parse(murl2.format(attributes.getSrcPlatform())))
                     .setWMF(wmf);
-                } catch (InvalidMediaException ime) { throw new CompletionException(ime); }
+                    System.out.println("Done asynchronous web attribution.");
+                } catch (InvalidMediaException | InterruptedException e) { throw new CompletionException(e); }
             }, CFExec.VIRTUAL_EXECUTOR);
             
             // Web Indirect to Direct Conversion
@@ -138,7 +154,7 @@ public class PiPMediaAttributor implements PropertyListener {
             if (convert && attributes.isWebIndirect()) {
                 System.err.println("Converting Link to Direct: -- " + convert + " and " + attributes.isWebIndirect());
                 attributes.setSrcPlatform(attributeSrcPlatform(murl, attributes.getSrcType()));
-                final String conversion = convertIndirectSrc(mediaSrc, attributes.getSrcPlatform());
+                final String conversion = convertIndirectSrc(link, mediaSrc, attributes.getSrcPlatform());
                 murl.pointsToFile();
                 if (! mediaSrc.equals(conversion)) {
                     // Try to set source type now. If it throws an error, default to the original media source.
@@ -161,7 +177,11 @@ public class PiPMediaAttributor implements PropertyListener {
             // Join the two processes running asynchronously.
             try {
                 cf.join();
-            } catch(CompletionException ce) { throw (InvalidMediaException) ce.getCause(); }
+            } catch(CompletionException ce) {
+                if (ce.getCause() instanceof InvalidMediaException ime)    throw ime;
+                else if (ce.getCause() instanceof InterruptedException ie) throw ie;
+                throw new InvalidMediaException(ce.getMessage());
+            }
             // If converting indirect to direct found a new source, set it.
             if (mediatorWMF.src() != null)
                 attributes.getWMF().setSrc(mediatorWMF.src());
@@ -193,42 +213,47 @@ public class PiPMediaAttributor implements PropertyListener {
      * <code>SRC_TYPE.WEB_INDIRECT</code> media. However, it may also work with
      * direct web media sources.
      * 
+     * @param link     - the Object source linked to the attribution request.
      * @param src      - the String media source.
      * @param platform - a {@link SRC_PLATFORM} that matches the media source.
      * @return a {@link WebMediaFormat} with all of the web media attributes.
      * @throws InvalidMediaException if there was an error attributing the web
      *                               media.
+     * @throws InterruptedException  if the web media attribution process was
+     *                               interrupted.
      */
-    private WebMediaFormat attributeWebMedia(String src, SRC_PLATFORM platform) throws InvalidMediaException {
+    private WebMediaFormat attributeWebMedia(Object link, String src, SRC_PLATFORM platform) throws InvalidMediaException, InterruptedException {
         final WebMediaFormat format = new WebMediaFormat();
         String platUser = null, platID = null, platDesc = null;
         
         // Pre-attribution checks. Platform-specific and Audio-only.
         final PiPSupplier<String> platSupplier = switch (platform) {
-        case X  -> () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.GALLERY_DL), "--cookies", AppRes.COOKIES_PATH_ARG, "-K", "\"" + src + "\"");
+        case X  -> () -> monitor.supplyLinked(link, Binaries::execAndGet, new String[] {
+                Binaries.bin(Bin.GALLERY_DL), "--cookies", AppRes.COOKIES_PATH_ARG, "-K", "\"" + src + "\""});
         default -> null;
         };
         
         System.out.println("Attempting web attribution gets...");
         // Execute multiple binary commands asynchronously and concurrently, including audio-only test, platform-specific and regular attribution.
         final ArrayList<String> cmdOuts = CFExec.runAndGetVirtual(
-                () -> Binaries.execAndFetchSafe(false, Binaries.bin(Bin.YT_DLP), "\"" + src + "\"", "-I", "1", "--print", "\"%(ext)s\""),
+                () -> monitor.supplyLinked(link, Binaries::execAndGet, new String[] {Binaries.bin(Bin.YT_DLP), "\"" + src + "\"", "-I", "1", "--print", "\"%(ext)s\""}),
                 platSupplier,
                 // Not Audio-Only, Cookies Attempts -- Cookies attempts go first. If both cases work, we will likely get more media info.
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     false, true ).toArray(new String[0])),
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, false, true ).toArray(new String[0])),
+                () -> monitor.supplyLinked(link, Binaries::execAndGet, getWebAttributionArgs(src, platform, Bin.YT_DLP,     false, true )),
+                () -> monitor.supplyLinked(link, Binaries::execAndGet, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, false, true )),
                 // Not Audio-Only, No Cookies Attempts -- No cookies attempts are the only ones to work on some sites.
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     false, false).toArray(new String[0])),
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, false, false).toArray(new String[0])),
+                () -> monitor.supplyLinked(link, Binaries::execAndGet, getWebAttributionArgs(src, platform, Bin.YT_DLP,     false, false)),
+                () -> monitor.supplyLinked(link, Binaries::execAndGet, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, false, false)),
                 // Audio-Only, Cookies Attempts -- Cookies attempts go first. If both cases work, we will likely get more media info.
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     true,  true ).toArray(new String[0])),
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, true,  true ).toArray(new String[0])),
+                () -> monitor.supplyLinked(link, Binaries::execAndGet, getWebAttributionArgs(src, platform, Bin.YT_DLP,     true,  true )),
+                () -> monitor.supplyLinked(link, Binaries::execAndGet, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, true,  true )),
                 // Audio-Only, No Cookies Attempts -- No cookies attempts are the only ones to work on some sites.
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.YT_DLP,     true,  false).toArray(new String[0])),
-                () -> Binaries.execAndFetchSafe(false, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, true,  false).toArray(new String[0])))
+                () -> monitor.supplyLinked(link, Binaries::execAndGet, getWebAttributionArgs(src, platform, Bin.YT_DLP,     true,  false)),
+                () -> monitor.supplyLinked(link, Binaries::execAndGet, getWebAttributionArgs(src, platform, Bin.GALLERY_DL, true,  false)))
+                .throwIfFrom(new InterruptedException("Monitor interrupted attribution: stopping web media attribution."))  // Throw exception before prints if caught.
                 .excepts((i, e) -> System.err.println("Exception caught from binary (#" + i + ") in web attribution: " + e))
                 .results();
-            
+        
         // Check if media is audio first.
         final String ext = cmdOuts.get(0);
         final MediaExt mediaExt = MediaExt.parseSafe(ext);
@@ -366,9 +391,9 @@ public class PiPMediaAttributor implements PropertyListener {
      *                    the media as audio only.
      * @param cookies     - a boolean for whether or not to include the cookies in
      *                    the arguments.
-     * @return a List<String> of arguments for setting the remote media.
+     * @return a String array of arguments for setting the remote media.
      */
-    private ArrayList<String> getWebAttributionArgs(final String src, SRC_PLATFORM platform, final Bin binOverride, final boolean audioOnly, final boolean useCookies) {
+    private String[] getWebAttributionArgs(final String src, SRC_PLATFORM platform, final Bin binOverride, final boolean audioOnly, final boolean useCookies) {
         // Cannot proceed without proper, non-null media.
         Objects.requireNonNull(src, "The String source must be non-null to retrieve web attribution arguments.");
         
@@ -442,7 +467,7 @@ public class PiPMediaAttributor implements PropertyListener {
         }
         
 //        System.out.println("Media Attribution Web Args:\n---> " + String.join(" ", webArgs) + "\n");    // Debug
-        return webArgs;
+        return webArgs.toArray(new String[0]);
     }
     
     /**
@@ -636,14 +661,17 @@ public class PiPMediaAttributor implements PropertyListener {
     }
     
     /**
-     * Attempts to convert a <code>WEB_INDIRECT</code> media source to a <code>WEB_DIRECT</code> one.
-     * This method is not guaranteed to work. It is possible that no direct link will be present,
-     * in which case, this method will just return the original source String.
+     * Attempts to convert a <code>WEB_INDIRECT</code> media source to a
+     * <code>WEB_DIRECT</code> one. This method is not guaranteed to work. It is
+     * possible that no direct link will be present, in which case, this method will
+     * just return the original source String.
      * 
-     * @param src - the String indirect web media source.
-     * @return the converted source String, or the passed String if conversion was not possible.
+     * @param link - the Object source linked to the attribution request.
+     * @param src  - the String indirect web media source.
+     * @return the converted source String, or the passed String if conversion was
+     *         not possible.
      */
-    private String convertIndirectSrc(String src, SRC_PLATFORM platform) {
+    private String convertIndirectSrc(Object link, String src, SRC_PLATFORM platform) throws InterruptedException {
         // Change arguments depending upon the platform.
         String[] args = null;
         boolean useYTDLP   = true;
@@ -666,8 +694,7 @@ public class PiPMediaAttributor implements PropertyListener {
                 args = new String[] { Binaries.bin(Bin.GALLERY_DL), "--cookies", AppRes.COOKIES_PATH_ARG, "\"" + src + "\"", "--get-url" };
             
             // Check for command execution failure or error, in which case try another binary.
-            final String cmdOutput = Binaries.execAndFetchSafe(false, args);
-//            System.err.println(cmdOutput);
+            final String cmdOutput = Objects.requireNonNullElse(monitor.supplyAsyncLinked(link, Binaries::execAndGet, args), "");
             String[] lines = cmdOutput.split("\n");
             if ((lines.length == 0 || lines[0].trim().length() == 0)|| lines[lines.length - 1].startsWith("ERROR")) {
                 useYTDLP = !useYTDLP;
@@ -733,6 +760,9 @@ public class PiPMediaAttributor implements PropertyListener {
     private String urlFix(String str) {
         return URLDecoder.decode(str, StandardCharsets.UTF_8);
     }
+    
+    @Override
+    public ThreadMonitor getMonitor() { return this.monitor; }
     
     // Do Nothing Unless Overridden
     @Override

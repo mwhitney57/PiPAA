@@ -100,15 +100,17 @@ public class PiPMedia {
      * not already stored locally, then conversion will not be possible.
      * <p>
      * <b>Note:</b> This method does not alter any properties of this PiPMedia
-     * instance <b>other than setting its converted source</b>, if conversion took place.
-     * It is otherwise a convenience method for converting invalid media and
+     * instance <b>other than setting its converted source</b>, if conversion took
+     * place. It is otherwise a convenience method for converting invalid media and
      * obtaining the path to the result.
      * 
      * @param source - a String with a custom source to use.
      * @return a String with the path to the converted media, or the PiPMedia's
      *         source if no conversion was necessary.
+     * @throws InterruptedException if the current thread was interrupted while
+     *                              converting the image using one of the binaries.
      */
-    public String convertUnsupported(String source) {
+    public String convertUnsupported(String source) throws InterruptedException {
         if (source == null || source.trim().isEmpty() || source.indexOf('.') == -1 || !hasAttributes() || getAttributes().getFileExtension() == null)
             return source;
         
@@ -151,8 +153,8 @@ public class PiPMedia {
                 if (convBin == null)
                     ImageIO.write(ImageIO.read(sourceFile), out.substring(out.lastIndexOf('.') + 1), outFile);
                 else
-                    Binaries.exec(Binaries.bin(convBin), "\"" + source + "\"", "\"" + out + "\"");
-            } catch (InterruptedException | IOException e) {
+                    Binaries.execAndWait(Binaries.bin(convBin), "\"" + source + "\"", "\"" + out + "\"");
+            } catch (IOException e) {
                 System.err.println("Unexpected error occurred during unsupported media conversion.");
                 return source;
             }
@@ -312,10 +314,10 @@ public class PiPMedia {
         // Execute trimming command via binary.
         try {
             if (option == TRIM_OPTION.NORMAL || option == TRIM_OPTION.FORCE)
-                Binaries.exec(Binaries.bin(Bin.IMGMAGICK), "-background", "none", "-fuzz", "4%", "\"" + source + "\"",
+                Binaries.execAndWait(Binaries.bin(Bin.IMGMAGICK), "-background", "none", "-fuzz", "4%", "\"" + source + "\"",
                         "-trim", "-layers", "TrimBounds", "-coalesce", "\"" + outFile.getPath() + "\"");
             else
-                Binaries.exec(Binaries.bin(Bin.IMGMAGICK), "-background", "none", "\"" + source + "\"", "-trim",
+                Binaries.execAndWait(Binaries.bin(Bin.IMGMAGICK), "-background", "none", "\"" + source + "\"", "-trim",
                         "-layers", "TrimBounds", "-coalesce", "\"" + outFile.getPath() + "\"");
         } catch (InterruptedException e) {
             throw new MediaModificationException("The trimming process was interrupted.");

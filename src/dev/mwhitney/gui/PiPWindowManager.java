@@ -33,13 +33,15 @@ import dev.mwhitney.media.exceptions.InvalidMediaException;
 import dev.mwhitney.properties.PiPProperty;
 import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.util.PiPAAUtils;
+import dev.mwhitney.util.monitor.ProcessMonitor;
+import dev.mwhitney.util.monitor.ThreadMonitor;
 
 /**
  * Manages any existing PiPWindows.
  * 
  * @author mwhitney57
  */
-public class PiPWindowManager implements PropertyListener, BindControllerFetcher, BindHandler {
+public class PiPWindowManager implements PropertyListener, BindControllerFetcher, BindHandler, ProcessMonitor {
     /** The size of the user's screen. */
     private final Rectangle userScreen = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
     /** The media attributor that assists in determining the attributes for PiPMedia. */
@@ -154,7 +156,11 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
                 public PiPMediaAttributes requestAttributes(AttributionRequest req) {
                     try {
                         return PiPWindowManager.this.attributor.determineAttributes(req);
-                    } catch (InvalidMediaException ime) { System.err.println(ime.getMessage()); }
+                    } catch (InvalidMediaException ime) {
+                        System.err.println(ime.getMessage());
+                    } catch (InterruptedException ie) {
+                        System.err.println("Attribution process interrupted, likely due to window closing: " + ie.getMessage());
+                    }
                     return null;
                 }
             });
@@ -420,6 +426,9 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         } catch (InterruptedException e) {
             System.err.println("[EXIT] Window manager exited OK, but was interrupted while closing windows.");
         }
+        
+        // Ensure all attribution processes have been interrupted.
+        interruptAll();
     }
     
     /**
@@ -586,6 +595,11 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
             if(window != null && window.state().not(StateProp.CLOSED))
                 window.propertyChanged(prop, value);
         }
+    }
+
+    @Override
+    public ThreadMonitor getMonitor() {
+        return this.attributor.getMonitor();
     }
 
     @Override

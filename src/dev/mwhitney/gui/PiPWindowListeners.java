@@ -62,6 +62,7 @@ import dev.mwhitney.listeners.PiPCommandListener;
 import dev.mwhitney.listeners.PiPHandoffListener;
 import dev.mwhitney.listeners.PiPMediaTransferListener;
 import dev.mwhitney.listeners.PiPWindowListener;
+import dev.mwhitney.main.Binaries;
 import dev.mwhitney.media.MediaExt;
 import dev.mwhitney.media.MediaFlavorPicker;
 import dev.mwhitney.media.MediaFlavorPicker.MediaFlavor;
@@ -760,7 +761,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                     Desktop.getDesktop().open(openFile);
                 } else {
                     final String openCmd = "explorer.exe /select,\"" + openFile.getAbsolutePath() + "\"";
-                    new ProcessBuilder("cmd.exe", "/c", openCmd).start();
+                    Binaries.exec("cmd.exe", "/c", openCmd);
                 }
             } catch (IOException ioe) { ioe.printStackTrace(); }
             break;
