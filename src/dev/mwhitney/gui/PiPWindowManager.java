@@ -40,17 +40,18 @@ import dev.mwhitney.util.PiPAAUtils;
  * @author mwhitney57
  */
 public class PiPWindowManager implements PropertyListener, BindControllerFetcher, BindHandler {
+    /** The size of the user's screen. */
+    private final Rectangle userScreen = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+    /** The media attributor that assists in determining the attributes for PiPMedia. */
+    private final PiPMediaAttributor attributor = new PiPMediaAttributor() {
+        @Override
+        public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindowManager.this.propertyState(prop, rtnType); }
+    };
+    /** The List of PiPWindows managed by this manager. */
+    private final List<PiPWindow> windows = new ArrayList<PiPWindow>();
+    
     /** The {@link CountDownLatch} which gives the manager time to clear windows during exit, but only up to a set timeout. */
     private CountDownLatch exitLatch;
-    
-    /** The size of the user's screen. */
-    private Rectangle userScreen;
-    
-    /** The media attributor that assists in determining the attributes for PiPMedia. */
-    private PiPMediaAttributor attributor;
-
-    /** The List of PiPWindows managed by this manager. */
-    private List<PiPWindow> windows;
     /** The window count listener that gets called when the live window count changes. */
     private PiPWindowCountListener countListener;
     /** The count/amount of <b>live</b>, unclosed PiPWindows managed by this manager.*/
@@ -68,13 +69,6 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
      * in existence at a time.
      */
     public PiPWindowManager() {
-        this.windows = new ArrayList<PiPWindow>();
-
-        this.userScreen = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-        this.attributor = new PiPMediaAttributor() {
-            @Override
-            public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindowManager.this.propertyState(prop, rtnType); }
-        };
         this.liveWindowCount = 0;
         this.lastWindowFocused = 0;
         this.lastSpawnLocation = new Point(-1, -1);
