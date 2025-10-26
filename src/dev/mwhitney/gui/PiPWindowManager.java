@@ -334,7 +334,7 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
      */
     public void clearWindowsQuickly() {
         // Run clearing operation asynchronously.
-        CompletableFuture.runAsync(() -> clearWindowsQuicklyInSync());
+        CompletableFuture.runAsync(this::clearWindowsQuicklyInSync);
     }
     
     /**
@@ -631,7 +631,7 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.RELOCATE_WINDOW)));
             break;
         case RESET_SIZE_ALL:
-            callInLiveWindows(window -> SwingUtilities.invokeLater(() -> window.resetSize()));
+            callInLiveWindows(window -> SwingUtilities.invokeLater(window::resetSize));
             break;
         case SEEK_ALL:
             // TODO Implement after SEEK in PiPWindow.

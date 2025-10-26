@@ -320,8 +320,8 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         // Setup latches and hooks.
         final CountDownLatch loadingLatch = new CountDownLatch(1);
         final CountDownLatch closingLatch = new CountDownLatch(1);
-        win.state().hook(LOADING, false, () -> loadingLatch.countDown());
-        win.state().hook(CLOSING_MEDIA, false, () -> closingLatch.countDown());
+        win.state().hook(LOADING, false, loadingLatch::countDown);
+        win.state().hook(CLOSING_MEDIA, false, closingLatch::countDown);
         // Set media.
         win.setMedia(media);
         // Await loading completion -- either success or failure.
@@ -719,7 +719,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
         // Close either the current media or the entire window.
         case CLOSE_FLEX:
             if (get().hasMedia()) setWindowMedia(null);
-            else CompletableFuture.runAsync(() -> get().requestClose());
+            else CompletableFuture.runAsync(get()::requestClose);
             break;
         // Pop-up with lock selection options for user to decide.
         case LOCK_WINDOW_MENU:

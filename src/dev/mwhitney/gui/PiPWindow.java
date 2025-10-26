@@ -970,7 +970,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 if (!imgLoc.isEmpty()) replaceArtwork(imgLoc.toString());
                 break;
             case RELOCATE_WINDOW:
-                SwingUtilities.invokeLater(() -> ensureOnScreen());
+                SwingUtilities.invokeLater(this::ensureOnScreen);
                 break;
             case RESIZE_WINDOW:
             case RESIZE_WINDOWS:
@@ -1000,7 +1000,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 else getManager().callInLiveWindows(w -> w.scaleSize(input.get(), scaleWidth.isTrue()));
                 break;
             case RESET_SIZE:
-                SwingUtilities.invokeLater(() -> resetSize());
+                SwingUtilities.invokeLater(this::resetSize);
                 break;
             case RESET_ZOOM:
                 if (state.is(PLAYER_SWING)) mediaCommand(PiPMediaCMD.ZOOM, "SET", "1.00f", "0", "0");
@@ -1204,7 +1204,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 final Point point = hasPointArgs ? new Point(Integer.valueOf(args[2]), Integer.valueOf(args[3])) : new Point(0, 0);
                 if (args[0].equals("SKIP")) ((StretchIcon) imgLabel.getIcon()).incZoom(newZoom, point);
                 else                        ((StretchIcon) imgLabel.getIcon()).setZoom(newZoom, point);
-                SwingUtilities.invokeLater(() -> imgLabel.repaint());
+                SwingUtilities.invokeLater(imgLabel::repaint);
                 break;
             case PAN:
                 if (state.not(PLAYER_SWING))
@@ -1216,7 +1216,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 } else {
                     ((StretchIcon) imgLabel.getIcon()).pan(Integer.valueOf(args[0]), Integer.valueOf(args[1]));
                 }
-                SwingUtilities.invokeLater(() -> imgLabel.repaint());
+                SwingUtilities.invokeLater(imgLabel::repaint);
                 break;
             case FULLSCREEN:
                 if (state.not(LOCKED_FULLSCREEN)) state.toggle(FULLSCREEN);
@@ -1290,7 +1290,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 else if (mediaPlayerCanBeStopped()) {
                     // Not using a virtual thread, as this operation may use native code.
                     try (final ExecutorService executor = Executors.newSingleThreadExecutor()) {
-                        final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> mediaPlayer.mediaPlayer().controls().stop(), executor);
+                        final CompletableFuture<Void> future = CompletableFuture.runAsync(mediaPlayer.mediaPlayer().controls()::stop, executor);
                         try {
                             // Give the media player a max runtime to execute the command. If exceeded, it has likely crashed.
                             future.get(2000, TimeUnit.MILLISECONDS);
@@ -1399,7 +1399,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             
             // Pick which player to use based on media.
             try {
-                SwingUtilities.invokeAndWait(() -> pickPlayer());
+                SwingUtilities.invokeAndWait(this::pickPlayer);
             } catch (InvocationTargetException | InterruptedException e) {
                 e.printStackTrace();
                 setMedia(null);
