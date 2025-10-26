@@ -1005,6 +1005,23 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case RESET_ZOOM:
                 if (state.is(PLAYER_SWING)) mediaCommand(PiPMediaCMD.ZOOM, "SET", "1.00f", "0", "0");
                 break;
+            case WINDOW_SIZE_DECREASE_LESS:
+            case WINDOW_SIZE_DECREASE:
+            case WINDOW_SIZE_DECREASE_MORE:
+            case WINDOW_SIZE_INCREASE_LESS:
+            case WINDOW_SIZE_INCREASE:
+            case WINDOW_SIZE_INCREASE_MORE:
+                final int adjustment = switch (shortcut) {
+                    case WINDOW_SIZE_DECREASE_LESS -> -5;
+                    case WINDOW_SIZE_DECREASE      -> -10;
+                    case WINDOW_SIZE_DECREASE_MORE -> -20;
+                    case WINDOW_SIZE_INCREASE_LESS -> 5;
+                    case WINDOW_SIZE_INCREASE      -> 10;
+                    case WINDOW_SIZE_INCREASE_MORE -> 20;
+                    default -> 0;
+                };
+                scaleSize(getInnerWidth() + adjustment, true);
+                break;
             // ZOOM -- Combined logic simplifies casting to MouseInput and usage of coordinates.
             case ZOOM_IN_LESS:
             case ZOOM_IN:
@@ -1366,7 +1383,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             contentPane.remove(mediaPlayer);
             contentPane.add(textField, BorderLayout.CENTER);
             adaptMinimumSize();
-            changeSize(PiPWindow.DEFAULT_SIZE, true);
+            resetSize();
             cr.setAspectRatio(null);
             ensureOnScreen();
             this.requestFocus();
@@ -2116,7 +2133,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      *      borders.
      */
     public void changeSize(final Dimension size) {
-        changeSize(size, false);
+        changeSize(refineInnerSize(size), false);
     }
     
     /**
@@ -2131,6 +2148,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      *      method with a <code>false</code> boolean value.
      */
     public void changeSize(final Dimension size, final boolean ignoreBorders) {
+        // Ensure paint will be fast during size changing. Keeps things smooth with multiple windows or quick consecutive calls.
+        if (this.imgLabelIcon != null && state.any(PLAYER_SWING, PLAYER_COMBO)) this.imgLabelIcon.restartZoomRescaleTimer();
+        
+        // Adjust size if necessary, adding the borders to the width and height. Then set the size.
         if (!ignoreBorders) size.setSize(size.width + (BORDER_SIZE * 2), size.height + (BORDER_SIZE * 2));
         PiPWindow.this.setSize(size);
         state.off(RESIZING);
@@ -2172,6 +2193,40 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     }
 
     /**
+     * Refines the passed {@link Dimension} with the inner size of the window. The
+     * refinement process removes rounding errors and impurities that occur in
+     * aspect ratio calculations for the media. These imperfections can compound if
+     * multiple scaling operations, such as with {@link #scaleSize(int, boolean)},
+     * occur consecutively without reference back to the size of the media. A pixel
+     * of inaccuracy becomes two, then three or four, and so on until there is a
+     * substantial and noticeable gap between the border and content of a window.
+     * <p>
+     * To address this, the refinement process uses the size's greatest dimension as
+     * a target, then calculates a scaled {@link Dimension} based on the media's
+     * size. This ensures consistent adherence to the aspect ratio, even with many
+     * consecutive scaling operations. If there's no attributed media present, the
+     * {@link Dimension} is returned as is.
+     * <pre>
+     *        Media Size: (1920, 1080)
+     *       Passed Size: ( 720,  406)
+     *     Expected Size: ( 720,  405)
+     * 
+     * refineInnerSize(new Dimension(720, 406)) -> (720, 405)
+     * </pre>
+     * 
+     * @param d - the inner size {@link Dimension} to refine.
+     * @return a refined version of the passed {@link Dimension}, with a few pixels
+     *         of difference, or passed inner size if there's no attributed media.
+     * @since 0.9.5
+     */
+    private Dimension refineInnerSize(final Dimension d) {
+        // Return size as is if null or if there's no attributed media, meaning no refinement is possible.
+        if (d == null || !hasAttributedMedia()) return d;
+        // Return the refined size, which simply ensures that the size is accurate to the media's aspect ratio.
+        return getMedia().getAttributes().getScaledSize(Math.max(d.width, d.height), false);
+    }
+
+    /**
      * Resets the size of this window to the default.
      * <p>
      * If this window has media, the {@link #DEFAULT_MEDIA_SIZE} will be used,
@@ -2181,8 +2236,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * called from the EDT</b>.
      */
     public void resetSize() {
-        if (hasMedia()) changeSize(media.getAttributes().getScaledSize(DEFAULT_MEDIA_SIZE));
-        else            changeSize(DEFAULT_SIZE, true);
+        if (hasAttributedMedia()) changeSize(media.getAttributes().getScaledSize(DEFAULT_MEDIA_SIZE));
+        else                      changeSize(DEFAULT_SIZE, true);
     }
     
     /**

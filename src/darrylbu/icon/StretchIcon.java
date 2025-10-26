@@ -623,7 +623,7 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
    * @author mwhitney57
    * @since 0.9.5
    */
-  private void restartZoomRescaleTimer() {
+  public void restartZoomRescaleTimer() {
       // This logic only pertains to the SMART scaling option. Return otherwise.
       if(currentScalingOption().not(SCALING_OPTION.SMART)) return;
       

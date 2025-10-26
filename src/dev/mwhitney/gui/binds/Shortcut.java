@@ -443,29 +443,41 @@ public enum Shortcut {
 	),
     // Step increase/decrease size of window.
     WINDOW_SIZE_INCREASE_LESS(
+        new KeyBind(KeyEvent.VK_QUOTE, SHIFT_DOWN_MASK)
     ),
     WINDOW_SIZE_INCREASE(
+        new KeyBind(KeyEvent.VK_QUOTE)
     ),
     WINDOW_SIZE_INCREASE_MORE(
+        new KeyBind(KeyEvent.VK_QUOTE, CTRL_DOWN_MASK)
     ),
     WINDOW_SIZE_DECREASE_LESS(
+        new KeyBind(KeyEvent.VK_SEMICOLON, SHIFT_DOWN_MASK)
     ),
     WINDOW_SIZE_DECREASE(
+        new KeyBind(KeyEvent.VK_SEMICOLON)
     ),
     WINDOW_SIZE_DECREASE_MORE(
+        new KeyBind(KeyEvent.VK_SEMICOLON, CTRL_DOWN_MASK)
     ),
     // Step increase/decrease size of ALL windows.
     WINDOWS_SIZE_INCREASE_LESS(
+        new KeyBind(KeyEvent.VK_QUOTE, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
     ),
     WINDOWS_SIZE_INCREASE(
+        new KeyBind(KeyEvent.VK_QUOTE, ALT_DOWN_MASK)
     ),
     WINDOWS_SIZE_INCREASE_MORE(
+        new KeyBind(KeyEvent.VK_QUOTE, ALT_DOWN_MASK | CTRL_DOWN_MASK)
     ),
     WINDOWS_SIZE_DECREASE_LESS(
+        new KeyBind(KeyEvent.VK_SEMICOLON, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
     ),
     WINDOWS_SIZE_DECREASE(
+        new KeyBind(KeyEvent.VK_SEMICOLON, ALT_DOWN_MASK)
     ),
     WINDOWS_SIZE_DECREASE_MORE(
+        new KeyBind(KeyEvent.VK_SEMICOLON, ALT_DOWN_MASK | CTRL_DOWN_MASK)
     ),
     ZOOM_IN_LESS(
         new KeyBind(KeyEvent.VK_CLOSE_BRACKET, SHIFT_DOWN_MASK)

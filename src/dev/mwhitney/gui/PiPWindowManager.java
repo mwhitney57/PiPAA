@@ -666,6 +666,24 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         case SEEK_9_ALL:
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.SEEK_9)));
             break;
+        case WINDOWS_SIZE_DECREASE_LESS:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.WINDOW_SIZE_DECREASE_LESS)));
+            break;
+        case WINDOWS_SIZE_DECREASE:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.WINDOW_SIZE_DECREASE)));
+            break;
+        case WINDOWS_SIZE_DECREASE_MORE:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.WINDOW_SIZE_DECREASE_MORE)));
+            break;
+        case WINDOWS_SIZE_INCREASE_LESS:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.WINDOW_SIZE_INCREASE_LESS)));
+            break;
+        case WINDOWS_SIZE_INCREASE:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.WINDOW_SIZE_INCREASE)));
+            break;
+        case WINDOWS_SIZE_INCREASE_MORE:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.WINDOW_SIZE_INCREASE_MORE)));
+            break;
         default: break; // Do nothing for the rest. Some actions handled in PiPWindow or PiPWindowListeners.
         }
     }

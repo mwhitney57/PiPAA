@@ -590,8 +590,10 @@ public class PiPMediaAttributes {
     }
     
     /**
-     * Gets a scaled version of the current size up to the passed length.
-     * Neither the width nor the height will exceed the passed length.
+     * Gets a scaled version of the current size up to the passed length. Neither
+     * the width nor the height will exceed the passed length, or their respective
+     * original lengths. Therefore, this method is best for downscale operations.
+     * Use {@link #getScaledSize(int, boolean)} to surpass the original media size.
      * <p>
      * Most importantly, this method <b>maintains the aspect ratio</b> of the media.
      * This is an example of the method and what to expect:
@@ -600,23 +602,47 @@ public class PiPMediaAttributes {
      * getScaledSize(720) =  720, 405
      * </pre>
      * 
-     * @param maxLen - an int for the maximum value of the width and/or height values.
+     * @param max - an int for the maximum value of the width and/or height.
      * @return a Dimension containing the aspect ratio-scaled size.
+     * @see {@link #getScaledSize(int, boolean)} to allow exceeding the media's size.
      */
-    public Dimension getScaledSize(int maxLen) {
+    public Dimension getScaledSize(int max) {
+        return getScaledSize(max, true);
+    }
+    
+    /**
+     * Gets a scaled version of the current size up to the passed length. Neither
+     * the width nor the height will exceed the passed length.
+     * <p>
+     * Most importantly, this method <b>maintains the aspect ratio</b> of the media.
+     * This is an example of the method and what to expect:
+     * <pre>
+     *              Media = 1920, 1080
+     * getScaledSize(720) =  720, 405
+     * </pre>
+     * 
+     * @param max     - an int for the maximum value of the width and/or height.
+     * @param bounded - a boolean for whether or not the size must be bounded to the
+     *                media's. The returned size will always be less than or equal
+     *                to the media's size if {@code true}.
+     * @return a Dimension containing the aspect ratio-scaled size.
+     * @since 0.9.5
+     * @see {@link #getScaledSize(int)} as shorthand to stay below the media's size.
+     */
+    public Dimension getScaledSize(int max, boolean bounded) {
         // Scale window based on media size while respecting passed maximum.
-        int x = getSize().width, y = getSize().height;
+        int x = this.size.width, y = this.size.height;
         if(x > y) {
-            x = Math.min(x, maxLen);
-            y = (int) (x / getSizeRatio());
+            x = bounded ? Math.min(x, max) : max;
+            y = (int) (x / this.sizeRatio);
         } else if (y > x){
-            y = Math.min(y, maxLen);
-            x = (int) (y * getSizeRatio());
+            y = bounded ? Math.min(y, max) : max;
+            x = (int) (y * this.sizeRatio);
         } else {
-            x = Math.min(x, maxLen);
-            y = Math.min(y, maxLen);
+            x = bounded ? Math.min(x, max) : max;
+            y = bounded ? Math.min(y, max) : max;
         }
-        return new Dimension((int) x, (int) y);
+        return new Dimension(x, y);
     }
     
     /**
