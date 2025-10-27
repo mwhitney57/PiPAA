@@ -93,20 +93,20 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
     private DataFlavor flavorWebURL;
     
     /** A DropTarget for drag 'n drop or clipboard media transfers. */
-    private DropTarget dndTarget;
+    private final DropTarget dndTarget;
     /** A DropTarget for drag 'n drop or clipboard media transfers that should be handed off to a new window. */
-    private DropTarget dndTargetSecondary;
+    private final DropTarget dndTargetSecondary;
     /** The AttributeUpdateListener which listens for updates to each window's media's attributes. */
-    private AttributeUpdateListener attributeListener;
+    private final AttributeUpdateListener attributeListener;
     /**
      * The high-speed mouse button tracker. Used instead of {@link BindHook} data
      * for maximum speed and readability. This is used for drag events, which must
      * be as fast as possible. While {@link BindHook} should be fast, this approach
      * should be faster, simpler, and certainly more readable.
      */
-    private HSMBTracker mouse = new HSMBTracker();
+    private final HSMBTracker mouse = new HSMBTracker();
     /** The keyboard and mouse hook which triggers bind actions when certain configured inputs are received that match shortcuts. */
-    private BindHook kbmHook;
+    private final BindHook kbmHook;
     
     /**
      * Creates a new window listeners instance. Each instance handles multiple
@@ -372,16 +372,16 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
 
         final boolean hasFlavorOverrides = flavorOverrides != null && flavorOverrides.length > 0;
         final MediaFlavorPicker picker = new MediaFlavorPicker(hasFlavorOverrides
-            ? flavorOverrides
-            : (clipboardSrc
-            ? new MediaFlavor[] { IMAGE, STRING, FILE, WEB_URL }
-            : (PREFER_LINK
-            ? new MediaFlavor[] { WEB_URL, FILE, IMAGE, STRING }
-            : MediaFlavorPicker.DEFAULT_PICK_ORDER)))
-        .support(STRING,  t.isDataFlavorSupported(DataFlavor.stringFlavor))
-        .support(IMAGE,   t.isDataFlavorSupported(DataFlavor.imageFlavor))
-        .support(FILE,    t.isDataFlavorSupported(DataFlavor.javaFileListFlavor))
-        .support(WEB_URL, t.isDataFlavorSupported(flavorWebURL));
+                ? flavorOverrides
+                : (clipboardSrc
+                ? new MediaFlavor[] { IMAGE, STRING, FILE, WEB_URL }
+                : (PREFER_LINK
+                ? new MediaFlavor[] { WEB_URL, FILE, IMAGE, STRING }
+                : MediaFlavorPicker.DEFAULT_PICK_ORDER)))
+            .support(STRING,  t.isDataFlavorSupported(DataFlavor.stringFlavor))
+            .support(IMAGE,   t.isDataFlavorSupported(DataFlavor.imageFlavor))
+            .support(FILE,    t.isDataFlavorSupported(DataFlavor.javaFileListFlavor))
+            .support(WEB_URL, t.isDataFlavorSupported(flavorWebURL));
         // Get transfer data for all supported media flavors.
         // For files, also relocate any and all files originating in the temporary directory to the PiPAA cache. See method doc. for why.
         final String        dataString = (picker.supports(STRING)  ? (String) t.getTransferData(DataFlavor.stringFlavor)                              : null);
@@ -710,6 +710,11 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             return;
         }
         
+        /*
+         * Shortcut Hierarchy:
+         * Handling for shortcuts starts here. If not handled here, the window receives the shortcut, then the manager.
+         * This is a great place to handle GUI-related tasks, as this is called on the EDT directly from listeners.
+         */
         final Shortcut shortcut = bind.shortcut();
         switch (shortcut) {
         // Add a new empty window.
