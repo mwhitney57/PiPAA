@@ -111,10 +111,10 @@ public abstract class AppRes {
     
     // Internal File Versions
     public static final String VERS_VLC                     = "3.0.21 Vetinari";
-    public static final String VERS_YTDLP                   = "stable@2025-03-31";
-    public static final String VERS_GALLERYDL               = "1.29.3";
-    public static final String VERS_FFMPEG                  = "7.1-120";
-    public static final String VERS_IMAGEMAGICK             = "7.1.1-47";
+    public static final String VERS_YTDLP                   = "stable@2025-10-22";
+    public static final String VERS_GALLERYDL               = "1.30.10";
+    public static final String VERS_FFMPEG                  = "8.0-28";
+    public static final String VERS_IMAGEMAGICK             = "7.1.2-8";
     
     // Internal Files
     public static final String FILE_LIBVLC                  = PATH_BIN + "/" + NAME_LIBVLC;
