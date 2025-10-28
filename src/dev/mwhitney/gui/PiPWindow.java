@@ -1239,6 +1239,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 if (state.not(LOCKED_FULLSCREEN)) state.toggle(FULLSCREEN);
                 break;
             case RELOAD:
+                // Don't attempt reload if there's nothing to reload.
+                if (!hasMedia()) {
+                    flashBorder(PiPWindow.BORDER_ERROR);
+                    return false;
+                }
+                flashBorder(PiPWindow.BORDER_OK);   // Indicate accepted reload request.
+                
                 // Optional Argument: [0+]=ReloadSelections OR SnapshotData -- Check for valid argument types.
                 final boolean selectionsArgs = anyArgs && cmdArgs.isOfType(ReloadSelections.class);
                 final boolean dataArgs       = anyArgs && cmdArgs.isOfType(SnapshotData.class);
