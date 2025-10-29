@@ -62,6 +62,9 @@ public enum Shortcut {
     DELETE_MEDIA(
         new KeyBind(KeyEvent.VK_D, CTRL_DOWN_MASK | SHIFT_DOWN_MASK)
     ),
+    DISABLE_SUBTITLES(
+        new KeyBind(KeyEvent.VK_S, ALT_DOWN_MASK)
+    ),
     DUPLICATE_WINDOW(
         new KeyBind(KeyEvent.VK_D, SHIFT_DOWN_MASK)
     ),

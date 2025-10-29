@@ -885,6 +885,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 }
                 break;
             case CYCLE_SUBTITLE_TRACKS:
+            case DISABLE_SUBTITLES:
                 // Only cycle tracks under applicable players.
                 if (state.not(PLAYER_VLC, PLAYER_COMBO)) break;
                 
@@ -894,6 +895,12 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     final List<Integer> trackIDs = tracks.stream().map(t -> t.id()).toList();
                     final int index = trackIDs.indexOf(mediaPlayer.mediaPlayer().subpictures().track());
                     final Loop<TrackDescription> trackLoop = new Loop<>(tracks.toArray(TrackDescription[]::new), index);
+                    
+                    // Loop through to the Disable track, then back up one to prepare for the final next() call below.
+                    if (shortcut == Shortcut.DISABLE_SUBTITLES && tracks.stream().anyMatch(t -> t.description().equalsIgnoreCase("Disable"))) {
+                        while (!trackLoop.next().description().equalsIgnoreCase("Disable"));
+                        trackLoop.previous();
+                    }
                     
                     // Set new subtitle track selection and notify user.
                     mediaPlayer.mediaPlayer().subpictures().setTrack(trackLoop.next().id());
