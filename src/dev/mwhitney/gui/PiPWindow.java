@@ -168,7 +168,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * in which case no media is currently displayed.
      */
     private volatile PiPMedia media;
-    /** A boolean which is true when the current media is being saved. */
+    /** A {@link PiPWindowState} instance which tracks the state of the window. */
     private final PiPWindowState state = new PiPWindowState();
     
     /** This window's content pane. */
@@ -219,8 +219,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     private final Object linkDL = new Object();
     
     /**
-     * Constructs a new PiPWindow. This constructor creates the window and simply
-     * sits until it receives media.
+     * Constructs a new PiPWindow. This constructor creates the window with no
+     * media.
      */
     public PiPWindow() {
         super();
@@ -287,7 +287,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         textField.addMouseMotionListener(listeners.kbmHook());
         textField.addMouseListener(listeners.kbmHook());
         // Text Field-Related Objects
-        textResetTimer = new Timer(3000, (e) -> PiPWindow.this.textField.setText(DEFAULT_FIELD_TXT));
+        textResetTimer = new Timer(3000, e -> PiPWindow.this.textField.setText(DEFAULT_FIELD_TXT));
         textResetTimer.setRepeats(false);
 
         // Window-wide Key Listener
@@ -2271,20 +2271,21 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     }
     
     /**
-     * Gets the PiPWindowState (state) of this window.
-     * A window's state contains important fields which indicate
-     * what it is currently doing or has done.
+     * Gets the PiPWindowState (state) of this window. A window's state contains
+     * important fields which indicate what it is currently doing or has done.
      * 
-     * @return a PiPWindowState object with the window's state.
+     * @return the {@link PiPWindowState} instance with the window's state.
      */
     public PiPWindowState state() {
         return this.state;
     }
     
-    
     /**
-     * Requests that this window be closed by its manager.
-     * This method is intended to be called by non-manager objects.
+     * Requests that this window be closed by its manager. This method is intended
+     * to be called by non-manager objects instead of using {@link #closeWindow()}.
+     * <p>
+     * Calling this method allows the manager to track the closing and keep an
+     * accurate live window count.
      */
     public void requestClose() {
         PiPWindow.this.managerListener.windowCloseRequested();
@@ -2296,8 +2297,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * closed by their manager. If a window closes itself, other objects may not be
      * notified, and therefore, some code may not be executed when it should be.
      * <p>
-     * <b>Instead</b>, call the <code>windowCloseRequested()</code> method within
-     * the PiPListener provided by the window's manager.
+     * <b>Instead</b>, call {@link #requestClose()} which is designed to use the
+     * manager-provided {@link PiPWindowManagerAdapter#windowCloseRequested()}.
      */
     public void closeWindow() {
         System.out.println("> close window req. received for win: " + getManager().getWindowNumber(this));
