@@ -363,6 +363,12 @@ public enum Shortcut {
         new KeyBind(KeyEvent.VK_PERIOD),
         new KeyBind(KeyEvent.VK_RIGHT, ALT_DOWN_MASK)
     ),
+    SEND_TO_BACK(
+        new KeyBind(KeyEvent.VK_BACK_SPACE)
+    ),
+    SEND_TO_FRONT(
+        new KeyBind(KeyEvent.VK_BACK_SPACE, ALT_DOWN_MASK)
+    ),
     SHOW_WINDOW(
         new KeyBind(KeyEvent.VK_H, ALT_DOWN_MASK)
     ),

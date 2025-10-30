@@ -776,6 +776,15 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
                 clipboardPasted();
             } catch (InvalidTransferMediaException itme) { System.err.println(itme.getMessage()); }
             break;
+        // FOCUS CHANGES
+        case SEND_TO_BACK:
+            get().getManager().callInLiveWindows(w -> {
+                if (w != get()) w.requestFocus();
+            });
+            break;
+        case SEND_TO_FRONT:
+            get().requestFocus();
+            break;
         // GLOBAL MUTE
         case GLOBAL_MUTE:
             PropertiesManager.mediator.propertyChanged(PiPProperty.GLOBAL_MUTED,
