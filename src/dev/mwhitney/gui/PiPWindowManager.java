@@ -164,6 +164,8 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
                     return null;
                 }
             });
+            // Window setup complete. Make window visible AFTER setting size and location to avoid Swing issues.
+            window.setVisible(true);
             // Return Created Window
             return window;
         });

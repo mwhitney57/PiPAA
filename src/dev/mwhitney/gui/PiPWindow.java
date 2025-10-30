@@ -337,7 +337,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         // Add Text Field (not Media Player yet), then Set Content Pane and Show
         contentPane.add(textField, BorderLayout.CENTER);
         this.setContentPane(contentPane);
-        this.setVisible(true);
     }
 
     /**
