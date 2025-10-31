@@ -223,8 +223,8 @@ public enum PiPProperty {
         public static final Color DARK_BTN          = new Color(35, 35, 35);
         public static final Color DARK_BTN_HOVER    = DARK_BG_ACCENT;
         public static final Color DARK_BTN_PRESSED  = DARK_BTN.darker();
-        public static final Color DARK_BTN_BORDER   = Color.BLACK;
-        public static final Color DARK_BTN_TXT      = Color.WHITE;
+        public static final Color DARK_BTN_BORDER   = new Color(15, 15, 15);
+        public static final Color DARK_BTN_TXT      = LIGHT_BTN_TXT;
         public static final Color DARK_SLIDER       = DARK_BG_ACCENT;
         public static final Color DARK_SLIDER_KNOB  = DARK_BTN;
         public static final Color DARK_SLIDER_EMPTY = Color.BLACK;
