@@ -137,7 +137,14 @@ public abstract class AppRes {
     
     // Colors
     public static final Color COLOR_TRANSPARENT             = new Color(0, 0, 0, 0);
+    /** Lighter than {@link Color#lightGray}, but darker than {@link Color#white}. */
     public static final Color COLOR_OFF_WHITE               = new Color(240, 240, 240);
+    /** Nearly pure {@link Color#white}. Lighter than {@link #COLOR_OFF_WHITE}. */
+    public static final Color COLOR_NEAR_WHITE              = new Color(250, 250, 250);
+    /** Darker than {@link Color#darkGray}, but lighter than {@link Color#black}. */
+    public static final Color COLOR_OFF_BLACK               = new Color(40, 40, 40);
+    /** Nearly pure {@link Color#black}. Darker than {@link #COLOR_OFF_BLACK}. */
+    public static final Color COLOR_NEAR_BLACK              = new Color(15, 15, 15);
     
     // Fonts
     public static final Font FONT_POPUP                     = new Font("Dialog", Font.BOLD, 16);

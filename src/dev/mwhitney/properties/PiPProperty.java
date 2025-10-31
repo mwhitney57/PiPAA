@@ -207,12 +207,12 @@ public enum PiPProperty {
         /* LIGHT COLORS */
         public static final Color LIGHT_BG           = AppRes.COLOR_OFF_WHITE;
         public static final Color LIGHT_BG_ACCENT    = new Color(210, 210, 210);
-        public static final Color LIGHT_TXT          = new Color(40, 40, 40);
+        public static final Color LIGHT_TXT          = AppRes.COLOR_OFF_BLACK;
         public static final Color LIGHT_BTN          = new Color(0, 120, 215);
         public static final Color LIGHT_BTN_HOVER    = new Color(0, 140, 255);
         public static final Color LIGHT_BTN_PRESSED  = new Color(0, 84, 150);
         public static final Color LIGHT_BTN_BORDER   = new Color(0, 60, 107);
-        public static final Color LIGHT_BTN_TXT      = new Color(250, 250, 250);
+        public static final Color LIGHT_BTN_TXT      = AppRes.COLOR_NEAR_WHITE;
         public static final Color LIGHT_SLIDER       = LIGHT_BTN.brighter();
         public static final Color LIGHT_SLIDER_KNOB  = LIGHT_BTN;
         public static final Color LIGHT_SLIDER_EMPTY = LIGHT_BTN_BORDER.darker().darker().darker();
@@ -223,8 +223,8 @@ public enum PiPProperty {
         public static final Color DARK_BTN          = new Color(35, 35, 35);
         public static final Color DARK_BTN_HOVER    = DARK_BG_ACCENT;
         public static final Color DARK_BTN_PRESSED  = DARK_BTN.darker();
-        public static final Color DARK_BTN_BORDER   = new Color(15, 15, 15);
-        public static final Color DARK_BTN_TXT      = LIGHT_BTN_TXT;
+        public static final Color DARK_BTN_BORDER   = AppRes.COLOR_NEAR_BLACK;
+        public static final Color DARK_BTN_TXT      = AppRes.COLOR_NEAR_WHITE;
         public static final Color DARK_SLIDER       = DARK_BG_ACCENT;
         public static final Color DARK_SLIDER_KNOB  = DARK_BTN;
         public static final Color DARK_SLIDER_EMPTY = Color.BLACK;
@@ -255,24 +255,24 @@ public enum PiPProperty {
         /* OCEAN COLORS */
         public static final Color OCEAN_BG           = new Color(0, 64, 128);
         public static final Color OCEAN_BG_ACCENT    = OCEAN_BG.darker();
-        public static final Color OCEAN_TXT          = Color.WHITE;
+        public static final Color OCEAN_TXT          = AppRes.COLOR_NEAR_WHITE;
         public static final Color OCEAN_BTN          = new Color(0, 26, 51);
         public static final Color OCEAN_BTN_HOVER    = new Color(0, 40, 77);
         public static final Color OCEAN_BTN_PRESSED  = OCEAN_BTN.darker();
         public static final Color OCEAN_BTN_BORDER   = OCEAN_BTN_PRESSED.darker();
-        public static final Color OCEAN_BTN_TXT      = Color.WHITE;
+        public static final Color OCEAN_BTN_TXT      = AppRes.COLOR_NEAR_WHITE;
         public static final Color OCEAN_SLIDER       = new Color(0, 51, 102).darker();
         public static final Color OCEAN_SLIDER_KNOB  = OCEAN_SLIDER.darker();
         public static final Color OCEAN_SLIDER_EMPTY = OCEAN_SLIDER_KNOB.darker().darker().darker();
         /* FIRE COLORS */
         public static final Color FIRE_BG           = new Color(221, 22, 0);
         public static final Color FIRE_BG_ACCENT    = FIRE_BG.darker();
-        public static final Color FIRE_TXT          = Color.WHITE;
+        public static final Color FIRE_TXT          = AppRes.COLOR_NEAR_WHITE;
         public static final Color FIRE_BTN          = new Color(127, 0, 0);
         public static final Color FIRE_BTN_HOVER    = new Color(153, 0, 0);
         public static final Color FIRE_BTN_PRESSED  = FIRE_BTN.darker();
         public static final Color FIRE_BTN_BORDER   = FIRE_BTN_PRESSED.darker();
-        public static final Color FIRE_BTN_TXT      = Color.WHITE;
+        public static final Color FIRE_BTN_TXT      = AppRes.COLOR_NEAR_WHITE;
         public static final Color FIRE_SLIDER       = new Color (255, 47, 24).darker();
         public static final Color FIRE_SLIDER_KNOB  = FIRE_SLIDER.darker();
         public static final Color FIRE_SLIDER_EMPTY = FIRE_SLIDER_KNOB.darker().darker().darker();
