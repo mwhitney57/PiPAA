@@ -89,6 +89,66 @@ public class PiPMedia {
     }
     
     /**
+     * Attempts to get the media as a {@link File}. This method only works if a
+     * local copy of the media exists in some form. Otherwise, {@code null} is
+     * returned.
+     * <p>
+     * The file's source is determined based on what's available in the following
+     * order:
+     * <pre>
+     * - Trim Source
+     * - Converted Source
+     * - General Cached Source
+     * - Source (Local)
+     * </pre>
+     * If none of these sources exist for this media, then {@code null} is returned.
+     * 
+     * @return a {@link File} which points to a locally-available version of the
+     *         media.
+     * @since 0.9.5
+     */
+    public File asFile() {
+        if (!hasAttributes()) return null;
+        
+        String fileSrc = null;
+        if (hasTrimSrc())                   fileSrc = this.trimSrc;
+        else if (hasConvertSrc())           fileSrc = this.convSrc;
+        else if (isCached())                fileSrc = this.cacheSrc;
+        else if (this.attributes.isLocal()) fileSrc = this.src;
+        return fileSrc == null ? null : new File(fileSrc);
+    }
+    
+    /**
+     * Attempts to get the media in its most original form as a {@link File}. This
+     * method only works if a local copy of the media exists in some form.
+     * Otherwise, {@code null} is returned.
+     * <p>
+     * The file's source is determined based on what's available in the following
+     * order:
+     * <pre>
+     * - Source (Local)
+     * - General Cached Source
+     * - Converted Source
+     * - Trim Source
+     * </pre>
+     * If none of these sources exist for this media, then {@code null} is returned.
+     * 
+     * @return a {@link File} which points to the most original, locally-available
+     *         version of the media.
+     * @since 0.9.5
+     */
+    public File asOriginalFile() {
+        if (!hasAttributes()) return null;
+        
+        String fileSrc = null;
+        if (this.attributes.isLocal()) fileSrc = this.src;
+        else if (isCached())           fileSrc = this.cacheSrc;
+        else if (hasConvertSrc())      fileSrc = this.convSrc;
+        else if (hasTrimSrc())         fileSrc = this.trimSrc;
+        return fileSrc == null ? null : new File(fileSrc);
+    }
+    
+    /**
      * Converts media with unsupported formats to a similar, supported format. For
      * example, this method will convert <code>WEBP</code> images to either
      * <code>PNG</code> or <code>GIF</code> formats, depending on if the media is

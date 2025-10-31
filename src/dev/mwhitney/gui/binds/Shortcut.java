@@ -53,6 +53,18 @@ public enum Shortcut {
     CLOSE_WINDOWS(
         new KeyBind(KeyEvent.VK_ESCAPE, SHIFT_DOWN_MASK)
     ),
+    COPY_MEDIA(
+        new KeyBind(KeyEvent.VK_C)
+    ),
+    COPY_MEDIA_SRC(
+        new KeyBind(KeyEvent.VK_C, ALT_DOWN_MASK)
+    ),
+    COPY_ALL_MEDIA(
+        new KeyBind(KeyEvent.VK_C, SHIFT_DOWN_MASK)
+    ),
+    COPY_ALL_MEDIA_SRC(
+        new KeyBind(KeyEvent.VK_C, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
+    ),
     CYCLE_AUDIO_TRACKS(
         new KeyBind(KeyEvent.VK_T)
     ),

@@ -3,6 +3,8 @@ package dev.mwhitney.gui;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,7 @@ import dev.mwhitney.media.attribution.PiPMediaAttributor;
 import dev.mwhitney.media.exceptions.InvalidMediaException;
 import dev.mwhitney.properties.PiPProperty;
 import dev.mwhitney.properties.PropertyListener;
+import dev.mwhitney.util.FileSelection;
 import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.util.monitor.ProcessMonitor;
 import dev.mwhitney.util.monitor.ThreadMonitor;
@@ -617,6 +620,23 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         // Grab Shortcut from details.
         final Shortcut shortcut = bind.shortcut();
         switch(shortcut) {
+        case COPY_ALL_MEDIA:
+            final List<File> files = new ArrayList<>();
+            callInLiveWindows(window -> {
+                final File mediaFile = window.hasMedia() ? window.getMedia().asFile() : null;
+                if (mediaFile != null) files.add(mediaFile);
+            });
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new FileSelection(files), null);
+            break;
+        case COPY_ALL_MEDIA_SRC:
+            final StringBuilder sources = new StringBuilder();
+            callInLiveWindows(window -> {
+                if (window.hasMedia() && window.getMedia().hasSrc())
+                    sources.append("\n").append(window.getMedia().getSrc());
+            });
+            final String str = sources.toString();
+            if (!str.isBlank()) Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(str.replaceFirst("\n", "")), null);
+            break;
         case FLASH_BORDERS_ALL:
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.FLASH_BORDERS)));
             break;

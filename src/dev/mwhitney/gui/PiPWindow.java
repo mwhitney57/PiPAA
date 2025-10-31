@@ -13,6 +13,8 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -87,6 +89,7 @@ import dev.mwhitney.properties.PiPProperty.THEME_OPTION.COLOR;
 import dev.mwhitney.properties.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.resources.AppRes;
+import dev.mwhitney.util.FileSelection;
 import dev.mwhitney.util.Loop;
 import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.util.ScalingDimension;
@@ -662,6 +665,22 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 // Display Info in Top Dialog
                 final BetterTextArea infoTxt = new BetterTextArea(this.toString(ctrlDown));
                 TopDialog.showMsg(infoTxt, "Window Information", JOptionPane.PLAIN_MESSAGE);
+                break;
+            case COPY_MEDIA:
+                // Only attempt file copy if there's attributed media.
+                if (hasAttributedMedia()) {
+                    // Only set clipboard contents if a valid file exists.
+                    final File copyFile = this.media.asFile();
+                    if (copyFile != null) {
+                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new FileSelection(copyFile), null);
+                        break;  // Don't proceed to copying source String since this succeeded.
+                    }
+                }
+                // Proceed to copy the String source instead.
+            case COPY_MEDIA_SRC:
+                // Only copy String source if it is available.
+                if (hasMedia() && this.media.hasSrc())
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(this.media.getSrc()), null);
                 break;
             case PAUSE:
             case PLAY:
