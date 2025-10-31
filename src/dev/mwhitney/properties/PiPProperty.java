@@ -207,12 +207,12 @@ public enum PiPProperty {
         /* LIGHT COLORS */
         public static final Color LIGHT_BG           = AppRes.COLOR_OFF_WHITE;
         public static final Color LIGHT_BG_ACCENT    = new Color(210, 210, 210);
-        public static final Color LIGHT_TXT          = Color.BLACK;
+        public static final Color LIGHT_TXT          = new Color(40, 40, 40);
         public static final Color LIGHT_BTN          = new Color(0, 120, 215);
         public static final Color LIGHT_BTN_HOVER    = new Color(0, 140, 255);
         public static final Color LIGHT_BTN_PRESSED  = new Color(0, 84, 150);
         public static final Color LIGHT_BTN_BORDER   = new Color(0, 60, 107);
-        public static final Color LIGHT_BTN_TXT      = Color.WHITE;
+        public static final Color LIGHT_BTN_TXT      = new Color(250, 250, 250);
         public static final Color LIGHT_SLIDER       = LIGHT_BTN.brighter();
         public static final Color LIGHT_SLIDER_KNOB  = LIGHT_BTN;
         public static final Color LIGHT_SLIDER_EMPTY = LIGHT_BTN_BORDER.darker().darker().darker();
