@@ -2,7 +2,14 @@ package dev.mwhitney.main;
 
 import static dev.mwhitney.resources.AppRes.APP_BIN_FOLDER;
 import static dev.mwhitney.resources.AppRes.APP_BUILD;
+import static dev.mwhitney.resources.AppRes.FILE_LIBVLC;
+import static dev.mwhitney.resources.AppRes.FILE_LIBVLCCORE;
+import static dev.mwhitney.resources.AppRes.FILE_LIBVLCPLUGINS;
+import static dev.mwhitney.resources.AppRes.NAME_LIBVLC;
+import static dev.mwhitney.resources.AppRes.NAME_LIBVLCCORE;
+import static dev.mwhitney.resources.AppRes.VERS_VLC;
 import static dev.mwhitney.resources.AppRes.VLC_PLUGINS_FOLDER;
+import static dev.mwhitney.resources.AppRes.YTDLP_PLUGINS_FOLDER;
 
 import java.awt.Insets;
 import java.io.File;
@@ -168,12 +175,15 @@ public class Initializer {
                 final String[] parts = updatingFrom.split("-");
                 if (parts.length == 2) {
                     final Build fromBuild = new Build(Version.form(parts[0]), TYPE_OPTION.parseSafe(parts[1]));
-                    if (APP_BUILD.equals(fromBuild) && forced)
-                        CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, "PiPAA was forcefully updated to the same version.\n\nThe app may not be any different.", "Update Complete", JOptionPane.INFORMATION_MESSAGE));
-                    else if (APP_BUILD.equals(fromBuild))
-                        CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, "PiPAA failed to update.", "Update Error", JOptionPane.INFORMATION_MESSAGE));
-                    else
-                        CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, "PiPAA has been updated from " + fromBuild + " to " + APP_BUILD + ".", "Update Complete", JOptionPane.INFORMATION_MESSAGE));
+                    final String msg, title;
+                    if (APP_BUILD.equals(fromBuild)) {
+                        msg   = forced ? "PiPAA was forcefully updated to the same version.\n\nThe app may not be any different." : "PiPAA failed to update.";
+                        title = forced ? "Update Complete" : "Update Error";
+                    } else {
+                        msg   = "PiPAA has been updated from " + fromBuild + " to " + APP_BUILD + ".";
+                        title = "Update Complete";
+                    }
+                    CompletableFuture.runAsync(() -> JOptionPane.showMessageDialog(null, msg, title, JOptionPane.INFORMATION_MESSAGE));
                 }
             } catch (Exception e) { /* Do Nothing -- Assume User Manual Configuration Error, Ultimately Deletes Invalid Properties */ }
             propsManager.remove(PiPProperty.APP_UPDATING_FROM);
@@ -244,7 +254,7 @@ public class Initializer {
      */
     private static void extractLibResources(PropertiesManager propsManager) throws ExtractionException {
         // Ensure bin and plugins folders exists.
-        PiPAAUtils.ensureExistence(APP_BIN_FOLDER, AppRes.YTDLP_PLUGINS_FOLDER);
+        PiPAAUtils.ensureExistence(APP_BIN_FOLDER, YTDLP_PLUGINS_FOLDER);
         
         // Check if each binary exists within the application bin folder.
         final String useSysVLC      = propsManager.get(PiPProperty.USE_SYS_VLC);
@@ -291,29 +301,24 @@ public class Initializer {
         // System VLC installation is not to be used and OS is Windows.
         if (!vlcReady && System.getProperty("os.name").startsWith("Windows")) {
             // Ensure that VLC files are extracted and present.
-            final boolean vlcFilesPresent = (new File(APP_BIN_FOLDER + "/" + AppRes.NAME_LIBVLC).exists()
-                             && new File(APP_BIN_FOLDER + "/" + AppRes.NAME_LIBVLCCORE).exists()
+            final boolean vlcFilesPresent = (new File(APP_BIN_FOLDER + "/" + NAME_LIBVLC).exists()
+                             && new File(APP_BIN_FOLDER + "/" + NAME_LIBVLCCORE).exists()
                              && new File(VLC_PLUGINS_FOLDER).exists());
             // VLC version not in configuration, or the versions don't match, or the required VLC files do not exist.
-            if (vlcVersion == null || !vlcVersion.equals(AppRes.VERS_VLC) || !vlcFilesPresent) {
+            if (vlcVersion == null || !vlcVersion.equals(VERS_VLC) || !vlcFilesPresent) {
                 // Extract Windows LibVlc DLLs to Bin Folder
                 System.out.println("<!> Extracting VLC libraries...");
                 // Use try-with-resources to ensure closing of streams.
-                try (final InputStream libvlc     = Initializer.class.getResourceAsStream(AppRes.FILE_LIBVLC);
-                     final InputStream libvlccore = Initializer.class.getResourceAsStream(AppRes.FILE_LIBVLCCORE);
-                     final InputStream plugins    = Initializer.class.getResourceAsStream(AppRes.FILE_LIBVLCPLUGINS)) {
+                try (final InputStream libvlc     = Initializer.class.getResourceAsStream(FILE_LIBVLC);
+                     final InputStream libvlccore = Initializer.class.getResourceAsStream(FILE_LIBVLCCORE);
+                     final InputStream plugins    = Initializer.class.getResourceAsStream(FILE_LIBVLCPLUGINS)) {
                     
                     // Attempt to copy and unzip all LibVlc-related files. Throw extraction exception if any had errors.
-                    CFExec.run(
-                            (BinRunnable) () -> Files.copy(libvlc,
-                                    Paths.get(APP_BIN_FOLDER + "/" + AppRes.NAME_LIBVLC),
-                                    StandardCopyOption.REPLACE_EXISTING),
-                            (BinRunnable) () -> Files.copy(libvlccore,
-                                    Paths.get(APP_BIN_FOLDER + "/" + AppRes.NAME_LIBVLCCORE),
-                                    StandardCopyOption.REPLACE_EXISTING),
-                            (BinRunnable) () -> UnzipUtility.unzip(plugins, VLC_PLUGINS_FOLDER))
+                    CFExec.run((BinRunnable) () -> Files.copy(libvlc, Paths.get(APP_BIN_FOLDER + "/" + NAME_LIBVLC), StandardCopyOption.REPLACE_EXISTING),
+                               (BinRunnable) () -> Files.copy(libvlccore, Paths.get(APP_BIN_FOLDER + "/" + NAME_LIBVLCCORE), StandardCopyOption.REPLACE_EXISTING),
+                               (BinRunnable) () -> UnzipUtility.unzip(plugins, VLC_PLUGINS_FOLDER))
                         .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting LibVlc libraries."));
-                    propsManager.set("LibVlc_BIN", AppRes.VERS_VLC);
+                    propsManager.set("LibVlc_BIN", VERS_VLC);
                 } catch (IOException ioe) { /* Thrown while closing streams. Ignore. */
                 } catch (ExtractionException ee) { throw ee; } // Forward exception throw.
             }
