@@ -239,7 +239,7 @@ public enum PiPProperty {
         public static final Color PINK_BTN_TXT      = Color.WHITE;
         public static final Color PINK_SLIDER       = PINK_BTN_PRESSED;
         public static final Color PINK_SLIDER_KNOB  = PINK_BTN;
-        public static final Color PINK_SLIDER_EMPTY = Color.WHITE;
+        public static final Color PINK_SLIDER_EMPTY = PINK_BTN_BORDER.darker().darker();
         /* SUBNAUTICA COLORS */
         public static final Color SUBNAUTICA_BG           = new Color(247, 135, 59);
         public static final Color SUBNAUTICA_BG_ACCENT    = SUBNAUTICA_BG.darker();
