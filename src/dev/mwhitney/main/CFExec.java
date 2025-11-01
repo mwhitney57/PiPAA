@@ -217,6 +217,27 @@ public class CFExec {
         }
         
         /**
+         * Executes the passed {@link Runnable} if any exceptions exist within the
+         * results. If no exceptions were thrown, then this method will effectively do
+         * nothing and return this CFExecResults instance.
+         * 
+         * @param run - the {@link Runnable} to run if any exceptions are found.
+         * @return this CFExecResults instance.
+         * @since 0.9.5
+         */
+        public CFExecResults<T> runIfAny(Runnable run) {
+            Objects.requireNonNull(run, "CFExec: Cannot potentially run \"null\" if exceptions are found in CFExecResults.");
+            
+            for (int i = 0; i < results.length; i++) {
+                if (results[i].except() != null) {
+                    run.run();
+                    return this;
+                }
+            }
+            return this;
+        }
+
+        /**
          * Runs the exception check on each {@link CFExecResult}, running the passed
          * {@link PiPConsumer} code if an exception was thrown during execution.
          * <p>
