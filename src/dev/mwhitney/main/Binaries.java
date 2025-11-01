@@ -476,8 +476,8 @@ public class Binaries {
         final BinUpdateResult[] results = new BinUpdateResult[2];
         
         // Check for Updates on Each Applicable Bin
-        CFExec.runVirtual((BinRunnable) () -> { if (Binaries.exists(Bin.YT_DLP))     results[0] = Binaries.update(Bin.YT_DLP); },
-                          (BinRunnable) () -> { if (Binaries.exists(Bin.GALLERY_DL)) results[1] = Binaries.update(Bin.GALLERY_DL); })
+        CFExec.runVirtual(Binaries.exists(Bin.YT_DLP)     ? (BinRunnable) () -> results[0] = Binaries.update(Bin.YT_DLP)     : null,
+                          Binaries.exists(Bin.GALLERY_DL) ? (BinRunnable) () -> results[1] = Binaries.update(Bin.GALLERY_DL) : null)
                 .excepts((i, ex) -> results[i] = new BinUpdateResult(i == 0 ? Bin.YT_DLP : Bin.GALLERY_DL, false));
         
         // Form Result

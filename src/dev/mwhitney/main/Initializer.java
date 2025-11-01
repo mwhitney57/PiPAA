@@ -261,10 +261,10 @@ public class Initializer {
         }
         
         // Extract any missing binaries to the application bin folder.
-        CFExec.run((BinRunnable) () -> { if (!Binaries.HAS_YTDLP     && !LOCAL_YTDLP)  Binaries.extract(Bin.YT_DLP);     },
-                   (BinRunnable) () -> { if (!Binaries.HAS_GALLERYDL && !LOCAL_GALDL)  Binaries.extract(Bin.GALLERY_DL); },
-                   (BinRunnable) () -> { if (!Binaries.HAS_FFMPEG    && !LOCAL_FFMPEG) Binaries.extract(Bin.FFMPEG);     },
-                   (BinRunnable) () -> { if (!Binaries.HAS_IMGMAGICK && !LOCAL_IMGMAG) Binaries.extract(Bin.IMGMAGICK);  })
+        CFExec.run(!Binaries.HAS_YTDLP     && !LOCAL_YTDLP  ? (BinRunnable) () -> Binaries.extract(Bin.YT_DLP)     : null,
+                   !Binaries.HAS_GALLERYDL && !LOCAL_GALDL  ? (BinRunnable) () -> Binaries.extract(Bin.GALLERY_DL) : null,
+                   !Binaries.HAS_FFMPEG    && !LOCAL_FFMPEG ? (BinRunnable) () -> Binaries.extract(Bin.FFMPEG)     : null,
+                   !Binaries.HAS_IMGMAGICK && !LOCAL_IMGMAG ? (BinRunnable) () -> Binaries.extract(Bin.IMGMAGICK)  : null)
               .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting binaries."));
         
         // Automatically update application during startup depending on user configuration and date/time.
