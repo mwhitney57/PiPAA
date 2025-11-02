@@ -22,6 +22,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -31,6 +32,7 @@ import com.sun.jna.NativeLibrary;
 
 import dev.mwhitney.exceptions.ExtractionException;
 import dev.mwhitney.gui.PiPWindowManager;
+import dev.mwhitney.gui.ProgressWindow;
 import dev.mwhitney.gui.binds.BindController;
 import dev.mwhitney.gui.popup.TopDialog;
 import dev.mwhitney.listeners.BinRunnable;
@@ -57,24 +59,13 @@ import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
  * @author mwhitney57
  */
 public class Initializer {
+    /** The {@link ProgressWindow} displayed during initialization to show loading progress. */
+    private static ProgressWindow progressWin;
+    
     // Main Method
     public static void main(String[] args) {
+        // Initialize Properties First
         final PropertiesManager propsManager = new PropertiesManager();
-        final BindController bindController = new BindController();
-        
-        // L&F
-        setLookAndFeel();
-        // Initialization Checks
-        initChecks(propsManager, args);
-        
-        // Extract Resources if Necessary
-        try {
-            extractLibResources(propsManager);
-        } catch (ExtractionException ee) {
-            TopDialog.showMsg("Failed to start PiPAA!\n" + ee.getMessage(), "Initialization Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
-            return;
-        }
         
         // Shared PropertyListener Methods
         final PropertyListener propListener = new PropertyListener() {
@@ -97,9 +88,44 @@ public class Initializer {
                 };
             }
         };
-        
         // Share PropertyListener with Binaries
         Binaries.setPropertyListener(propListener);
+        
+        // Get Theme for Loading Styling
+//        final THEME_OPTION theme = PropDefault.THEME.matchAny(propListener.propertyState(PiPProperty.THEME, String.class));
+        // Set L&F Before Managing Any GUI
+        setLookAndFeel();
+        
+        // Create window for displaying initialization progress. 
+        progressWin = PiPAAUtils.makeOnEDT(() -> 
+            new ProgressWindow(new ImageIcon(Initializer.class.getResource(AppRes.BANNER_APP_LOADING)))
+                .useTitle("Starting PiPAA...")
+                .useIcon(AppRes.IMG_APP_32_WORK)
+                .display()
+        );
+        
+        loadingProgress("Setting up binds...", 5);
+        
+        final BindController bindController = new BindController();
+        
+        loadingProgress("Performing initialization checks...", 10);
+        
+        // Initialization Checks
+        initChecks(propsManager, args);
+        
+        loadingProgress("Extracting application resources...", 20);
+        
+        // Extract Resources if Necessary
+        try {
+            extractLibResources(propsManager);
+        } catch (ExtractionException ee) {
+            loadingProgress("Failed to initialize!");
+            TopDialog.showMsg("Failed to start PiPAA!\n" + ee.getMessage(), "Initialization Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+            return;
+        }
+        
+        loadingProgress("Creating window manager...", 75);
         
         // Create PiPWindowManager, which then opens one window by default.
         final PiPWindowManager windowManager = new PiPWindowManager() {
@@ -108,7 +134,11 @@ public class Initializer {
             @Override
             public BindController getController() { return bindController; }
         };
+        // Add a window when the loading process completes.
+        progressWin.whenComplete(windowManager::addWindow);
 
+        loadingProgress("Setting up the tray...", 90);
+        
         // Create the Tray object.
         final Tray tray = new Tray() {
             @Override
@@ -131,6 +161,8 @@ public class Initializer {
             public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return propListener.propertyState(prop, rtnType); }
         };
         
+        loadingProgress("Finishing up...", 95);
+        
         // Set Listeners
         windowManager.setWindowCountListener(() ->
             // Updates tray's status with window count.
@@ -147,6 +179,34 @@ public class Initializer {
             @Override
             public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return propListener.propertyState(prop, rtnType); }
         };
+        
+        loadingProgress("Finished loading!", 100);
+    }
+    
+    /**
+     * Safely updates the {@link ProgressWindow} that is displayed during
+     * initialization with the passed information.
+     * <p>
+     * This version of the method only updates the message without changing the
+     * progress value.
+     * 
+     * @param msg - a String with the new status message to display.
+     * @since 0.9.5
+     */
+    private static void loadingProgress(String msg) {
+        if (progressWin != null) progressWin.setMessage(msg);
+    }
+    
+    /**
+     * Safely updates the {@link ProgressWindow} that is displayed during
+     * initialization with the passed information.
+     * 
+     * @param msg      - a String with the new status message to display.
+     * @param progress - a float with the new progress value.
+     * @since 0.9.5
+     */
+    private static void loadingProgress(String msg, float progress) {
+        if (progressWin != null) progressWin.update(msg, progress);
     }
     
     /**
@@ -270,12 +330,16 @@ public class Initializer {
             throw new ExtractionException("Unexpected exception occurred while extracting binaries.");
         }
         
+        loadingProgress("Extracting missing binaries...", 25);
+        
         // Extract any missing binaries to the application bin folder.
         CFExec.run(!Binaries.HAS_YTDLP     && !LOCAL_YTDLP  ? (BinRunnable) () -> Binaries.extract(Bin.YT_DLP)     : null,
                    !Binaries.HAS_GALLERYDL && !LOCAL_GALDL  ? (BinRunnable) () -> Binaries.extract(Bin.GALLERY_DL) : null,
                    !Binaries.HAS_FFMPEG    && !LOCAL_FFMPEG ? (BinRunnable) () -> Binaries.extract(Bin.FFMPEG)     : null,
                    !Binaries.HAS_IMGMAGICK && !LOCAL_IMGMAG ? (BinRunnable) () -> Binaries.extract(Bin.IMGMAGICK)  : null)
               .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting binaries."));
+        
+        loadingProgress("Checking for app update...", 35);  // Does not guarantee that a check occurs. Just a general progress statement.
         
         // Automatically update application during startup depending on user configuration and date/time.
         final String frequencyApp  = propsManager.get(PiPProperty.APP_UPDATE_FREQUENCY);
@@ -289,11 +353,16 @@ public class Initializer {
         }
         if (result.hasException()) System.err.println("Warning, app update process failed: " + result.exception().getTotalMessage());
         
+        loadingProgress("Checking for updates to binaries...", 50); // Does not guarantee that a check occurs, as with app update.
+        
         // Automatically update binaries during startup depending on user configuration and date/time.
         final String frequencyBin = propsManager.get(PiPProperty.BIN_UPDATE_FREQUENCY);
         final String lastCheckBin = propsManager.get(PiPProperty.BIN_LAST_UPDATE_CHECK);
+        
         if (PiPUpdater.updateBin(frequencyBin, lastCheckBin)) // Update last update check time.
             propsManager.set(PiPProperty.BIN_LAST_UPDATE_CHECK, LocalDateTime.now().toString());
+        
+        loadingProgress("Picking VLC instance...", 60);
         
         // VLC is ready if configured to be used and installed on the system. Otherwise use PiPAA's version.
         boolean vlcReady = (useSysVLC != null && Boolean.valueOf(useSysVLC) ? new NativeDiscovery().discover() : false);
@@ -308,6 +377,7 @@ public class Initializer {
             if (vlcVersion == null || !vlcVersion.equals(VERS_VLC) || !vlcFilesPresent) {
                 // Extract Windows LibVlc DLLs to Bin Folder
                 System.out.println("<!> Extracting VLC libraries...");
+                loadingProgress("Extracting VLC libraries...", 65);
                 // Use try-with-resources to ensure closing of streams.
                 try (final InputStream libvlc     = Initializer.class.getResourceAsStream(FILE_LIBVLC);
                      final InputStream libvlccore = Initializer.class.getResourceAsStream(FILE_LIBVLCCORE);

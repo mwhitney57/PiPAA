@@ -77,6 +77,8 @@ public abstract class AppRes {
     public static final String ICON_APP_32_DOWNLOADING      = "/dev/mwhitney/images/icon32Downloading.png";
     public static final String ICON_APP_32_TRIMMING         = "/dev/mwhitney/images/icon32Trimming.png";
     
+    public static final String BANNER_APP_LOADING           = "/dev/mwhitney/images/bannerLoading.png";
+    
     public static final String ICON_TRAY_INFO               = "/dev/mwhitney/images/iconInfo24.png";
     public static final String ICON_TRAY_CONFIG             = "/dev/mwhitney/images/iconConfig32.png";
     public static final String ICON_TRAY_GLOBE              = "/dev/mwhitney/images/iconGlobe24.png";

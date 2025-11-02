@@ -78,9 +78,6 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         this.lastWindowFocused = 0;
         this.lastSpawnLocation = new Point(-1, -1);
         this.lastSpawnLocationMax = new Point(-1, -1);
-
-        // Create Empty Starting Window
-        addWindow();
     }
     
     /**
