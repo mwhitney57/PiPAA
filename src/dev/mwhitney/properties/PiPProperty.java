@@ -141,6 +141,8 @@ public enum PiPProperty {
         LIGHT,
         /** The dark theme for the application. */
         DARK,
+        /** A theme with colors resembling PiPAA's icon. */
+        PIPAA,
         /** The pink theme for the application. */
         PINK,
         /** A theme with colors based on the "Subnautica" video game, developed and published by Unknown Worlds Entertainment. */
@@ -159,7 +161,7 @@ public enum PiPProperty {
         public boolean usesInvertedIcons() {
             return switch (this) {
             case LIGHT -> false;
-            case SUBNAUTICA, PINK, DARK, OCEAN, FIRE -> true;
+            case SUBNAUTICA, PINK, DARK, PIPAA, OCEAN, FIRE -> true;
             };
         }
         
@@ -168,6 +170,7 @@ public enum PiPProperty {
             return switch(this) {
             case LIGHT      -> "☀️ Light";
             case DARK       -> "🌑 Dark";
+            case PIPAA      -> "🖼️ PiPAA";
             case PINK       -> "🌸 Pink";
             case SUBNAUTICA -> "🚀 Subnautica";
             case OCEAN      -> "🌊 Ocean";
@@ -228,6 +231,18 @@ public enum PiPProperty {
         public static final Color DARK_SLIDER       = DARK_BG_ACCENT;
         public static final Color DARK_SLIDER_KNOB  = DARK_BTN;
         public static final Color DARK_SLIDER_EMPTY = Color.BLACK;
+        /* PIPAA COLORS */
+        public static final Color PIPAA_BG           = new Color(0, 34, 53);
+        public static final Color PIPAA_BG_ACCENT    = new Color(0, 24, 38);
+        public static final Color PIPAA_TXT          = AppRes.COLOR_OFF_WHITE;
+        public static final Color PIPAA_BTN          = new Color(0, 122, 188);
+        public static final Color PIPAA_BTN_HOVER    = PIPAA_BTN.brighter();
+        public static final Color PIPAA_BTN_PRESSED  = new Color(0, 52, 84);
+        public static final Color PIPAA_BTN_BORDER   = new Color(0, 76, 117);
+        public static final Color PIPAA_BTN_TXT      = AppRes.COLOR_NEAR_WHITE;
+        public static final Color PIPAA_SLIDER       = new Color(0, 69, 107);
+        public static final Color PIPAA_SLIDER_KNOB  = PIPAA_BTN;
+        public static final Color PIPAA_SLIDER_EMPTY = new Color(0, 5, 8);
         /* PINK COLORS */
         public static final Color PINK_BG           = Color.PINK;
         public static final Color PINK_BG_ACCENT    = PINK_BG.darker();
@@ -312,6 +327,19 @@ public enum PiPProperty {
                 case SLIDER       -> DARK_SLIDER;
                 case SLIDER_KNOB  -> DARK_SLIDER_KNOB;
                 case SLIDER_EMPTY -> DARK_SLIDER_EMPTY;
+                };
+            case PIPAA -> switch (c) {
+                case BG           -> PIPAA_BG;
+                case BG_ACCENT    -> PIPAA_BG_ACCENT;
+                case TXT          -> PIPAA_TXT;
+                case BTN          -> PIPAA_BTN;
+                case BTN_BORDER   -> PIPAA_BTN_BORDER;
+                case BTN_HOVER    -> PIPAA_BTN_HOVER;
+                case BTN_PRESSED  -> PIPAA_BTN_PRESSED;
+                case BTN_TXT      -> PIPAA_BTN_TXT;
+                case SLIDER       -> PIPAA_SLIDER;
+                case SLIDER_KNOB  -> PIPAA_SLIDER_KNOB;
+                case SLIDER_EMPTY -> PIPAA_SLIDER_EMPTY;
                 };
             case PINK -> switch (c) {
                 case BG           -> PINK_BG;
