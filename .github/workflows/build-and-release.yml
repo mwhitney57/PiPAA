@@ -38,7 +38,7 @@ jobs:
           target/PiPAA.jar
           target/PiPAA.exe
 
-  release:
+  release: # Only runs daily or when triggered manually.
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
