@@ -228,8 +228,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     public PiPWindow() {
         super();
 
-        // Warn if manager is not valid for some reason.
-        if (!hasManager()) System.err.println("<!> Critical error: Window doesn't have accessible manager during construction.");
+        // Throw exception if manager is not valid for some reason.
+        if (!hasManager()) throw new RuntimeException("Cannot construct PiPWindow: No accessible manager during construction.");
 
         // Media Player -- Start with MediaPlayerFactory to provide audio separation fix option.
         setupMediaPlayer();
