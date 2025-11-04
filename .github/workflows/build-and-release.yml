@@ -40,15 +40,18 @@ jobs:
 
   release: # Only runs daily or when triggered manually.
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Install tools
-      run: sudo apt-get update && sudo apt-get install -y xmlstarlet jq zip unzip
+    - name: Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
@@ -56,93 +59,125 @@ jobs:
         path: target/
     - name: Determine tag and check changes
       id: setup
+      shell: pwsh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        version=$(xmlstarlet sel -N maven=http://maven.apache.org/POM/4.0.0 -t -v "/maven:project/maven:version" pom.xml)
-        has_changes="true"
-        type=""
-        tag_name=""
-        release_body=""
-        if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          type="snapshot"
-          tag_name="v${version%-SNAPSHOT}-snapshot"
-          release_exists=$(gh release view "$tag_name" --json name -q .name || echo "")
-          if [ -n "$release_exists" ]; then
-            old_commit=$(git rev-parse "$tag_name")
-            has_changes=$(git log --pretty=oneline "$old_commit"..HEAD | wc -l)
-            release_body=$(gh release view "$tag_name" --json body -q .body || echo "")
-          else
-            has_changes="1"  # New snapshot
-          fi
-          if [ "$has_changes" -eq 0 ]; then
-            echo "No code changes since last snapshot; skipping release."
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          fi
-        else
-          tag_name="${{ github.ref_name }}"
-          if [[ "$tag_name" == *-beta ]]; then
-            type="beta"
-          else
-            type="release"
-          fi
-          release_exists=$(gh release view "$tag_name" --json name -q .name || echo "")
-          if [ -n "$release_exists" ]; then
-            release_body=$(gh release view "$tag_name" --json body -q .body || echo "")
-          fi
-          echo "has_changes=true" >> $GITHUB_OUTPUT
-        fi
-        echo "tag_name=$tag_name" >> $GITHUB_OUTPUT
-        echo "type=$type" >> $GITHUB_OUTPUT
-        echo "clean_version=${version%-SNAPSHOT}" >> $GITHUB_OUTPUT
-        echo "is_prerelease=$([ "$type" != "release" ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
-        if [ -n "$release_body" ]; then
-          encoded_body=$(echo "$release_body" | base64 -w 0)
-          echo "release_body=$encoded_body" >> $GITHUB_OUTPUT
-        else
-          echo "release_body=" >> $GITHUB_OUTPUT
-        fi
+        $ErrorActionPreference = 'Continue'
+        [xml]$xml = Get-Content pom.xml
+        $version = $xml.project.version
+        $hasChanges = 'true'
+        $type = ""
+        $tagName = ""
+        $releaseBody = ""
+        $releaseExists = 'false'
+        if ("${{ github.event_name }}" -eq "schedule" -or "${{ github.event_name }}" -eq "workflow_dispatch") {
+          $type = "snapshot"
+          $tagName = "v$($version -replace '-SNAPSHOT', '')-snapshot"
+          $releaseJson = gh release view "$tagName" --json name,body 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $release = $releaseJson | ConvertFrom-Json
+            $releaseBody = $release.body
+            $releaseExists = 'true'
+          } else {
+            $releaseBody = ""
+          }
+          $hasChanges = 'true'
+          if ("${{ github.event_name }}" -eq "schedule") {
+            if ($releaseExists -eq 'true') {
+              $oldCommit = git rev-parse "$tagName"
+              $log = git log --pretty=oneline "$oldCommit"..HEAD
+              if ([string]::IsNullOrEmpty($log)) {
+                $hasChanges = 'false'
+              }
+            } else {
+              $hasChanges = 'true'
+            }
+            if ($hasChanges -eq 'false') {
+              Write-Output "No code changes since last snapshot; skipping release."
+            }
+          }
+        } else {
+          $tagName = "${{ github.ref_name }}"
+          if ($tagName -match '-beta$') {
+            $type = "beta"
+          } else {
+            $type = "release"
+          }
+          $releaseJson = gh release view "$tagName" --json name,body 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $release = $releaseJson | ConvertFrom-Json
+            $releaseBody = $release.body
+            $releaseExists = 'true'
+          } else {
+            $releaseBody = ""
+          }
+          $hasChanges = 'true'
+        }
+        "has_changes=$hasChanges" >> $env:GITHUB_OUTPUT
+        "tag_name=$tagName" >> $env:GITHUB_OUTPUT
+        "type=$type" >> $env:GITHUB_OUTPUT
+        $cleanVersion = $version -replace '-SNAPSHOT', ''
+        "clean_version=$cleanVersion" >> $env:GITHUB_OUTPUT
+        $isPrerelease = if ($type -ne "release") { 'true' } else { 'false' }
+        "is_prerelease=$isPrerelease" >> $env:GITHUB_OUTPUT
+        if ($releaseBody) {
+          $encodedBody = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($releaseBody))
+          "release_body=$encodedBody" >> $env:GITHUB_OUTPUT
+        } else {
+          "release_body=" >> $env:GITHUB_OUTPUT
+        }
+        $LASTEXITCODE = 0
+    - name: Create minimized JRE bundle using jlink
+      if: steps.setup.outputs.has_changes == 'true'
+      shell: pwsh
+      run: |
+        # Run jdeps to find required modules
+        & $env:JAVA_HOME\bin\jdeps.exe --print-module-deps --ignore-missing-deps target\PiPAA.jar | Out-File modules.txt
+        $modules = (Get-Content modules.txt -Raw).Trim()
+        if ([string]::IsNullOrEmpty($modules)) {
+          $modules = "java.base"
+        }
+        # Remove jre directory if it exists
+        if (Test-Path bundle\jre) {
+          Remove-Item -Recurse -Force bundle\jre
+        }
+        # Create custom minimized JRE
+        & $env:JAVA_HOME\bin\jlink.exe --add-modules $modules --compress 2 --no-header-files --no-man-pages --strip-debug --output bundle\jre
+        # Copy EXE
+        Copy-Item target\PiPAA.exe bundle\
+        # Zip the bundle
+        Compress-Archive -Path bundle\* -DestinationPath target\PiPAA-with-Java.zip
     - name: Update snapshot tag if needed
       if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.setup.outputs.has_changes == 'true'
+      shell: pwsh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        tag_name="${{ steps.setup.outputs.tag_name }}"
-        gh release delete "$tag_name" --yes || true
-        git push origin :"$tag_name" || true
-        git tag -f "$tag_name" HEAD
-        git push origin "$tag_name" --force
-    - name: Download and bundle JRE
-      if: steps.setup.outputs.has_changes == 'true'
-      run: |
-        jre_url=$(curl -s https://api.adoptium.net/v3/assets/latest/21/hotspot | jq -r '.[] | select(.binary.os == "windows" and .binary.architecture == "x64" and .binary.image_type == "jre") | .binary.package.link')
-        curl -L -o jre.zip "$jre_url"
-        unzip jre.zip -d temp_jre
-        mkdir -p bundle/jre
-        mv temp_jre/*/* bundle/jre/
-        cp target/PiPAA.exe bundle/
-        cd bundle && zip -r ../PiPAA-with-Java.zip . && cd ..
-        mv PiPAA-with-Java.zip target/
+        $tagName = "${{ steps.setup.outputs.tag_name }}"
+        gh release delete "$tagName" --yes 2>$null
+        git push origin :"$tagName" 2>$null
+        git tag -f "$tagName" HEAD
+        git push origin "$tagName" --force
     - name: Prepare release body
       if: steps.setup.outputs.has_changes == 'true'
       id: body
+      shell: pwsh
       run: |
-        if [ -n "${{ steps.setup.outputs.release_body }}" ]; then
-          body=$(echo "${{ steps.setup.outputs.release_body }}" | base64 -d)
-        else
-          body=$(cat <<'EOF'
-        This is a snapshot release with the latest changes. It may contain more bugs. Check the recent [commits](https://github.com/mwhitney57/PiPAA/commits/main/) for more information.
+        $body = ""
+        if ("${{ steps.setup.outputs.release_body }}") {
+          $body = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("${{ steps.setup.outputs.release_body }}"))
+        } else {
+          $body = @"
+        This is a snapshot release with the latest changes. It may contain more bugs than the [latest release](https://github.com/mwhitney57/PiPAA/releases/latest). Check the recent [commits](https://github.com/mwhitney57/PiPAA/commits/main/) for more information.
         
         ## ⚙️ Pre-v1.0.0 Reminder
-        We have not hit `v1.0.0` yet. Some things need polish! Please leave an issue on the repository or check the current [Known Issues](https://github.com/mwhitney57/PiPAA?tab=readme-ov-file#-known-issues) if anything is wrong!
-        EOF
-        )
-        fi
-        echo "body<<EOF" >> $GITHUB_OUTPUT
-        echo "$body" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        We have not hit <code>v1.0.0</code> yet. Some things need polish! Please leave an issue on the repository or check the current [Known Issues](https://github.com/mwhitney57/PiPAA?tab=readme-ov-file#-known-issues) if anything is wrong!
+        "@
+        }
+        "body<<EOF" >> $env:GITHUB_OUTPUT
+        $body >> $env:GITHUB_OUTPUT
+        "EOF" >> $env:GITHUB_OUTPUT
     - name: Create or Update Release
       if: steps.setup.outputs.has_changes == 'true'
       uses: softprops/action-gh-release@v2
@@ -152,6 +187,7 @@ jobs:
         body: ${{ steps.body.outputs.body }}
         draft: false
         prerelease: ${{ steps.setup.outputs.is_prerelease }}
+        make_latest: ${{ steps.setup.outputs.type == 'release' && 'true' || 'false' }}
         files: |
           target/PiPAA.jar
           target/PiPAA.exe
