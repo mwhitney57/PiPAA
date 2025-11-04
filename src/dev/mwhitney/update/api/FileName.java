@@ -18,7 +18,7 @@ package dev.mwhitney.update.api;
 public class FileName {
     /**
      * The raw String that was provided at construction. The only case where this
-     * won't match that passed String is if it was <code>null</code>, which this
+     * wouldn't match that passed String is if it was {@code null}, which this
      * String will never be. However, it may be empty.
      */
     private String raw;
@@ -51,7 +51,7 @@ public class FileName {
     }
     
     /**
-     * Checks if there is a name, meaning it is non-<code>null</code> and not blank.
+     * Checks if there is a name, meaning it is non-{@code null} and not blank.
      * 
      * @return <code>true</code> if there's a name; <code>false</code> otherwise.
      */
@@ -70,7 +70,7 @@ public class FileName {
     }
     
     /**
-     * Checks if there is an extension, meaning it is non-<code>null</code> and not
+     * Checks if there is an extension, meaning it is non-{@code null} and not
      * blank.
      * 
      * @return <code>true</code> if there's an extension; <code>false</code>
