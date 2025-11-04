@@ -141,6 +141,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     private static final Dimension MAXIMUM_AUDIO_SIZE = new Dimension(128 + (BORDER_SIZE*2), 128 + (BORDER_SIZE*2));
     
     /* Colors */
+    /**
+     * The {@link Color} that is almost entirely transparent. Its specific non-zero
+     * alpha value is specified to keep the border both invisible and functional,
+     * allowing the user to interact with it to resize the window.
+     */
     public static final Color TRANSPARENT_BG  = new Color(0,   0,   0,   0.002f);
     public static final Color BORDER_NORMAL   = new Color(0,   69,  107, 200);
     public static final Color BORDER_OK       = new Color(152, 236, 133, 200);
@@ -421,7 +426,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     }
     
     /**
-     * Performs setup for the media player.
+     * Performs setup for the VLC media player used for video and audio playback.
+     * This method <b>does not</b> perform any setup for the Swing player used to
+     * display images.
      */
     private void setupMediaPlayer() {
         if (mediaPlayerValid())
@@ -574,7 +581,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 }
             }
         };
-        mediaPlayer.mediaPlayer().controls().setRepeat(false);
+        mediaPlayer.mediaPlayer().controls().setRepeat(false);  // Repeats handled manually.
         mediaPlayer.videoSurfaceComponent().setDropTarget(listeners.dndTarget());
         mediaPlayer.videoSurfaceComponent().addMouseMotionListener(listeners.kbmHook());
         mediaPlayer.videoSurfaceComponent().addMouseListener(listeners.kbmHook());
@@ -583,7 +590,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         mediaPlayer.mediaPlayer().events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
             @Override
             public void paused(MediaPlayer mediaPlayer) {
-//                System.out.println("PAUSED");     // Debug
+                // Manual repeat logic: The media was not manually paused; it finished. Restart it.
                 if(state.not(MANUALLY_PAUSED)) {
                     mediaCommand(PiPMediaCMD.SEEK, "SET", "0.00f");
                     mediaCommand(PiPMediaCMD.PLAY);
@@ -591,10 +598,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             }
             @Override
             public void stopped(MediaPlayer mediaPlayer) {
-//                System.out.println("STOPPED");    // Debug
                 // Only attempt to play stopped media again if window is not closing/closed.
-                if(state.not(CLOSING, MANUALLY_STOPPED))
-                    mediaCommand(PiPMediaCMD.PLAY);
+                if(state.not(CLOSING, MANUALLY_STOPPED)) mediaCommand(PiPMediaCMD.PLAY);
             }
         });
     }
@@ -2368,10 +2373,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * Sets the listener for this PiPWindow. This is intended to be the
      * listener for communicating with the manager of this window.
      * 
-     * @param pl - the PiPListener to use.
+     * @param ml - the {@link PiPWindowManagerAdapter} to use.
      */
-    public void setListener(PiPWindowManagerAdapter pl) {
-        this.managerListener = pl;
+    public void setListener(PiPWindowManagerAdapter ml) {
+        this.managerListener = ml;
     }
     
     @Override
