@@ -27,6 +27,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.plaf.InsetsUIResource;
 
 import com.sun.jna.NativeLibrary;
 
@@ -293,6 +294,7 @@ public class Initializer {
                 UIManager.getLookAndFeelDefaults().put("MenuItem.opaque", true);
                 UIManager.getLookAndFeelDefaults().put("TabbedPane.contentOpaque", false);
                 UIManager.getLookAndFeelDefaults().put("TabbedPane.tabInsets", new Insets(2, 10, 0, 10));
+                UIManager.getLookAndFeelDefaults().put("TabbedPane.selectedTabPadInsets", new InsetsUIResource(3, 0, 3, 0));
                 UIManager.getLookAndFeelDefaults().put("ToolTip.font", AppRes.FONT_TOOLTIP);
             });
         } catch (InvocationTargetException | InterruptedException e) {
