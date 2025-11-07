@@ -150,7 +150,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         setResizable(false);
         setBackground(AppRes.COLOR_TRANSPARENT);
         setBounds(Math.max(0, screen.width - 530), Math.max(0, screen.height - 650), 520, 600);
-        addWindowFocusListener((WindowFocusLostListener) (e) -> setVisible(false));
+        addWindowFocusListener((WindowFocusLostListener) e -> setVisible(false));
         
         // Component Setup
         final Font textFont = new Font(null, Font.PLAIN, 12);
@@ -185,20 +185,20 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         comboTheme = new BetterComboBox(PropDefault.THEME.labels(), titleFont);
         
         chkPreferLinkDND = new BetterCheckbox("🔗 Prefer Links with Drag and Drop", true, titleFont);
-        chkPreferLinkDND.addActionListener((e) -> propertyChanged(PiPProperty.DND_PREFER_LINK, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkPreferLinkDND.addActionListener(e -> propertyChanged(PiPProperty.DND_PREFER_LINK, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblPreferLinkDND = new BetterLabel(PiPPropertyDesc.DND_PREFER_LINK, textFont);
         
         chkConvertIndWeb = new BetterCheckbox("📦 Convert Indirect Web Links to Direct", true, titleFont);
-        chkConvertIndWeb.addActionListener((e) -> propertyChanged(PiPProperty.CONVERT_WEB_INDIRECT, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkConvertIndWeb.addActionListener(e -> propertyChanged(PiPProperty.CONVERT_WEB_INDIRECT, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblConvIndWeb = new BetterLabel(PiPPropertyDesc.CONVERT_WEB_INDIRECT, textFont);
         
-        final BetterButton btnOpenFolder = new BetterButton("Open Application Folder", titleFont, (e) -> {
+        final BetterButton btnOpenFolder = new BetterButton("Open Application Folder", titleFont, e -> {
             try {
                 Desktop.getDesktop().open(new File(AppRes.APP_FOLDER));
             } catch (IOException ioe) { ioe.printStackTrace(); }
         });
         
-        final BetterButton btnShowShortcuts = new BetterButton("Show Keyboard and Mouse Shortcuts", titleFont, (e) -> {
+        final BetterButton btnShowShortcuts = new BetterButton("Show Keyboard and Mouse Shortcuts", titleFont, e -> {
             final BetterTextArea shortcutsComp = new BetterTextArea(AppRes.SHORTCUTS);
             TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
         });
@@ -209,7 +209,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblDLWebMedia = new BetterLabel(PiPPropertyDesc.DOWNLOAD_WEB_MEDIA, textFont);
         
         chkTrimTransparency = new BetterCheckbox("✂️ Trim Transparent Edges", true, titleFont);
-        chkTrimTransparency.addActionListener((e) -> propertyChanged(PiPProperty.TRIM_TRANSPARENCY, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkTrimTransparency.addActionListener(e -> propertyChanged(PiPProperty.TRIM_TRANSPARENCY, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         comboTrim = new BetterComboBox(PropDefault.TRIM.labels(), titleFont);
         final BetterLabel lblTrimTransparency = new BetterLabel(PiPPropertyDesc.TRIM_TRANSPARENCY, textFont);
         
@@ -223,18 +223,18 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblImgScaling = new BetterLabel(PiPPropertyDesc.IMG_SCALING_QUALITY, textFont);
         
         chkSinglePlay = new BetterCheckbox("💠 Single Playback Mode", true, titleFont);
-        chkSinglePlay.addActionListener((e) -> propertyChanged(PiPProperty.SINGLE_PLAY_MODE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkSinglePlay.addActionListener(e -> propertyChanged(PiPProperty.SINGLE_PLAY_MODE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblSinglePlay = new BetterLabel(PiPPropertyDesc.SINGLE_PLAY_MODE, textFont);
         
         chkGlobMute = new BetterCheckbox("🔇 Global Mute", true, titleFont);
-        chkGlobMute.addActionListener((e) -> propertyChanged(PiPProperty.GLOBAL_MUTED, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkGlobMute.addActionListener(e -> propertyChanged(PiPProperty.GLOBAL_MUTED, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblGlobMute = new BetterLabel(PiPPropertyDesc.GLOBAL_MUTED, textFont);
         
         lblDefVolTitle = new BetterLabel("Default Volume: 100", titleFont);
         sliderDefVol = new BetterSlider(0, 100, 50);
         sliderDefVol.setMinorTickSpacing(1);
         sliderDefVol.setMajorTickSpacing(5);
-        sliderDefVol.addMouseListener((MouseReleaseListener) (e) -> {
+        sliderDefVol.addMouseListener((MouseReleaseListener) e -> {
             // On RMB, reset to default. Otherwise, adjust based on new slider value.
             if (e.getButton() == MouseEvent.BUTTON3) {
                 propertyChanged(PiPProperty.DEFAULT_VOLUME, Integer.toString(50));
@@ -242,14 +242,14 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             } else
                 propertyChanged(PiPProperty.DEFAULT_VOLUME, Integer.toString(((JSlider) e.getSource()).getValue()));
         });
-        sliderDefVol.addChangeListener((e) -> lblDefVolTitle.setText(volTitleTxt()));
+        sliderDefVol.addChangeListener(e -> lblDefVolTitle.setText(volTitleTxt()));
         final BetterLabel lblDefVol = new BetterLabel(PiPPropertyDesc.DEFAULT_VOLUME, textFont);
         
         lblDefRateTitle = new BetterLabel("Default Speed: 1.00x", titleFont);
         sliderDefRate = new BetterSlider(10, 400, 100);
         sliderDefRate.setMinorTickSpacing(2);
         sliderDefRate.setMajorTickSpacing(50);
-        sliderDefRate.addMouseListener((MouseReleaseListener) (e) -> {
+        sliderDefRate.addMouseListener((MouseReleaseListener) e -> {
             // On RMB, reset to default. Otherwise, adjust based on new slider value.
             if (e.getButton() == MouseEvent.BUTTON3) {
                 propertyChanged(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.toString(1.00f));
@@ -257,12 +257,12 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             } else
                 propertyChanged(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.toString(((JSlider) e.getSource()).getValue() / 100.0f));
         });
-        sliderDefRate.addChangeListener((e) -> lblDefRateTitle.setText(rateTitleTxt()));
+        sliderDefRate.addChangeListener(e -> lblDefRateTitle.setText(rateTitleTxt()));
         final BetterLabel lblDefRate = new BetterLabel(PiPPropertyDesc.DEFAULT_PLAYBACK_RATE, textFont);
         
         // -------------------- Cache Panel --------------------
         chkDisCache = new BetterCheckbox("❌ Disable Cache", true, titleFont);
-        chkDisCache.addActionListener((e) -> propertyChanged(PiPProperty.DISABLE_CACHE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkDisCache.addActionListener(e -> propertyChanged(PiPProperty.DISABLE_CACHE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblDisCache = new BetterLabel(PiPPropertyDesc.DISABLE_CACHE, textFont);
         
         final BetterLabel lblOverwriteCacheTitle = new BetterLabel("Overwrite Cached Media", titleFont);
@@ -271,7 +271,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         
         final BetterLabel lblMediaCacheTitle = new BetterLabel("Media Cache", titleFont);
         final BetterLabel lblMediaCache = new BetterLabel("Open, prune, or delete the media cache. Prune deletes empty folders and subfolders from the cache.", textFont);
-        final BetterButton btnOpenCache = new BetterButton("Open", titleFont, (e) -> {
+        final BetterButton btnOpenCache = new BetterButton("Open", titleFont, e -> {
             // Ensure cache folder exists before trying to open it.
             final File cacheFolder = new File(AppRes.APP_CACHE_FOLDER);
             cacheFolder.mkdirs();
@@ -280,7 +280,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
                 Desktop.getDesktop().open(cacheFolder);
             } catch (IOException ioe) { ioe.printStackTrace(); }
         });
-        final BetterButton btnPruneCache = new BetterButton("Prune", titleFont, (e) -> {
+        final BetterButton btnPruneCache = new BetterButton("Prune", titleFont, e -> {
             CompletableFuture.runAsync(() -> {
                 try {
                     PiPAAUtils.pruneCacheFolder();
@@ -291,7 +291,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
                 EasyTopDialog.showMsg(this, "Pruning Completed.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, false);
             });
         });
-        final BetterButton btnClearCache = new BetterButton("Clear", titleFont, (e) -> {
+        final BetterButton btnClearCache = new BetterButton("Clear", titleFont, e -> {
             final File cacheDir = new File(AppRes.APP_CACHE_FOLDER);
             cacheDir.mkdirs();
             CompletableFuture.runAsync(() -> {
@@ -309,7 +309,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         
         final BetterLabel lblVLCCacheTitle = new BetterLabel("VLC Artwork Cache", titleFont);
         final BetterLabel lblVLCCache      = new BetterLabel("Open or delete the VLC artwork cache. Artwork (or album art) is cached here occasionally when media is played.", textFont);
-        final BetterButton btnOpenVLCCache = new BetterButton("Open", titleFont, (e) -> {
+        final BetterButton btnOpenVLCCache = new BetterButton("Open", titleFont, e -> {
             // Ensure cache folder exists before trying to open it.
             final File vlcFolder = new File(AppRes.VLC_ART_CACHE_FOLDER);
             vlcFolder.mkdirs();
@@ -318,7 +318,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
                 Desktop.getDesktop().open(vlcFolder);
             } catch (IOException ioe) { ioe.printStackTrace(); }
         });
-        final BetterButton btnClearVLCCache = new BetterButton("Clear", titleFont, (e) -> {
+        final BetterButton btnClearVLCCache = new BetterButton("Clear", titleFont, e -> {
             final File vlcFolder = new File(AppRes.VLC_ART_CACHE_FOLDER);
             vlcFolder.mkdirs();
             CompletableFuture.runAsync(() -> {
@@ -346,7 +346,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         chkForceAppUpdate.setToolTipText("Force the application to ask if you'd like to update, even if the version is the same. Only with manual updates via the button.");
         chkForceAppUpdate.setHorizontalTextPosition(SwingConstants.LEADING);
         chkForceAppUpdate.setIconTextGap(107);
-        final BetterButton btnUpdateApp = new BetterButton("Check for Application Update", titleFont, (e) -> {
+        final BetterButton btnUpdateApp = new BetterButton("Check for Application Update", titleFont, e -> {
             // Do not stack update requests.
             if (PiPUpdater.APP_UPDATING) return;
             PiPUpdater.APP_UPDATING = true;
@@ -377,7 +377,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblBinUpdateDesc  = new BetterLabel(PiPPropertyDesc.BIN_UPDATES, textFont);
         final BetterLabel lblBinUpdateFreqTitle = new BetterLabel("Automatically Check for Updates:", titleFont);
         comboBinUpdateFreq = new BetterComboBox(PropDefault.FREQUENCY_BIN.labels(), titleFont);
-        final BetterButton btnUpdateBin = new BetterButton("Update Downloader Binaries", titleFont, (e) -> {
+        final BetterButton btnUpdateBin = new BetterButton("Update Downloader Binaries", titleFont, e -> {
             // Do not stack update requests.
             if (PiPUpdater.BIN_UPDATING) return;
             PiPUpdater.BIN_UPDATING = true;
@@ -399,15 +399,15 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         // -------------------- Advanced Panel --------------------
         final BetterLabel lblAdvWarning    = new BetterLabel("⚠️ Warning: Only for advanced users. Do not change anything unless you know what you are doing.", titleFont);
         chkSystemVLC = new BetterCheckbox("🎥 Use System VLC", false, titleFont);
-        chkSystemVLC.addActionListener((e) -> propertyChanged(PiPProperty.USE_SYS_VLC, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkSystemVLC.addActionListener(e -> propertyChanged(PiPProperty.USE_SYS_VLC, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblSystemVLC  = new BetterLabel(PiPPropertyDesc.USE_SYS_VLC, textFont);
         
         chkSystemBin = new BetterCheckbox("⚙️ Use System Binaries", false, titleFont);
-        chkSystemBin.addActionListener((e) -> propertyChanged(PiPProperty.USE_SYS_BINARIES, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkSystemBin.addActionListener(e -> propertyChanged(PiPProperty.USE_SYS_BINARIES, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblSystemBin  = new BetterLabel(PiPPropertyDesc.USE_SYS_BINARIES, textFont);
         
         chkHWDecoding = new BetterCheckbox("🔨 Hardware-Accelerated Decoding", false, titleFont);
-        chkHWDecoding.addActionListener((e) -> {
+        chkHWDecoding.addActionListener(e -> {
             final boolean state = ((BetterCheckbox) e.getSource()).isSelected();
             propertyChanged(PiPProperty.USE_HW_DECODING, Boolean.toString(state));
             chkSuperRes.setEnabled(state);  // Disable RTX Super Res. if this is disabled.
@@ -415,7 +415,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         final BetterLabel lblHWDecoding   = new BetterLabel(PiPPropertyDesc.USE_HW_DECODING, textFont);
         
         chkSuperRes = new BetterCheckbox("🎞️ RTX Video Super Resolution", false, titleFont);
-        chkSuperRes.addActionListener((e) -> propertyChanged(PiPProperty.USE_SUPER_RES, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        chkSuperRes.addActionListener(e -> propertyChanged(PiPProperty.USE_SUPER_RES, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblSuperRes   = new BetterLabel(PiPPropertyDesc.USE_SUPER_RES, textFont);
         
         // Add Components to Content Panes
