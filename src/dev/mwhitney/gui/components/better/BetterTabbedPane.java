@@ -31,17 +31,8 @@ public class BetterTabbedPane extends JTabbedPane {
         
         setFont(f);
         setBorder(null);
-        setFocusable(false);
         setOpaque(false);
-        addMouseWheelListener(e -> {
-            // Setup loop of tab indices, then progress forward or backward based on scroll direction.
-            final Integer[] tabIndices = new Integer[this.getTabCount()];
-            for (int i = 0; i < tabIndices.length; i++) {
-                tabIndices[i] = i;
-            }
-            final Loop<Integer> loop = new Loop<>(tabIndices, this.getSelectedIndex());
-            this.setSelectedIndex(e.getPreciseWheelRotation() < 0 ? loop.previous() : loop.next());
-        });
+        addMouseWheelListener(e -> changeTabByDirection((int) e.getPreciseWheelRotation()));
         setUI(new BasicTabbedPaneUI() {
             // Do nothing to avoid painting the border.
             @Override
@@ -75,5 +66,54 @@ public class BetterTabbedPane extends JTabbedPane {
                         };
             }
         });
+    }
+    
+    /**
+     * Creates an integer {@link Loop} which contains all of the valid indices, each
+     * corresponding to a tab present in the {@link BetterTabbedPane}. The loop
+     * starts at the position of the selected tab's index. This allows for easy
+     * selection of a neighboring tab.
+     * 
+     * @return a {@link Loop} of integer indices corresponding to tabs in the pane.
+     * @since 0.9.5
+     */
+    private Loop<Integer> getTabIndicesLoop() {
+        // Setup loop of tab indices, then create loop with array starting at current tab selection.
+        final Integer[] tabIndices = new Integer[this.getTabCount()];
+        for (int i = 0; i < tabIndices.length; i++) {
+            tabIndices[i] = i;
+        }
+        return new Loop<>(tabIndices, this.getSelectedIndex());
+    }
+    
+    /**
+     * Changes selection to a tab neighboring the current one, depending on the
+     * direction. Negative numbers will select a previous tab. Any zero or positive
+     * integer will cause the next tab to be selected.
+     * 
+     * @param direction - an int with the direction.
+     * @since 0.9.5
+     */
+    public void changeTabByDirection(int direction) {
+        final Loop<Integer> loop = getTabIndicesLoop();
+        this.setSelectedIndex(direction < 0 ? loop.previous() : loop.next());
+    }
+    
+    /**
+     * Selects the previous tab that neighbors the one that is currently selected.
+     * 
+     * @since 0.9.5
+     */
+    public void selectPreviousTab() {
+        changeTabByDirection(-1);
+    }
+    
+    /**
+     * Selects the next tab that neighbors the one that is currently selected.
+     * 
+     * @since 0.9.5
+     */
+    public void selectNextTab() {
+        changeTabByDirection(1);
     }
 }

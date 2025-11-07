@@ -36,6 +36,7 @@ public class BetterCheckbox extends JCheckBox {
 
         setIcon(ICON);
         setSelectedIcon(ICON_SEL);
+        setFocusable(false);
         setFocusPainted(false);
         if (f != null) setFont(f);
     }
