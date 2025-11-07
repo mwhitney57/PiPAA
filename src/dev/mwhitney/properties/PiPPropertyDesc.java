@@ -29,6 +29,7 @@ public final class PiPPropertyDesc {
         OVERWRITE_CACHE       = "If incoming media already exists under the exact same filename and path, how should PiPAA handle the conflict?",
         DOWNLOAD_WEB_MEDIA    = "Attempt to download non-local media before playback, which is often necessary. Downloaded media is put in the cache folder, but it will be deleted if the cache is disabled.",
         CONVERT_WEB_INDIRECT  = "Attempts to discover a direct source from an indirect media link. When enabled, more media can be played directly without having to cache it. Can be inconsistent across platforms.",
+        CONFIRM_CLOSE_ALL     = "Require confirmation before closing all windows using the shortcut.",
         TRIM_TRANSPARENCY     = "Trims transparent edges from images or GIFs before playing, keeping window edges closer to media content. Trimming can take a while for big or long GIFs. Results are saved to the cache.",
         APP_UPDATES           = "Updates for the entire PiPAA application. Select the type of updates to check for below. Most users can stick with the default."
                 + " For newer builds that are less stable, select Beta or Snapshot versions. You can set the automatic update schedule or manually update using the button below.",

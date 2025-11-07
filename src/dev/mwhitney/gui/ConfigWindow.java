@@ -105,6 +105,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private BetterComboBox comboDLWebMedia;
     /** The BetterCheckbox for the {@link PiPProperty#CONVERT_WEB_INDIRECT} property. */
     private BetterCheckbox chkConvertIndWeb;
+    /** The BetterCheckbox for the {@link PiPProperty#CONFIRM_CLOSE_ALL} property. */
+    private BetterCheckbox chkConfirmClose;
     /** The BetterCheckbox for the {@link PiPProperty#TRIM_TRANSPARENCY} property. */
     private BetterCheckbox chkTrimTransparency;
     /** The BetterComboBox for the {@link PiPProperty#THEME} property. */
@@ -191,6 +193,10 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         chkConvertIndWeb = new BetterCheckbox("📦 Convert Indirect Web Links to Direct", true, titleFont);
         chkConvertIndWeb.addActionListener(e -> propertyChanged(PiPProperty.CONVERT_WEB_INDIRECT, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblConvIndWeb = new BetterLabel(PiPPropertyDesc.CONVERT_WEB_INDIRECT, textFont);
+        
+        chkConfirmClose = new BetterCheckbox("⚠️ Confirm Before Closing All Windows", true, titleFont);
+        chkConfirmClose.addActionListener(e -> propertyChanged(PiPProperty.CONFIRM_CLOSE_ALL, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        final BetterLabel lblConfirmClose = new BetterLabel(PiPPropertyDesc.CONFIRM_CLOSE_ALL, textFont);
         
         final BetterButton btnOpenFolder = new BetterButton("Open Application Folder", titleFont, e -> {
             try {
@@ -428,7 +434,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         paneGeneral.add(lblPreferLinkDND, "wrap");
         paneGeneral.add(chkConvertIndWeb, "wrap 0px");
         paneGeneral.add(lblConvIndWeb, "wrap");
-        paneGeneral.add(btnOpenFolder, "gaptop 180px, span, w 100%, h pref!, wrap");
+        paneGeneral.add(chkConfirmClose, "wrap 0px");
+        paneGeneral.add(lblConfirmClose, "wrap");
+        paneGeneral.add(btnOpenFolder, "gaptop 130px, span, w 100%, h pref!, wrap");
         paneGeneral.add(btnShowShortcuts, "span, w 100%, h pref!, wrap");
         // Media Pane
         paneMedia.add(comboDLWebMedia, "gaptop 5px, split 2, w 55%");
@@ -696,6 +704,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             break;
         case CONVERT_WEB_INDIRECT:
             chkConvertIndWeb.setSelected(propertyState(prop, Boolean.class));
+            break;
+        case CONFIRM_CLOSE_ALL:
+            chkConfirmClose.setSelected(propertyState(prop, Boolean.class));
             break;
         case TRIM_TRANSPARENCY:
             chkTrimTransparency.setSelected(propertyState(prop, Boolean.class));

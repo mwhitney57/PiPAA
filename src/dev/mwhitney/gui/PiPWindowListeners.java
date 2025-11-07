@@ -857,7 +857,9 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             get().requestClose();
             break;
         case CLOSE_WINDOWS:
-            if (TopDialog.showConfirm("Are you sure you want to close all windows?", "Clear Windows", JOptionPane.YES_NO_OPTION) == 0)
+            // Immediately clear all windows if configuration option is off. Otherwise confirm with the user first.
+            if (!get().propertyState(PiPProperty.CONFIRM_CLOSE_ALL, Boolean.class)
+                    || TopDialog.showConfirm("Are you sure you want to close all windows?", "Clear Windows", JOptionPane.YES_NO_OPTION) == 0)
                 get().getListener().clearWindows();
             break;
         default:

@@ -42,6 +42,8 @@ public enum PiPProperty {
     DOWNLOAD_WEB_MEDIA,
     /** Attempt to retrieve direct media links from an indirect web link. */
     CONVERT_WEB_INDIRECT,
+    /** Require confirmation before closing all windows via shortcut execution. */
+    CONFIRM_CLOSE_ALL,
     /** Trim any fully-transparent pixel edges from image and GIF media sources. */
     TRIM_TRANSPARENCY,
     /** The option selection for how {@link TRIM_TRANSPARENCY} should operate. */
@@ -89,6 +91,7 @@ public enum PiPProperty {
         case APP_UPDATE_FREQUENCY     -> PropDefault.FREQUENCY_APP.toString();
         case BIN_UPDATE_FREQUENCY     -> PropDefault.FREQUENCY_BIN.toString();
         case DND_PREFER_LINK,
+             CONFIRM_CLOSE_ALL,
              CONVERT_WEB_INDIRECT     -> "true";
         case TRIM_TRANSPARENCY,
              GLOBAL_MUTED,
