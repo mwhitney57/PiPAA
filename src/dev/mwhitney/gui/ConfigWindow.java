@@ -20,6 +20,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 
 import org.apache.commons.io.FileUtils;
@@ -76,6 +77,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private final BetterPanel paneGeneral;
     /** The BetterPanel with the Playback config options. */
     private final BetterPanel panePlayback;
+    /** The BetterPanel with the Media config options. */
+    private final BetterPanel paneMedia;
     /** The BetterPanel with the Cache config options. */
     private final BetterPanel paneCache;
     /** The BetterPanel with the Update config options. */
@@ -159,12 +162,15 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
 //        final BetterPanel contentPane = new BetterPanel(new MigLayout("debug"));
         contentPane  = new BetterPanel(new MigLayout("fill, insets 10 10 10 10"));
         tabbedPane   = new BetterTabbedPane(titleFont);
+        tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         paneGeneral  = new BetterPanel(new MigLayout(), true);
         panePlayback = new BetterPanel(new MigLayout(), true);
+        paneMedia    = new BetterPanel(new MigLayout(), true);
         paneCache    = new BetterPanel(new MigLayout(), true);
         paneUpdates  = new BetterPanel(new MigLayout(), true);
         paneAdvanced = new BetterPanel(new MigLayout(), true);
         tabbedPane.addTab("General", paneGeneral);
+        tabbedPane.addTab("Media", paneMedia);
         tabbedPane.addTab("Playback", panePlayback);
         tabbedPane.addTab("Cache", paneCache);
         tabbedPane.addTab("Updates", paneUpdates);
@@ -182,18 +188,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         chkPreferLinkDND.addActionListener((e) -> propertyChanged(PiPProperty.DND_PREFER_LINK, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblPreferLinkDND = new BetterLabel(PiPPropertyDesc.DND_PREFER_LINK, textFont);
         
-        final BetterLabel lblDLWebMediaTitle = new BetterLabel("Download Web Media", titleFont);
-        comboDLWebMedia = new BetterComboBox(PropDefault.DOWNLOAD.labels(), titleFont);
-        final BetterLabel lblDLWebMedia = new BetterLabel(PiPPropertyDesc.DOWNLOAD_WEB_MEDIA, textFont);
-        
         chkConvertIndWeb = new BetterCheckbox("📦 Convert Indirect Web Links to Direct", true, titleFont);
         chkConvertIndWeb.addActionListener((e) -> propertyChanged(PiPProperty.CONVERT_WEB_INDIRECT, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblConvIndWeb = new BetterLabel(PiPPropertyDesc.CONVERT_WEB_INDIRECT, textFont);
-        
-        chkTrimTransparency = new BetterCheckbox("✂️ Trim Transparent Edges", true, titleFont);
-        chkTrimTransparency.addActionListener((e) -> propertyChanged(PiPProperty.TRIM_TRANSPARENCY, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
-        comboTrim = new BetterComboBox(PropDefault.TRIM.labels(), titleFont);
-        final BetterLabel lblTrimTransparency = new BetterLabel(PiPPropertyDesc.TRIM_TRANSPARENCY, textFont);
         
         final BetterButton btnOpenFolder = new BetterButton("Open Application Folder", titleFont, (e) -> {
             try {
@@ -205,6 +202,16 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             final BetterTextArea shortcutsComp = new BetterTextArea(AppRes.SHORTCUTS);
             TopDialog.showMsg(shortcutsComp, "Keyboard and Mouse Shortcuts", JOptionPane.PLAIN_MESSAGE);
         });
+        
+        // -------------------- Media Panel --------------------
+        final BetterLabel lblDLWebMediaTitle = new BetterLabel("Download Web Media", titleFont);
+        comboDLWebMedia = new BetterComboBox(PropDefault.DOWNLOAD.labels(), titleFont);
+        final BetterLabel lblDLWebMedia = new BetterLabel(PiPPropertyDesc.DOWNLOAD_WEB_MEDIA, textFont);
+        
+        chkTrimTransparency = new BetterCheckbox("✂️ Trim Transparent Edges", true, titleFont);
+        chkTrimTransparency.addActionListener((e) -> propertyChanged(PiPProperty.TRIM_TRANSPARENCY, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        comboTrim = new BetterComboBox(PropDefault.TRIM.labels(), titleFont);
+        final BetterLabel lblTrimTransparency = new BetterLabel(PiPPropertyDesc.TRIM_TRANSPARENCY, textFont);
         
         // -------------------- Playback Panel --------------------
         final BetterLabel lblGIFPlaybackTitle = new BetterLabel("GIF Playback Mode", titleFont);
@@ -416,19 +423,20 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         contentPane.add(tabbedPane, "growy");
         // General Pane
         paneGeneral.add(comboTheme, "gaptop 5px, split 2, w 80%");
-        paneGeneral.add(lblThemeTitle, "span, wrap 0px");
-        paneGeneral.add(chkPreferLinkDND, "gaptop 5px, wrap 0px");
-        paneGeneral.add(lblPreferLinkDND, "wrap 5px");
-        paneGeneral.add(comboDLWebMedia, "gaptop 5px, split 2, w 55%");
-        paneGeneral.add(lblDLWebMediaTitle, "span, wrap 4px");
-        paneGeneral.add(lblDLWebMedia, "wrap");
+        paneGeneral.add(lblThemeTitle, "span, wrap");
+        paneGeneral.add(chkPreferLinkDND, "wrap 0px");
+        paneGeneral.add(lblPreferLinkDND, "wrap");
         paneGeneral.add(chkConvertIndWeb, "wrap 0px");
-        paneGeneral.add(lblConvIndWeb, "wrap 5px");
-        paneGeneral.add(chkTrimTransparency, "split 2, w 70%");
-        paneGeneral.add(comboTrim, "w 30%, wrap 0px");
-        paneGeneral.add(lblTrimTransparency, "wrap 5px");
-        paneGeneral.add(btnOpenFolder, "gaptop 15px, span, w 100%, h pref!, wrap");
+        paneGeneral.add(lblConvIndWeb, "wrap");
+        paneGeneral.add(btnOpenFolder, "gaptop 180px, span, w 100%, h pref!, wrap");
         paneGeneral.add(btnShowShortcuts, "span, w 100%, h pref!, wrap");
+        // Media Pane
+        paneMedia.add(comboDLWebMedia, "gaptop 5px, split 2, w 55%");
+        paneMedia.add(lblDLWebMediaTitle, "span, wrap 4px");
+        paneMedia.add(lblDLWebMedia, "wrap");
+        paneMedia.add(chkTrimTransparency, "split 2, w 70%");
+        paneMedia.add(comboTrim, "w 30%, wrap 0px");
+        paneMedia.add(lblTrimTransparency, "wrap 5px");
         // Playback Pane
         panePlayback.add(comboGIFPlayback, "gaptop 5px, split 2, w 50%");
         panePlayback.add(lblGIFPlaybackTitle, "span, wrap 4px");
@@ -638,6 +646,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     public void pickTheme(THEME_OPTION theme) {
         themeComponents(theme, contentPane);
         themeComponents(theme, paneGeneral);
+        themeComponents(theme, paneMedia);
         themeComponents(theme, panePlayback);
         themeComponents(theme, paneCache);
         themeComponents(theme, paneUpdates);
