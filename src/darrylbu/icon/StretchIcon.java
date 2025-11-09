@@ -392,6 +392,16 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
     // Only re-scale the image if pending (zoom or image changed).
     if (scaling.not(SCALING_OPTION.FAST) && pendingImgRescale && !zoomChanging && (scaling.is(SCALING_OPTION.QUALITY) || !parentResizing)) {
 //        if (this.scaledImage != null) this.scaledImage.flush();   // Basic testing indicates not necessary. No visible side effects using it though.
+        /* 
+         * Current approach using getScaledInstance.
+         * Using Graphics2D or a library is the preferred approach. However, without multiple steps, Graphics2D produces an inferior result.
+         * imgscalr could only match the quality on high resolution images with its ULTRA_QUALITY method, but it took much longer (~3-5x).
+         * Most testing was done with downscaling. Those approaches may produce slightly better upscaled results.
+         * Downscaling quality is more important than upscaling quality for this application.
+         * 
+         * Even if overly simplistic and typically inefficient, the getScaledInstance method offers the best quality over time here.
+         * This could change on other operating systems, if supported in the future, in which case this approach should be revisited.
+         */
         this.scaledImage = toBufferedImage(image).getScaledInstance(w, h, Image.SCALE_SMOOTH);
         this.parentSizeAtLastScale = c.getSize();
         this.pendingImgRescale = false;
