@@ -68,12 +68,14 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         // Only paint the border when not faded.
         if (!isFaded()) {
-            // Enable anti-aliasing, paint the rounded border, then disable anti-aliasing.
-            // If not disabled, the anti-aliasing will persist to other components and cause a massive hit to performance.
-            final Graphics2D g2d = (Graphics2D) g;
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            super.paintBorder(c, g, x, y, width, height);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            // Paint the rounded border using anti-aliasing. Use then safely dispose of Graphics copy.
+            final Graphics2D g2d = (Graphics2D) g.create();
+            try {
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                super.paintBorder(c, g2d, x, y, width, height);
+            } finally {
+                g2d.dispose();
+            }
         }
     }
     
