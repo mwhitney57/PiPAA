@@ -40,12 +40,14 @@ import dev.mwhitney.util.monitor.ProcessMonitor;
 import dev.mwhitney.util.monitor.ThreadMonitor;
 
 /**
- * Manages any existing PiPWindows.
+ * Manages windows ({@link PiPWindow}) and provides simple methods to create,
+ * remove, and call them. Operations can be performed across all windows at
+ * once. The manager gracefully handles the closing and disposal of windows.
  * 
  * @author mwhitney57
  */
 public class PiPWindowManager implements PropertyListener, BindControllerFetcher, BindHandler, ProcessMonitor {
-    /** The size of the user's screen. */
+    /** The size of the user's screen, represented by a {@link Rectangle} for simple {@link Point} bounds checks. */
     private final Rectangle userScreen = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
     /** The media attributor that assists in determining the attributes for PiPMedia. */
     private final PiPMediaAttributor attributor = new PiPMediaAttributor() {
@@ -59,7 +61,7 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
     private CountDownLatch exitLatch;
     /** The window count listener that gets called when the live window count changes. */
     private PiPWindowCountListener countListener;
-    /** The count/amount of <b>live</b>, unclosed PiPWindows managed by this manager.*/
+    /** The count/amount of <b>live</b>, unclosed PiPWindows managed by this manager. */
     private volatile int liveWindowCount;
     /** An int index for the last window that received user focus. */
     private volatile int lastWindowFocused;
@@ -125,7 +127,7 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
             window.setLocation(lastSpawnLocation);
             
             // Set Window Listeners
-            window.addWindowFocusListener((WindowFocusGainedListener) (e) -> lastWindowFocused = index);
+            window.addWindowFocusListener((WindowFocusGainedListener) e -> lastWindowFocused = index);
             window.setListener(new PiPWindowManagerAdapter() {  // Communicates back to the manager.
                 @Override
                 public PiPWindowManager get() { return PiPWindowManager.this; }
@@ -440,7 +442,7 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
      * Though often bad practice, this call is ideal in this circumstance. After
      * clearing windows, especially ones with images, the garbage collector has
      * proven to be lazy in testing. Even after flushing the images, it waits for a
-     * long time before freeing up that memory (if ever.) This could lead to memory
+     * long time before freeing up that memory (if ever). This could lead to memory
      * issues for the user if more and more windows with images are added and
      * removed, assuming that Java does not catch on before that happens. The
      * benefit is worth the cost.
@@ -449,6 +451,9 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
      * is helpful when the user wants to not use the application, but leaves it
      * running. Idle background applications should take up as little memory as
      * possible.
+     * <p>
+     * The {@link System#gc()} call does not guarantee that any memory will be
+     * freed, but it has been proven to help in expediting the process.
      */
     private void gcIfZeroCount() {
         if (windowCount() <= 0) System.gc();
@@ -581,24 +586,6 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         setLiveWindowCount(Math.max(0, this.liveWindowCount - 1));
     }
     
-    /**
-     * <b>Deprecated</b>, as {@link #callInLiveWindows(Consumer)} simplifies this
-     * kind of logic such that this function is no longer necessary.
-     * <p>
-     * Fires the propertyChanged method in each PiPWindow.
-     * 
-     * @param prop  - the PiPProperty that has changed.
-     * @param value - the new property value.
-     */
-    @SuppressWarnings("unused")
-    @Deprecated(since = "0.9.5", forRemoval = true)
-    private void setPropertyInWindows(PiPProperty prop, String value) {
-        for(final PiPWindow window : this.windows) {
-            if(window != null && window.state().not(StateProp.CLOSED))
-                window.propertyChanged(prop, value);
-        }
-    }
-
     @Override
     public ThreadMonitor getMonitor() {
         return this.attributor.getMonitor();
