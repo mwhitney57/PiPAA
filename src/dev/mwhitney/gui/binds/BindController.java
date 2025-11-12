@@ -435,12 +435,11 @@ public class BindController {
      * a similar issue may arise, getting {@link InputEvent#ALT_DOWN_MASK} value of
      * <code>512</code> even when not pressing keys.
      * <p>
-     * This behavior is odd, and newer versions of Java do not seem to fix to the
+     * This behavior is odd, and newer versions of Java do not seem to fix the
      * issue. Therefore, it could be a bug stemming from another factor, such as
      * development/environment setup or an operating system/software issue.
      * Regardless, this method should not hurt even in cases where the
      * aforementioned behavior does not occur. It simply provides safeguards.
-     * 
      * 
      * @param input - the {@link MouseInput} to run through the filter.
      * @return a new {@link MouseInput} instance with identical data, <b>except</b>
