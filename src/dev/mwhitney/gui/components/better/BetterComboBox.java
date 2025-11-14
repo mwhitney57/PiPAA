@@ -92,21 +92,23 @@ public class BetterComboBox extends JComboBox<String> {
     protected void paintComponent(Graphics g) {
         // Create Graphics and Rendering Hints
         final Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        // Select the Color Based on Pressed State
-        g2d.setColor(this.boxColor);
-        g2d.fillRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
-        
-        // Paint Text within Rect.
-        if (this.getSelectedItem() instanceof String) {
-            final String txt = (String) this.getSelectedItem();
-            g2d.setColor(getForeground());
-            g2d.drawString(txt, 8, 7 + (getHeight()/2));
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Select the Color Based on Pressed State
+            g2d.setColor(this.boxColor);
+            g2d.fillRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
+            
+            // Paint Text within Rect.
+            if (this.getSelectedItem() instanceof String) {
+                final String txt = (String) this.getSelectedItem();
+                g2d.setColor(getForeground());
+                g2d.drawString(txt, 8, 7 + (getHeight()/2));
+            }
+        } finally {
+            // Dispose of the Graphics2D Object
+            g2d.dispose();
         }
-        
-        // Dispose of the Graphics2D Object
-        g2d.dispose();
         
 //        super.paintComponent(g); // Commented-out -- Don't paint and ONLY use custom paint solution.
     }
@@ -115,15 +117,17 @@ public class BetterComboBox extends JComboBox<String> {
     protected void paintBorder(Graphics g) {
         // Create Graphics and Rendering Hints
         final Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        // Draws the Rounded Border
-        g2d.setColor(this.boxBorderColor);
-        g2d.setStroke(new BasicStroke(2.0f));
-        g2d.drawRoundRect(2, 1, getWidth()-4, getHeight()-3, 10, 10);
-        
-        // Dispose of the Graphics2D Object
-        g2d.dispose();
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Draws the Rounded Border
+            g2d.setColor(this.boxBorderColor);
+            g2d.setStroke(new BasicStroke(2.0f));
+            g2d.drawRoundRect(2, 1, getWidth()-4, getHeight()-3, 10, 10);
+        } finally {
+            // Dispose of the Graphics2D Object
+            g2d.dispose();
+        }
     }
     
     /**

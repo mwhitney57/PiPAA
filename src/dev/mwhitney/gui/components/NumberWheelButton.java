@@ -61,93 +61,95 @@ public class NumberWheelButton extends BetterButton implements ThemedComponent {
     protected void paintComponent(Graphics g) {
         // Create Graphics and Rendering Hints
         final Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        // Simplify retrieval of width and height.
-        final int width  = getWidth();
-        final int height = getHeight();
-        
-        // Select the Color Based on Pressed State
-        if(getModel().isPressed()) g2d.setColor(colorBGPressed);
-        else                       g2d.setColor(colorBG);
-        // Paint general background area of button.
-        g2d.fillRoundRect(1, 1, width-2, height-2,
-                (roundedArc != -1 ? roundedArc : 40),
-                (roundedArc != -1 ? roundedArc : 40));
-        
-        // Paint Highlighted Area
-        g2d.setColor(colorHighlight);
-        g2d.fillRoundRect(1, 1 + height/3, width-2, height/3,
-                (roundedArc != -1 ? roundedArc : 40),
-                (roundedArc != -1 ? roundedArc : 40));
-        
-        // Setup Text Color and Font
-        g2d.setColor(colorText);
-        g2d.setFont(getFont().deriveFont(24f));
-        
-        // Text placeholder to retrieve font information.
-        final String text = "0";
-        // Get font metrics for text measurement.
-        FontMetrics fm = g2d.getFontMetrics();
-        
-        // Get width and height of the text.
-        int textWidth  = fm.stringWidth(text);
-        int textHeight = fm.getHeight();
-        
-        // Calculate the X and Y coordinates to center the text.
-        int x = (width  - textWidth)  / 2;
-        int y = (height + textHeight) / 2 - fm.getDescent(); // Subtract fm.getDescent() to adjust baseline to the vertical center.
-        
-        // Draw larger, current digit in center of highlighted area.
-        g2d.drawString(""+loop.current(), x, y);
-        
-        // Reset Font. Prepare for similar font process for above and below digits.
-        g2d.setFont(getFont());
-        // Get font metrics for text measurement.
-        fm = g2d.getFontMetrics();
-        
-        // Get width and height of the text.
-        textWidth  = fm.stringWidth(text);
-        textHeight = fm.getHeight();
-        
-        // Calculate the X and Y coordinates to center the text.
-        x = (width  - textWidth)  / 2;
-        y = (height + textHeight) / 2 - fm.getDescent(); // Subtract fm.getDescent() to adjust baseline to the vertical center.
-        
-        // Draw above and below digits based on current digit.
-        if (loop.current() != 0)
-            g2d.drawString(String.valueOf(loop.current()-1), x, height/3 - fm.getDescent());
-        else
-            g2d.drawString(String.valueOf(9), x, height/3 - fm.getDescent());
-        if (loop.current() != 9)
-            g2d.drawString(String.valueOf(loop.current()+1), x, height/2 + (height/3) + fm.getDescent());
-        else
-            g2d.drawString(String.valueOf(0), x, height/2 + (height/3) + fm.getDescent());
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             
-        
-        // Setup gradient values for fade overlay.
-        float midPoint  = height / 2f;   // Controls the size of the middle point.
-        float fadeRange = height / 4f;  // Controls the height of the transparent area.
-
-        // Transparency Color
-        final Color transparency = AppRes.COLOR_TRANSPARENT;
-
-        // Creates a gradient that goes:  BG → Transparency → BG
-        final LinearGradientPaint gradient = new LinearGradientPaint(
-            0, height/8, 0, height - (height/8), 
-            new float[] { 0f, (midPoint - fadeRange) / height, (midPoint + fadeRange) / height, 1f },
-            new Color[] { colorBGPressed, transparency, transparency, colorBGPressed }
-        );
-
-        // Set the gradient paint to the graphics context
-        g2d.setPaint(gradient);
-
-        // Paint the gradient overlay, rounded and within the border of the component.
-        g2d.fillRoundRect(2, 2, width - 4, height - 4, (roundedArc != -1 ? roundedArc : 40),
-                (roundedArc != -1 ? roundedArc : 40));
-        
-        // Dispose of the Graphics2D Object
-        g2d.dispose();
+            // Simplify retrieval of width and height.
+            final int width  = getWidth();
+            final int height = getHeight();
+            
+            // Select the Color Based on Pressed State
+            if(getModel().isPressed()) g2d.setColor(colorBGPressed);
+            else                       g2d.setColor(colorBG);
+            // Paint general background area of button.
+            g2d.fillRoundRect(1, 1, width-2, height-2,
+                    (roundedArc != -1 ? roundedArc : 40),
+                    (roundedArc != -1 ? roundedArc : 40));
+            
+            // Paint Highlighted Area
+            g2d.setColor(colorHighlight);
+            g2d.fillRoundRect(1, 1 + height/3, width-2, height/3,
+                    (roundedArc != -1 ? roundedArc : 40),
+                    (roundedArc != -1 ? roundedArc : 40));
+            
+            // Setup Text Color and Font
+            g2d.setColor(colorText);
+            g2d.setFont(getFont().deriveFont(24f));
+            
+            // Text placeholder to retrieve font information.
+            final String text = "0";
+            // Get font metrics for text measurement.
+            FontMetrics fm = g2d.getFontMetrics();
+            
+            // Get width and height of the text.
+            int textWidth  = fm.stringWidth(text);
+            int textHeight = fm.getHeight();
+            
+            // Calculate the X and Y coordinates to center the text.
+            int x = (width  - textWidth)  / 2;
+            int y = (height + textHeight) / 2 - fm.getDescent(); // Subtract fm.getDescent() to adjust baseline to the vertical center.
+            
+            // Draw larger, current digit in center of highlighted area.
+            g2d.drawString(""+loop.current(), x, y);
+            
+            // Reset Font. Prepare for similar font process for above and below digits.
+            g2d.setFont(getFont());
+            // Get font metrics for text measurement.
+            fm = g2d.getFontMetrics();
+            
+            // Get width and height of the text.
+            textWidth  = fm.stringWidth(text);
+            textHeight = fm.getHeight();
+            
+            // Calculate the X and Y coordinates to center the text.
+            x = (width  - textWidth)  / 2;
+            y = (height + textHeight) / 2 - fm.getDescent(); // Subtract fm.getDescent() to adjust baseline to the vertical center.
+            
+            // Draw above and below digits based on current digit.
+            if (loop.current() != 0)
+                g2d.drawString(String.valueOf(loop.current()-1), x, height/3 - fm.getDescent());
+            else
+                g2d.drawString(String.valueOf(9), x, height/3 - fm.getDescent());
+            if (loop.current() != 9)
+                g2d.drawString(String.valueOf(loop.current()+1), x, height/2 + (height/3) + fm.getDescent());
+            else
+                g2d.drawString(String.valueOf(0), x, height/2 + (height/3) + fm.getDescent());
+                
+            
+            // Setup gradient values for fade overlay.
+            float midPoint  = height / 2f;   // Controls the size of the middle point.
+            float fadeRange = height / 4f;  // Controls the height of the transparent area.
+    
+            // Transparency Color
+            final Color transparency = AppRes.COLOR_TRANSPARENT;
+    
+            // Creates a gradient that goes:  BG → Transparency → BG
+            final LinearGradientPaint gradient = new LinearGradientPaint(
+                0, height/8, 0, height - (height/8), 
+                new float[] { 0f, (midPoint - fadeRange) / height, (midPoint + fadeRange) / height, 1f },
+                new Color[] { colorBGPressed, transparency, transparency, colorBGPressed }
+            );
+    
+            // Set the gradient paint to the graphics context
+            g2d.setPaint(gradient);
+    
+            // Paint the gradient overlay, rounded and within the border of the component.
+            g2d.fillRoundRect(2, 2, width - 4, height - 4, (roundedArc != -1 ? roundedArc : 40),
+                    (roundedArc != -1 ? roundedArc : 40));
+        } finally {
+            // Dispose of the Graphics2D Object
+            g2d.dispose();
+        }
     }
     
     /**

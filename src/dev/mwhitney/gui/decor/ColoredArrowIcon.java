@@ -39,21 +39,25 @@ public class ColoredArrowIcon implements Icon {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-        final Graphics2D g2d = (Graphics2D) g;
+        final Graphics2D g2d = (Graphics2D) g.create();
 
-        // Setup x and y-coordinate points for drawing: >
-        final int[] xPoints = {x + 2, x + 5, x + 2};
-        final int[] yPoints = {y + 2, y + 5, y + 8};
-
-        // Enable anti-aliasing.
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        // Adjust drawing style.
-        g2d.setColor(color);
-        g2d.setStroke(new BasicStroke(2));
-        // Draw each polygon line.
-        g2d.drawPolyline(xPoints, yPoints, 3);
-        
-        // Disable anti-aliasing.
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        try {
+            // Setup x and y-coordinate points for drawing: >
+            final int[] xPoints = {x + 2, x + 5, x + 2};
+            final int[] yPoints = {y + 2, y + 5, y + 8};
+            
+            // Enable anti-aliasing.
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            // Adjust drawing style.
+            g2d.setColor(color);
+            g2d.setStroke(new BasicStroke(2));
+            // Draw each polygon line.
+            g2d.drawPolyline(xPoints, yPoints, 3);
+            
+            // Disable anti-aliasing.
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        } finally {
+            g2d.dispose();
+        }
     }
 }

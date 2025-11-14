@@ -72,19 +72,20 @@ public class BetterButton extends JButton {
     @Override
     protected void paintComponent(Graphics g) {
         // Create Graphics and Rendering Hints
-        Graphics2D g2d = (Graphics2D) g.create();
-        
-        // Select the Color Based on Pressed State
-        if(getModel().isPressed())
-            g2d.setColor(colorBGPressed);
-        else
-            g2d.setColor(colorBG);
-        g2d.fillRoundRect(1, 1, getWidth()-2, getHeight()-2,
-                (roundedArc != -1 ? roundedArc : 40),
-                (roundedArc != -1 ? roundedArc : 40));
-        
-        // Dispose of the Graphics2D Object
-        g2d.dispose();
+        final Graphics2D g2d = (Graphics2D) g.create();
+        try {
+            // Select the Color Based on Pressed State
+            if(getModel().isPressed())
+                g2d.setColor(colorBGPressed);
+            else
+                g2d.setColor(colorBG);
+            g2d.fillRoundRect(1, 1, getWidth()-2, getHeight()-2,
+                    (roundedArc != -1 ? roundedArc : 40),
+                    (roundedArc != -1 ? roundedArc : 40));
+        } finally {
+            // Dispose of the Graphics2D Object
+            g2d.dispose();
+        }
         
         super.paintComponent(g);
     }
@@ -92,18 +93,20 @@ public class BetterButton extends JButton {
     @Override
     protected void paintBorder(Graphics g) {
         // Create Graphics and Rendering Hints
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        // Draws the Rounded Border
-        g2d.setColor(colorBorder);
-        g2d.setStroke(new BasicStroke(4.0f));
-        g2d.drawRoundRect(2, 2, getWidth()-5, getHeight()-5,
-                (roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25),
-                (roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25));
-        
-        // Dispose of the Graphics2D Object
-        g2d.dispose();
+        final Graphics2D g2d = (Graphics2D) g.create();
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Draws the Rounded Border
+            g2d.setColor(colorBorder);
+            g2d.setStroke(new BasicStroke(4.0f));
+            g2d.drawRoundRect(2, 2, getWidth()-5, getHeight()-5,
+                    (roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25),
+                    (roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25));
+        } finally {
+            // Dispose of the Graphics2D Object
+            g2d.dispose();
+        }
     }
     
     /**
