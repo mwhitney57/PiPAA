@@ -98,7 +98,7 @@ public class Tray implements PropertyListener {
         itemComps = new ArrayList<JComponent>();
         
         // Dorkbox SystemTray Debug Statement
-        SystemTray.DEBUG = true;
+        SystemTray.DEBUG = false;
         // Dorkbox SystemTray Menu and Icon Scaling
         SizeAndScalingWindows.OVERRIDE_MENU_SIZE = 20;
         SizeAndScalingWindows.OVERRIDE_TRAY_SIZE = 32;
