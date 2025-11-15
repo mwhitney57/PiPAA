@@ -158,7 +158,11 @@ public class Tray implements PropertyListener {
         
         // Get System Tray
         tray = SystemTray.get();
-        if (tray == null) throw new RuntimeException("Unable to get the system tray!");
+        // Ensure tray is non-null and system is supported before proceeding.
+        if (tray == null) {
+            TopDialog.showMsg("Your system is not supported!", "Cannot Launch PiPAA Tray", JOptionPane.ERROR_MESSAGE);
+            throw new RuntimeException("Unable to get the system tray! System likely unsupported.");
+        }
         
         // Create Context Menu
         menu = tray.getMenu();
