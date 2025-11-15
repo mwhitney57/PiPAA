@@ -146,7 +146,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * alpha value is specified to keep the border both invisible and functional,
      * allowing the user to interact with it to resize the window.
      */
-    public static final Color TRANSPARENT_BG  = new Color(0,   0,   0,   0.002f);
+    public static final Color TRANSPARENT_BG  = new Color(0,   0,   0,   1);
     public static final Color BORDER_NORMAL   = new Color(0,   69,  107, 200);
     public static final Color BORDER_OK       = new Color(152, 236, 133, 200);
     public static final Color BORDER_PROGRESS = new Color(249, 248, 113, 200);
