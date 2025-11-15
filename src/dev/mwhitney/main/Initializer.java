@@ -149,9 +149,10 @@ public class Initializer {
                 case SET_ALL_PAUSED, SET_ALL_MUTED, SET_ALL_PLAYBACK_RATE, SET_ALL_VOLUME -> {}
                 case USE_SYS_BINARIES -> {
                     // Refresh available system binaries when property is enabled.
-                    if (Boolean.valueOf(value))
-                        CFExec.run(Binaries::refreshOnSys).excepts((i, e) -> e.printStackTrace());
-                    
+                    if (Boolean.valueOf(value)) try {
+                        Binaries.refreshOnSys();
+                    } catch (InterruptedException ignore) {}
+
                     propsManager.set(prop, value);
                 }
                 default -> propsManager.set(prop, value);

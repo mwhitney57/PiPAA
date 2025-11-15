@@ -171,7 +171,7 @@ public class Tray implements PropertyListener {
         setupTrayMenuItems();
         
         // Load Current Configuration
-        entryGlobalMute.setChecked(Boolean.valueOf(this.propertyState(PiPProperty.GLOBAL_MUTED, String.class)));
+        entryGlobalMute.setChecked(this.propertyState(PiPProperty.GLOBAL_MUTED, Boolean.class));
         entryGlobalMute.setText("Global Mute " + (entryGlobalMute.getChecked() ? "Enabled" : "Disabled"));
 
         // Add Tray Icon to System Tray
