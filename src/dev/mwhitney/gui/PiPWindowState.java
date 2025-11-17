@@ -129,6 +129,16 @@ public class PiPWindowState {
          */
         FULLSCREEN,
         /**
+         * Whether the image media displayed in the Swing player should be flipped
+         * horizontally.
+         */
+        FLIP_HORIZONTAL,
+        /**
+         * Whether the image media displayed in the Swing player should be flipped
+         * vertically.
+         */
+        FLIP_VERTICAL,
+        /**
          * Whether the window is loading media.
          */
         LOADING,
@@ -235,6 +245,14 @@ public class PiPWindowState {
      * A boolean for whether or not the window is in full screen display mode.
      */
     private boolean fullscreen;
+    /**
+     * A boolean for whether or not the image media in the Swing player is horizontally flipped.
+     */
+    private boolean flipHorizontal;
+    /**
+     * A boolean for whether or not the image media in the Swing player is vertically flipped.
+     */
+    private boolean flipVertical;
     /**
      * A boolean for whether or not the window is loading media.
      */
@@ -430,6 +448,8 @@ public class PiPWindowState {
         case CONTROLS_KEY      -> this.controlsKey      = val;
         case CONTROLS_MOUSE    -> this.controlsMouse    = val;
         case FULLSCREEN        -> this.fullscreen       = val;
+        case FLIP_HORIZONTAL   -> this.flipHorizontal   = val;
+        case FLIP_VERTICAL     -> this.flipVertical     = val;
         case LOADING           -> this.loading          = val;
         case READY             -> this.ready            = val;
         case RESIZING          -> this.resizing         = val;
@@ -470,6 +490,8 @@ public class PiPWindowState {
         case HW_ACCELERATION   ->  this.hwAcceleration;
         case RTX_SUPER_RES     ->  this.rtxSuperRes;
         case FULLSCREEN        ->  this.fullscreen;
+        case FLIP_HORIZONTAL   ->  this.flipHorizontal;
+        case FLIP_VERTICAL     ->  this.flipVertical;
         case LOADING           ->  this.loading;
         case READY             ->  this.ready;
         case RESIZING          ->  this.resizing;

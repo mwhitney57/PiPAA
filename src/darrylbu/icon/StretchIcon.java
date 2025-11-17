@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.net.URL;
@@ -19,13 +20,16 @@ import java.util.Objects;
 import javax.swing.ImageIcon;
 import javax.swing.Timer;
 
+import dev.mwhitney.gui.PiPWindowState;
+import dev.mwhitney.gui.PiPWindowState.StateProp;
+import dev.mwhitney.gui.interfaces.StateFetcher;
 import dev.mwhitney.gui.viewer.SubImageObserver;
 import dev.mwhitney.gui.viewer.ZoomPanSnapshot;
 import dev.mwhitney.listeners.PaintRequester;
 import dev.mwhitney.properties.PiPProperty;
-import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.properties.PiPProperty.PropDefault;
 import dev.mwhitney.properties.PiPProperty.SCALING_OPTION;
+import dev.mwhitney.properties.PropertyListener;
 
 /**
  * An <CODE>Icon</CODE> that scales its image to fill the component area,
@@ -43,7 +47,7 @@ import dev.mwhitney.properties.PiPProperty.SCALING_OPTION;
  * @version 1.0 03/27/12
  * @author Darryl
  */
-public class StretchIcon extends ImageIcon implements PaintRequester, PropertyListener {
+public class StretchIcon extends ImageIcon implements PaintRequester, PropertyListener, StateFetcher {
 
   /**
    * A generated, unique serial ID for StretchIcons.
@@ -405,6 +409,22 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
         this.scaledImage = toBufferedImage(image).getScaledInstance(w, h, Image.SCALE_SMOOTH);
         this.parentSizeAtLastScale = c.getSize();
         this.pendingImgRescale = false;
+    }
+    
+    // Handle transforms prior to drawing image.
+    // Apply horizontal flip transform if enabled.
+    if (hasState() && getState().is(StateProp.FLIP_HORIZONTAL)) {
+        final AffineTransform flipH = new AffineTransform();
+        flipH.translate(w, 0);  // Move Origin to Right Edge
+        flipH.scale(-1, 1);     // Flip X-Axis
+        g2d.transform(flipH);   // Apply Transform
+    }
+    // Apply vertical flip transform if enabled.
+    if (hasState() && getState().is(StateProp.FLIP_VERTICAL)) {
+        final AffineTransform flipV = new AffineTransform();
+        flipV.translate(0, h);  // Move Origin to Bottom Edge
+        flipV.scale(1, -1);     // Flip Y-Axis
+        g2d.transform(flipV);   // Apply Transform
     }
     
     // Draw depending on image scaling configuration.
@@ -898,4 +918,6 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
   public void propertyChanged(PiPProperty prop, String value) {}
   @Override
   public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return null; }
+  @Override
+  public PiPWindowState getState() { return null; }
 }

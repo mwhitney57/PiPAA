@@ -86,6 +86,12 @@ public enum Shortcut {
     FLASH_BORDERS_ALL(
         new KeyBind(KeyEvent.VK_B, SHIFT_DOWN_MASK)
     ),
+    FLIP_HORIZONTAL(
+        new KeyBind(KeyEvent.VK_F3)
+    ),
+    FLIP_VERTICAL(
+        new KeyBind(KeyEvent.VK_F4)
+    ),
     FULLSCREEN(
         new KeyBind(KeyEvent.VK_F),
         new MouseBind(BindOptions.build().onHit(2).useDelay(250), MouseEvent.BUTTON1)

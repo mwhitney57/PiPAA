@@ -932,6 +932,14 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                     EasyTopDialog.showMsg(this, "No subtitle tracks.", PropDefault.THEME.matchAny(propertyState(PiPProperty.THEME, String.class)), 1000, true);
                 }
                 break;
+            case FLIP_HORIZONTAL:
+                state.toggle(FLIP_HORIZONTAL);
+                SwingUtilities.invokeLater(this.imgLabel::repaint);
+                break;
+            case FLIP_VERTICAL:
+                state.toggle(FLIP_VERTICAL);
+                SwingUtilities.invokeLater(this.imgLabel::repaint);
+                break;
             case SAVE_MEDIA:
             case SAVE_MEDIA_ALT:
                 // Save to Cache
@@ -1998,6 +2006,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 public void requestPaint() { imgLabel.repaint(); }
                 @Override
                 public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindow.this.propertyState(prop, rtnType); }
+                @Override
+                public PiPWindowState getState() { return PiPWindow.this.state; }
             };
         else if (urlSrc != null)
             imgLabelIcon = new StretchIcon(urlSrc, true) {
@@ -2007,6 +2017,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 public void requestPaint() { imgLabel.repaint(); }
                 @Override
                 public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindow.this.propertyState(prop, rtnType); }
+                @Override
+                public PiPWindowState getState() { return PiPWindow.this.state; }
             };
         else throw new InvalidMediaException("Cannot set image viewer source: Neither image source option is valid.");
             
