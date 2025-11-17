@@ -411,20 +411,16 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
         this.pendingImgRescale = false;
     }
     
-    // Handle transforms prior to drawing image.
-    // Apply horizontal flip transform if enabled.
-    if (hasState() && getState().is(StateProp.FLIP_HORIZONTAL)) {
-        final AffineTransform flipH = new AffineTransform();
-        flipH.translate(w, 0);  // Move Origin to Right Edge
-        flipH.scale(-1, 1);     // Flip X-Axis
-        g2d.transform(flipH);   // Apply Transform
+    // Handle flips prior to drawing image.
+    if (isFlippedHori()) {
+        // Scale x-axis inverted, then translate back to center of component.
+        g2d.scale(-1, 1);
+        g2d.translate(-this.compSize.width, 0);
     }
-    // Apply vertical flip transform if enabled.
-    if (hasState() && getState().is(StateProp.FLIP_VERTICAL)) {
-        final AffineTransform flipV = new AffineTransform();
-        flipV.translate(0, h);  // Move Origin to Bottom Edge
-        flipV.scale(1, -1);     // Flip Y-Axis
-        g2d.transform(flipV);   // Apply Transform
+    if (isFlippedVert()) {
+        // Scale y-axis inverted, then translate back to center of component.
+        g2d.scale(1, -1);
+        g2d.translate(0, -this.compSize.height);
     }
     
     // Draw depending on image scaling configuration.
@@ -758,6 +754,26 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
       if (this.panOffset == null)
           this.panOffset = new Dimension();
   }
+  
+  /**
+   * Checks if the icon should be flipped horizontally, per the window state.
+   * 
+   * @return {@code true} if it should be flipped; {@code false} otherwise.
+   * @since 0.9.5
+   */
+  private boolean isFlippedHori() {
+      return (hasState() && getState().is(StateProp.FLIP_HORIZONTAL));
+  }
+  
+  /**
+   * Checks if the icon should be flipped vertically, per the window state.
+   * 
+   * @return {@code true} if it should be flipped; {@code false} otherwise.
+   * @since 0.9.5
+   */
+  private boolean isFlippedVert() {
+      return (hasState() && getState().is(StateProp.FLIP_VERTICAL));
+  }
 
   /**
    * Adds the passed <code>int a</code> to <code>int x</code> while respecting the
@@ -802,8 +818,14 @@ public class StretchIcon extends ImageIcon implements PaintRequester, PropertyLi
       if (zoom <= 1)
           return;
       
+      // Flip/invert the pan amounts if window state dictates it.
+      if (isFlippedHori()) x = x * -1;
+      if (isFlippedVert()) y = y * -1;
+      
+      // Ensure Points are initialized.
       initPoints();
       
+      // Update the pan buffer.
 //      System.out.println("Pan CMD Received: (" + x + ", " + y + ")");
 //      System.out.println("PAN OFFSET: " + panOffset);
       this.panBuffer.setSize(x, y);
