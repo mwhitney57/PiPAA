@@ -1420,7 +1420,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         if (mediaNew == null) {
             // Unhook READY hooks so that they do not carry over to new media.
             state.unhook(READY);
-            state.off(READY);
+            state.off(READY).on(PLAYER_NONE);
             
             this.setTitle("");
             textField.setVisible(true);
