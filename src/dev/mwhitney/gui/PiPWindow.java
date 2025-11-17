@@ -1981,6 +1981,27 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         }
         titleStatusUpdate(null);
     }
+    
+    /**
+     * A simple extension upon {@link StretchIcon} that provides default method
+     * implementations for {@link PiPWindow} use while simplifying construction.
+     * 
+     * @since 0.9.5
+     */
+    private class WindowStretchIcon extends StretchIcon {
+        /** The randomly-generated, default serial ID. */
+        private static final long serialVersionUID = 1759259882823854325L;
+        /** Creates a proportional {@link StretchIcon} using a {@link URL} source. */
+        public WindowStretchIcon(URL src)    { super(src, true); }
+        /** Creates a proportional {@link StretchIcon} using a String source. */
+        public WindowStretchIcon(String src) { super(src, true); }
+        @Override
+        public void requestPaint() { PiPWindow.this.imgLabel.repaint(); }
+        @Override
+        public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindow.this.propertyState(prop, rtnType); }
+        @Override
+        public PiPWindowState getState() { return PiPWindow.this.state; }
+    }
 
     /**
      * Sets the JLabel image viewer icon to be one of the passed sources, with the
@@ -1998,28 +2019,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      */
     private void setImgViewerSrc(final String src, final URL urlSrc) throws InvalidMediaException {
         // Determine type of source and create icon.
-        if (src != null)
-            imgLabelIcon = new StretchIcon(src, true) {
-                /** The randomly-generated, default serial ID. */
-                private static final long serialVersionUID = 1759259882823854325L;
-                @Override
-                public void requestPaint() { imgLabel.repaint(); }
-                @Override
-                public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindow.this.propertyState(prop, rtnType); }
-                @Override
-                public PiPWindowState getState() { return PiPWindow.this.state; }
-            };
-        else if (urlSrc != null)
-            imgLabelIcon = new StretchIcon(urlSrc, true) {
-                /** The randomly-generated, default serial ID. */
-                private static final long serialVersionUID = 1759259882823854325L;
-                @Override
-                public void requestPaint() { imgLabel.repaint(); }
-                @Override
-                public <T> T propertyState(PiPProperty prop, Class<T> rtnType) { return PiPWindow.this.propertyState(prop, rtnType); }
-                @Override
-                public PiPWindowState getState() { return PiPWindow.this.state; }
-            };
+        if (src != null)         imgLabelIcon = new WindowStretchIcon(src);
+        else if (urlSrc != null) imgLabelIcon = new WindowStretchIcon(urlSrc);
         else throw new InvalidMediaException("Cannot set image viewer source: Neither image source option is valid.");
             
         state.on(RESIZING);
