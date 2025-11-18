@@ -18,11 +18,11 @@ import dev.mwhitney.gui.PiPWindowState;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 /**
- * A simple {@link JComponent} intended to be used a glass pane for a
+ * A simple {@link JComponent} intended to be used as a glass pane for a
  * {@link JFrame}.
  * 
  * Despite the name, this component doesn't do anything special, but it is used
- * in a special way. 
+ * in a special way.
  * <h2>The Problem</h2>
  * <p>
  * The vlcj {@link EmbeddedMediaPlayerComponent} does not like when a

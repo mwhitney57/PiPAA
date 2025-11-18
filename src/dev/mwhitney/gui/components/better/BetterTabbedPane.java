@@ -14,7 +14,9 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import dev.mwhitney.util.Loop;
 
 /**
- * An incredibly-basic extension upon BetterTabbedPane that changes a few default settings/behaviors.
+ * A basic extension upon BetterTabbedPane that changes a few default
+ * settings/behaviors. Additionally, it provides easy methods for switching to
+ * tabs neighboring the currently selected one.
  * 
  * @author mwhitney57
  */

@@ -181,13 +181,13 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     /** A {@link PiPWindowState} instance which tracks the state of the window. */
     private final PiPWindowState state = new PiPWindowState();
     
-    /** A component used as the window's glass pane. Keeps the content area clickable when in use, particularly with the VLC player. */
-    private final SpecialGlassPane glassPane = new SpecialGlassPane(this);;
+    /** A {@link SpecialGlassPane} for the window. Keeps the content area clickable when in use, particularly with the VLC player. */
+    private final SpecialGlassPane glassPane = new SpecialGlassPane(this);
     /** This window's content pane. */
     private JPanel contentPane;
     /** This window's JLabel for displaying images. */
     private JLabel imgLabel;
-    /** This window's JLabel's StretchIcon for displaying an image. */
+    /** The StretchIcon with the image to display in the window's JLabel. */
     private StretchIcon imgLabelIcon;
     /** The last zoom and pan snapshot taken of the image icon, shown in the Swing image viewer, while in Normal (non-fullscreen) mode. */
     private ZoomPanSnapshot imgSnapshotNorm = ZoomPanSnapshot.DEFAULT;
