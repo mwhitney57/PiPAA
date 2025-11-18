@@ -81,6 +81,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private final BetterPanel paneMedia;
     /** The BetterPanel with the Cache config options. */
     private final BetterPanel paneCache;
+    /** The BetterPanel with the Window config options. */
+    private final BetterPanel paneWindow;
     /** The BetterPanel with the Update config options. */
     private final BetterPanel paneUpdates;
     /** The BetterPanel with the Advanced config options. */
@@ -127,6 +129,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private BetterCheckbox chkDisCache;
     /** The BetterComboBox for the {@link PiPProperty#OVERWRITE_CACHE} property. */
     private BetterComboBox comboOverwriteCache;
+    /** The BetterCheckbox for the {@link PiPProperty#TRANSPARENT_PASS} property. */
+    private BetterCheckbox chkPassThrough;
     /** The BetterComboBox for the {@link PiPProperty#APP_UPDATE_FREQUENCY} property. */
     private BetterComboBox comboAppUpdateFreq;
     /** The BetterComboBox for the {@link PiPProperty#APP_UPDATE_TYPE} property. */
@@ -169,12 +173,14 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         panePlayback = new BetterPanel(new MigLayout(), true);
         paneMedia    = new BetterPanel(new MigLayout(), true);
         paneCache    = new BetterPanel(new MigLayout(), true);
+        paneWindow   = new BetterPanel(new MigLayout(), true);
         paneUpdates  = new BetterPanel(new MigLayout(), true);
         paneAdvanced = new BetterPanel(new MigLayout(), true);
         tabbedPane.addTab("General", paneGeneral);
         tabbedPane.addTab("Media", paneMedia);
         tabbedPane.addTab("Playback", panePlayback);
         tabbedPane.addTab("Cache", paneCache);
+        tabbedPane.addTab("Window", paneWindow);
         tabbedPane.addTab("Updates", paneUpdates);
         tabbedPane.addTab("Advanced", paneAdvanced);
         setContentPane(contentPane);
@@ -340,6 +346,11 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             });
         });
         
+        // -------------------- Window Panel --------------------
+        chkPassThrough = new BetterCheckbox("Transparent Pass-Through", true, titleFont);
+        chkPassThrough.addActionListener(e -> propertyChanged(PiPProperty.TRANSPARENT_PASS, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        final BetterLabel lblPassThrough = new BetterLabel(PiPPropertyDesc.TRANSPARENT_PASS, textFont);
+        
         // -------------------- Updates Panel --------------------
         final BetterLabel lblAppUpdateTitle = new BetterLabel("Application Updates", headerFont);
         final BetterLabel lblAppUpdateDesc  = new BetterLabel(PiPPropertyDesc.APP_UPDATES, textFont);
@@ -477,6 +488,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         paneCache.add(lblVLCCache, "wrap");
         paneCache.add(btnOpenVLCCache, "gaptop 0px, split 2, w 100%, h pref!");
         paneCache.add(btnClearVLCCache, "w 100%, h pref!, wrap");
+        // Window Pane
+        paneWindow.add(chkPassThrough, "wrap 0px");
+        paneWindow.add(lblPassThrough, "wrap");
         // Updates Pane
         paneUpdates.add(lblAppUpdateTitle, "alignx center, wrap 5px");
         paneUpdates.add(lblAppUpdateDesc, "wrap");
@@ -657,6 +671,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         themeComponents(theme, paneMedia);
         themeComponents(theme, panePlayback);
         themeComponents(theme, paneCache);
+        themeComponents(theme, paneWindow);
         themeComponents(theme, paneUpdates);
         themeComponents(theme, paneAdvanced);
         this.repaint();
@@ -736,6 +751,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         case OVERWRITE_CACHE:
             final OVERWRITE_OPTION overwrite = PropDefault.OVERWRITE.matchAny(propertyState(prop, String.class));
             comboOverwriteCache.setSelectedIndex(overwrite.index());
+            break;
+        case TRANSPARENT_PASS:
+            chkPassThrough.setSelected(propertyState(prop, Boolean.class));
             break;
         case APP_UPDATE_FREQUENCY:
             final FREQUENCY_OPTION appFrequency = PropDefault.FREQUENCY_APP.matchAny(propertyState(prop, String.class));

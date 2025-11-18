@@ -50,6 +50,8 @@ import dev.mwhitney.gui.binds.BindDetails;
 import dev.mwhitney.gui.binds.BindHandler;
 import dev.mwhitney.gui.binds.MouseInput;
 import dev.mwhitney.gui.binds.Shortcut;
+import dev.mwhitney.gui.components.SpecialGlassPane;
+import dev.mwhitney.gui.components.TransparentLabel;
 import dev.mwhitney.gui.components.better.BetterTextArea;
 import dev.mwhitney.gui.decor.FadingLineBorder;
 import dev.mwhitney.gui.decor.OffsetRoundedLineBorder;
@@ -179,6 +181,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     /** A {@link PiPWindowState} instance which tracks the state of the window. */
     private final PiPWindowState state = new PiPWindowState();
     
+    /** A component used as the window's glass pane. Keeps the content area clickable when in use, particularly with the VLC player. */
+    private final SpecialGlassPane glassPane = new SpecialGlassPane(this);;
     /** This window's content pane. */
     private JPanel contentPane;
     /** This window's JLabel for displaying images. */
@@ -241,11 +245,27 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         
         // Establish Permanent Locked Hooks
         state.hook(LOCKED_SIZE, true,  (PermanentRunnable) () ->
-            SwingUtilities.invokeLater(() -> PiPWindow.this.setResizable(false))
+            SwingUtilities.invokeLater(() -> {
+                PiPWindow.this.setResizable(false);
+                fadingBorder.useFullTransparency(true);
+            })
         );
         state.hook(LOCKED_SIZE, false, (PermanentRunnable) () ->
-            SwingUtilities.invokeLater(() -> PiPWindow.this.setResizable(true))
+            SwingUtilities.invokeLater(() -> {
+                PiPWindow.this.setResizable(true);
+                fadingBorder.useFullTransparency(false);
+            })
         );
+        state.hook(PASSTHROUGH, true,  (PermanentRunnable) () -> 
+            SwingUtilities.invokeLater(() -> this.imgLabel.setBackground(AppRes.COLOR_TRANSPARENT))
+        );
+        state.hook(PASSTHROUGH, false, (PermanentRunnable) () -> 
+            SwingUtilities.invokeLater(() -> this.imgLabel.setBackground(TRANSPARENT_BG))
+        );
+        state.hook(PLAYER_NONE,  true, (PermanentRunnable) () -> SwingUtilities.invokeLater(this.glassPane::conceal));
+        state.hook(PLAYER_SWING, true, (PermanentRunnable) () -> SwingUtilities.invokeLater(this.glassPane::conceal));
+        state.hook(PLAYER_COMBO, true, (PermanentRunnable) () -> SwingUtilities.invokeLater(this.glassPane::conceal));
+        state.hook(PLAYER_VLC,   true, (PermanentRunnable) () -> SwingUtilities.invokeLater(this.glassPane::reveal));
         // Establish Permanent Full Screen Border Hooks
         state.hook(FULLSCREEN, true,  (PermanentRunnable) () -> {
             // Only use media player to set fullscreen if VLC video.
@@ -268,13 +288,12 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         contentPane = new JPanel(new BorderLayout());
         contentPane.setFocusable(false);
         contentPane.setOpaque(false);
-        contentPane.setBackground(Color.BLACK);
+        contentPane.setBackground(TRANSPARENT_BG);
         contentPane.setBorder(fadingBorder);
         contentPane.setDropTarget(listeners.dndTargetSecondary());
         
         // JLabel for Displaying Images
-        imgLabel = new JLabel();
-        imgLabel.setBackground(Color.BLACK);
+        imgLabel = new TransparentLabel();
         imgLabel.setHorizontalAlignment(JLabel.CENTER);
         imgLabel.setBorder(null);
         imgLabel.setDropTarget(listeners.dndTarget());
@@ -282,6 +301,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         imgLabel.addMouseListener(listeners.kbmHook());
         imgLabel.addMouseWheelListener(listeners.kbmHook());
         imgLabel.addKeyListener(listeners.kbmHook());
+        // Sets the pass-through state and background based on user configuration.
+        state.set(PASSTHROUGH, propertyState(PiPProperty.TRANSPARENT_PASS, Boolean.class));
 
         // Text Field (with Drag and Drop)
         textField = new JTextField(DEFAULT_FIELD_TXT);
@@ -327,7 +348,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         // Frame
         this.setAlwaysOnTop(true);
         this.setUndecorated(true);
-        this.setBackground(TRANSPARENT_BG);
+        this.setBackground(AppRes.COLOR_TRANSPARENT);
+        this.setGlassPane(this.glassPane);
         this.setIconImage(ICON_NORMAL);
         this.addWindowListener((WindowClosingListener) e -> {
             // Ensure PiPWindow is closed properly even if initiated unconventionally.
@@ -2423,8 +2445,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         
         // Already on EDT since prop change occurs in a Swing GUI.
         switch(prop) {
-        case THEME          -> pickTheme(PropDefault.THEME.matchAny(value));
-        case GLOBAL_MUTED   -> {
+        case THEME            -> pickTheme(PropDefault.THEME.matchAny(value));
+        case TRANSPARENT_PASS -> state.set(PASSTHROUGH, Boolean.valueOf(value));
+        case GLOBAL_MUTED     -> {
             if (Boolean.valueOf(value))
                 mediaCommand(PiPMediaCMD.MUTE, "false");
             else
