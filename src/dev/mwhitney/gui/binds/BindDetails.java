@@ -164,7 +164,9 @@ public class BindDetails <I extends BindInput> {
     
     @Override
     public String toString() {
-        return String.format("BindDetails == Shortcut:%s | Input:%s | Options:%s",
-                this.shortcut.toString(), this.input.toString(), this.options.toString());
+        return "BindDetails == Shortcut:%s | Input:%s | Options:%s".formatted(
+                Objects.nonNull(shortcut) ? shortcut : "none",
+                Objects.nonNull(input) ? input : "none",
+                options);
     }
 }
