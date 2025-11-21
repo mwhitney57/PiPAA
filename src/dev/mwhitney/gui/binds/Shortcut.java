@@ -1,5 +1,6 @@
 package dev.mwhitney.gui.binds;
 
+import static dev.mwhitney.gui.binds.ShortcutMask.*;
 import static java.awt.event.InputEvent.ALT_DOWN_MASK;
 import static java.awt.event.InputEvent.BUTTON2_DOWN_MASK;
 import static java.awt.event.InputEvent.BUTTON3_DOWN_MASK;
@@ -119,6 +120,78 @@ public enum Shortcut {
     ),
     MINIMIZE_WINDOWS(
         new KeyBind(KeyEvent.VK_DOWN, ALT_DOWN_MASK | SHIFT_DOWN_MASK)
+    ),
+    MOVE_WINDOW_W(
+        new KeyBind(KeyEvent.VK_LEFT, CUSTOM_MASK_1.mask())
+    ),
+    MOVE_WINDOW_W_LESS(
+        new KeyBind(KeyEvent.VK_LEFT, CUSTOM_MASK_1.mask() | ALT_DOWN_MASK)
+    ),
+    MOVE_WINDOW_W_MORE(
+        new KeyBind(KeyEvent.VK_LEFT, CUSTOM_MASK_1.mask() | CTRL_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_W(
+        new KeyBind(KeyEvent.VK_LEFT, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_W_LESS(
+        new KeyBind(KeyEvent.VK_LEFT, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK | ALT_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_W_MORE(
+        new KeyBind(KeyEvent.VK_LEFT, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK | CTRL_DOWN_MASK)
+    ),
+    MOVE_WINDOW_E(
+        new KeyBind(KeyEvent.VK_RIGHT, CUSTOM_MASK_1.mask())
+    ),
+    MOVE_WINDOW_E_LESS(
+        new KeyBind(KeyEvent.VK_RIGHT, CUSTOM_MASK_1.mask() | ALT_DOWN_MASK)
+    ),
+    MOVE_WINDOW_E_MORE(
+        new KeyBind(KeyEvent.VK_RIGHT, CUSTOM_MASK_1.mask() | CTRL_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_E(
+        new KeyBind(KeyEvent.VK_RIGHT, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_E_LESS(
+        new KeyBind(KeyEvent.VK_RIGHT, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK | ALT_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_E_MORE(
+        new KeyBind(KeyEvent.VK_RIGHT, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK | CTRL_DOWN_MASK)
+    ),
+    MOVE_WINDOW_S(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_1.mask())
+    ),
+    MOVE_WINDOW_S_LESS(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_1.mask() | ALT_DOWN_MASK)
+    ),
+    MOVE_WINDOW_S_MORE(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_1.mask() | CTRL_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_S(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_S_LESS(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK | ALT_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_S_MORE(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK | CTRL_DOWN_MASK)
+    ),
+    MOVE_WINDOW_N(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_1.mask())
+    ),
+    MOVE_WINDOW_N_LESS(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_1.mask() | ALT_DOWN_MASK)
+    ),
+    MOVE_WINDOW_N_MORE(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_1.mask() | CTRL_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_N(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_N_LESS(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK | ALT_DOWN_MASK)
+    ),
+    MOVE_WINDOWS_N_MORE(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK | CTRL_DOWN_MASK)
     ),
     OPEN_MEDIA_DIRECTORY(
         new KeyBind(KeyEvent.VK_O, CTRL_DOWN_MASK)

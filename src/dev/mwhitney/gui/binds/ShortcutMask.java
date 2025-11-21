@@ -1,6 +1,7 @@
 package dev.mwhitney.gui.binds;
 
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * Custom modifier masks for shortcuts.
@@ -49,8 +50,8 @@ import java.awt.event.InputEvent;
 public enum ShortcutMask {
     /** Mask Value: 1 << 26 */
     CUSTOM_MASK_1(
-        1 << 26
-        // No default input.
+        1 << 26,
+        KeyEvent.VK_SLASH
     ),
     /** Mask Value: 1 << 27 */
     CUSTOM_MASK_2(

@@ -1030,6 +1030,43 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 } catch (InvocationTargetException | InterruptedException ex) { ex.printStackTrace(); }
                 if (!imgLoc.isEmpty()) replaceArtwork(imgLoc.toString());
                 break;
+            case MOVE_WINDOW_W:
+            case MOVE_WINDOW_W_LESS:
+            case MOVE_WINDOW_W_MORE:
+            case MOVE_WINDOW_E:
+            case MOVE_WINDOW_E_LESS:
+            case MOVE_WINDOW_E_MORE:
+            case MOVE_WINDOW_S:
+            case MOVE_WINDOW_S_LESS:
+            case MOVE_WINDOW_S_MORE:
+            case MOVE_WINDOW_N:
+            case MOVE_WINDOW_N_LESS:
+            case MOVE_WINDOW_N_MORE:
+                // Get current coordinates.
+                final int curX = getX(), curY = getY();
+                // Get X and Y adjustments.
+                final int adjX = switch (shortcut) {
+                case MOVE_WINDOW_W       ->  -5;
+                case MOVE_WINDOW_W_LESS  ->  -1;
+                case MOVE_WINDOW_W_MORE  -> -25;
+                case MOVE_WINDOW_E       ->   5;
+                case MOVE_WINDOW_E_LESS  ->   1;
+                case MOVE_WINDOW_E_MORE  ->  25;
+                default -> 0;
+                };
+                final int adjY = switch(shortcut) {
+                case MOVE_WINDOW_S       ->   5;
+                case MOVE_WINDOW_S_LESS  ->   1;
+                case MOVE_WINDOW_S_MORE  ->  25;
+                case MOVE_WINDOW_N       ->  -5;
+                case MOVE_WINDOW_N_LESS  ->  -1;
+                case MOVE_WINDOW_N_MORE  -> -25;
+                default -> 0;
+                };
+                
+                // Set location to be current coordinates + adjustments.
+                SwingUtilities.invokeLater(() -> this.setLocation(curX + adjX, curY + adjY));
+                break;
             case RELOCATE_WINDOW:
                 SwingUtilities.invokeLater(this::ensureOnScreen);
                 break;

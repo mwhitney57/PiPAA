@@ -624,6 +624,42 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         case FLASH_BORDERS_ALL:
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.FLASH_BORDERS)));
             break;
+        case MOVE_WINDOWS_W:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_W)));
+            break;
+        case MOVE_WINDOWS_W_LESS:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_W_LESS)));
+            break;
+        case MOVE_WINDOWS_W_MORE:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_W_MORE)));
+            break;
+        case MOVE_WINDOWS_E:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_E)));
+            break;
+        case MOVE_WINDOWS_E_LESS:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_E_LESS)));
+            break;
+        case MOVE_WINDOWS_E_MORE:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_E_MORE)));
+            break;
+        case MOVE_WINDOWS_S:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_S)));
+            break;
+        case MOVE_WINDOWS_S_LESS:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_S_LESS)));
+            break;
+        case MOVE_WINDOWS_S_MORE:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_S_MORE)));
+            break;
+        case MOVE_WINDOWS_N:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_N)));
+            break;
+        case MOVE_WINDOWS_N_LESS:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_N_LESS)));
+            break;
+        case MOVE_WINDOWS_N_MORE:
+            callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_N_MORE)));
+            break;
         case PAUSE_ALL:
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.PAUSE)));
             break;
