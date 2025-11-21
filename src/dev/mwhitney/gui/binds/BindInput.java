@@ -17,10 +17,10 @@ public abstract sealed class BindInput permits KeyInput, MouseInput {
     public static final int NO_MODIFIERS = 0;
     
     /** A bitwise mask for all recognized, possible keyboard modifiers. */
-    private static final int KEY_MODIFIERS   = InputEvent.CTRL_DOWN_MASK    | InputEvent.SHIFT_DOWN_MASK   | InputEvent.ALT_DOWN_MASK | InputEvent.META_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK;
-    /** A bitwise mask for all recognized, possible mouse modifiers. */
-    private static final int MOUSE_MODIFIERS = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK;
-    
+    private static final int KEY_MODIFIERS = InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.META_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK;
+    /** A bitwise mask for all recognized mouse modifiers. Java allows for more, but the application defines a limit to leave integer space for custom masks. */
+    private static final int MOUSE_MODIFIERS = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK | ShortcutMask.EXTRA_BUTTONS_MASK;
+
     /**
      * An int with the input code. For keyboards, the code is usually equal to
      * {@link KeyEvent#getKeyCode()}. For mice, {@link MouseEvent#getButton()}. In
@@ -179,9 +179,21 @@ public abstract sealed class BindInput permits KeyInput, MouseInput {
         case KeyEvent.VK_ALT_GRAPH -> KeyEvent.ALT_GRAPH_DOWN_MASK;
         
         // Mouse Button Modifiers
-        case MouseEvent.BUTTON1 -> InputEvent.BUTTON1_DOWN_MASK;
-        case MouseEvent.BUTTON2 -> InputEvent.BUTTON2_DOWN_MASK;
-        case MouseEvent.BUTTON3 -> InputEvent.BUTTON3_DOWN_MASK;
+        case MouseEvent.BUTTON1    -> InputEvent.BUTTON1_DOWN_MASK;
+        case MouseEvent.BUTTON2    -> InputEvent.BUTTON2_DOWN_MASK;
+        case MouseEvent.BUTTON3    -> InputEvent.BUTTON3_DOWN_MASK;
+        case ShortcutCode.BUTTON4  -> ShortcutMask.BUTTON4_DOWN_MASK;
+        case ShortcutCode.BUTTON5  -> ShortcutMask.BUTTON5_DOWN_MASK;
+        case ShortcutCode.BUTTON6  -> ShortcutMask.BUTTON6_DOWN_MASK;
+        case ShortcutCode.BUTTON7  -> ShortcutMask.BUTTON7_DOWN_MASK;
+        case ShortcutCode.BUTTON8  -> ShortcutMask.BUTTON8_DOWN_MASK;
+        case ShortcutCode.BUTTON9  -> ShortcutMask.BUTTON9_DOWN_MASK;
+        case ShortcutCode.BUTTON10 -> ShortcutMask.BUTTON10_DOWN_MASK;
+        case ShortcutCode.BUTTON11 -> ShortcutMask.BUTTON11_DOWN_MASK;
+        case ShortcutCode.BUTTON12 -> ShortcutMask.BUTTON12_DOWN_MASK;
+        case ShortcutCode.BUTTON13 -> ShortcutMask.BUTTON13_DOWN_MASK;
+        case ShortcutCode.BUTTON14 -> ShortcutMask.BUTTON14_DOWN_MASK;
+        case ShortcutCode.BUTTON15 -> ShortcutMask.BUTTON15_DOWN_MASK;
         default -> -1;
         };
     }

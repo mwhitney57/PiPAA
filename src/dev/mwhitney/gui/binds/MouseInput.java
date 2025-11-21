@@ -83,8 +83,22 @@ public final class MouseInput extends BindInput {
      * @return the new input instance.
      */
     public static MouseInput newWithModifiers(MouseInput input, int modifiers) {
-        Objects.requireNonNull(input, "Cannot create new MouseInput instance with modifiers using null.");
+        Objects.requireNonNull(input, "Cannot create new MouseInput instance with different modifiers using null input instance.");
         return new MouseInput(input.code(), modifiers, input.hits(), input.getWheelRotation(), input.getX(), input.getY(), input.getOnScreenX(), input.getOnScreenY());
+    }
+    
+    /**
+     * Creates a new input instance, combining the passed modifiers mask with those
+     * in the passed input.
+     * 
+     * @param input     - the {@link MouseInput} instance to base the new instance
+     *                  on, keeping everything except for the modifiers mask.
+     * @param modifiers - an int with the modifiers mask to combine.
+     * @return the new input instance.
+     */
+    public static MouseInput newWithCombinedModifiers(MouseInput input, int modifiers) {
+        Objects.requireNonNull(input, "Cannot create new MouseInput instance with added modifiers using null input instance.");
+        return newWithModifiers(input, input.modifiers() | modifiers);
     }
     
     /**

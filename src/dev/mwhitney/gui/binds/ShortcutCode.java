@@ -15,11 +15,78 @@ import java.awt.event.MouseWheelEvent;
  * <p>
  * This class fixes that problem by defining custom codes which can be matched
  * against events and then compared to the current bind configuration.
+ * <p>
+ * This class also contains constants for input codes that are recognized by
+ * Java, but not explicitly defined, such as {@link #BUTTON4} and
+ * {@link #BUTTON5}.
  * 
  * @author mwhitney57
  * @since 0.9.5
  */
 public abstract class ShortcutCode {
+    // Java Codes That Lack Constants
+    /**
+     * The code for the fourth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON4  = 4;
+    /**
+     * The code for the fifth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON5  = 5;
+    /**
+     * The code for the sixth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON6  = 6;
+    /**
+     * The code for the seventh mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON7  = 7;
+    /**
+     * The code for the eighth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON8  = 8;
+    /**
+     * The code for the ninth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON9  = 9;
+    /**
+     * The code for the tenth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON10 = 10;
+    /**
+     * The code for the eleventh mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON11 = 11;
+    /**
+     * The code for the twelfth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON12 = 12;
+    /**
+     * The code for the thirteenth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON13 = 13;
+    /**
+     * The code for the fourteenth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON14 = 14;
+    /**
+     * The code for the fifteenth mouse button.
+     * This value is handled by traditional Java methods, but no constant is defined for its code.
+     */
+    public static final int BUTTON15 = 15;
+    
+    
     // Static Custom Codes - Begin at int value 1,000,000 to easily avoid conflicting with any KeyEvent/MouseEvent codes via getKeyCode() or getButton().
     /**
      * A custom mouse button code for scrolling events. Typically not used, as

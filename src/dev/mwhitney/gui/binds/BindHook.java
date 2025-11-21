@@ -65,8 +65,10 @@ public abstract class BindHook implements BindedKeyListener, BindedMouseListener
     // Essential built-in methods. Marked as final to prevent overriding.
     @Override
     public final void keyPressed(KeyEvent e)      {
+        // If key code matches a modifier, use zero (no modifiers), otherwise combine event modifiers with active custom key modifiers.
+        final int mods = this.controller.isModifier(e.getKeyCode()) ? 0 : e.getModifiersEx() | this.controller.getCustomKeyModifiers();
         // Create KeyInput from KeyEvent and tell controller about the press.
-        final KeyInput input = new KeyInput(e.getKeyCode(), e.getModifiersEx());
+        final KeyInput input = new KeyInput(e.getKeyCode(), mods);
         final List<BindDetails<KeyInput>> details = this.controller.keyDown(input);
         // At least one shortcut was found under that input.
         if (details != null && details.size() > 0) {
@@ -79,8 +81,10 @@ public abstract class BindHook implements BindedKeyListener, BindedMouseListener
     }
     @Override
     public final void keyReleased(KeyEvent e)     {
+        // If key code matches a modifier, use zero (no modifiers), otherwise combine event modifiers with active custom key modifiers.
+        final int mods = this.controller.isModifier(e.getKeyCode()) ? 0 : e.getModifiersEx() | this.controller.getCustomKeyModifiers();
         // Create KeyInput from KeyEvent and tell controller about the release.
-        final KeyInput input = new KeyInput(e.getKeyCode(), e.getModifiersEx());
+        final KeyInput input = new KeyInput(e.getKeyCode(), mods);
         final List<BindDetails<KeyInput>> details = this.controller.keyUp(input);
         // At least one shortcut was found under that input.
         if (details != null && details.size() > 0) {
@@ -93,8 +97,10 @@ public abstract class BindHook implements BindedKeyListener, BindedMouseListener
     }
     @Override
     public final void mousePressed(MouseEvent e)  {
-        // Create MouseInput from MouseEvent. Filter weird modifiers behavior. Tell controller about the press.
-        final MouseInput input = this.controller.filterUnpressedKeyModifiers(MouseInput.fromEvent(e));
+        // Create MouseInput from MouseEvent. Filter weird modifiers behavior, then include any active custom modifiers.
+        final MouseInput input = MouseInput.newWithCombinedModifiers(
+                this.controller.filterUnpressedKeyModifiers(MouseInput.fromEvent(e)),
+                this.controller.getCustomModifiers());
         final List<BindDetails<MouseInput>> details = this.controller.mouseDown(input);
         // At least one shortcut was found under that input.
         if (details != null && details.size() > 0) {
@@ -107,9 +113,12 @@ public abstract class BindHook implements BindedKeyListener, BindedMouseListener
     }
     @Override
     public final void mouseReleased(MouseEvent e) {
-        // Create MouseInput from MouseEvent. Filter weird modifiers behavior. Tell controller about the release.
-        final MouseInput input = this.controller.filterUnpressedKeyModifiers(MouseInput.fromEvent(e));
+        // Create MouseInput from MouseEvent. Filter weird modifiers behavior, then include any active custom modifiers.
+        final MouseInput input = MouseInput.newWithCombinedModifiers(
+                this.controller.filterUnpressedKeyModifiers(MouseInput.fromEvent(e)),
+                this.controller.getCustomModifiers());
         final List<BindDetails<MouseInput>> details = this.controller.mouseUp(input);
+        // At least one shortcut was found under that input.
         if (details != null && details.size() > 0) {
             details.forEach(shortcut -> {
                 if (shortcut.options().isOnRelease()) onMouseBindUp(shortcut);
@@ -120,8 +129,9 @@ public abstract class BindHook implements BindedKeyListener, BindedMouseListener
     }
     @Override
     public final void mouseWheelMoved(MouseWheelEvent e) {
-        // Create MouseInput from MouseEvent and check for matching bind. Wheel movement is one-off and not tracked by the controller.
-        final MouseInput input = MouseInput.fromEvent(e);
+        // Create MouseInput from MouseEvent, including active custom modifiers.
+        final MouseInput input = MouseInput.newWithCombinedModifiers(MouseInput.fromEvent(e), this.controller.getCustomModifiers());
+        // Check for matching bind. Wheel movement is one-off and not tracked by the controller.
         final ConcurrentSkipListMap<Integer, BindDetails<MouseInput>> binds = this.controller.getMouseBind(input);
         final BindDetails<MouseInput> details = (binds != null ? binds.get(input.hits()) : null);
         // Scroll bind match found.

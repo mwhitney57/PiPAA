@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -51,6 +52,20 @@ public class BindController {
      * activate, including any additional {@link BindOptions}.
      */
     private final ConcurrentHashMap<MouseInput, ConcurrentSkipListMap<Integer, BindDetails<MouseInput>>> mouseBinds = new ConcurrentHashMap<>();
+    /**
+     * The {@link CustomModifierManager} which handles all custom modifiers.
+     * <p>
+     * Java provides a number of bitwise masks for typical modifiers, such as
+     * {@link InputEvent#CTRL_DOWN_MASK} or {@link InputEvent#SHIFT_DOWN_MASK}, but
+     * there is a finite number of modifiers, and it becomes limiting. Certain keys,
+     * especially the arrow keys, can reasonably have many functions, but
+     * limitations arise given this short list of modifiers.
+     * <p>
+     * This manager uses the additional five custom modifier slots provided by
+     * {@link ShortcutMask} and provides the ability for their default bindings to
+     * be overridden, just like with user-configured keyboard and mouse binds.
+     */
+    private final CustomModifierManager customModsManager = new CustomModifierManager();
 
     /** The {@link ConcurrentHashMap} set containing all active (currently-pressed) keyboard inputs. */
     private final Set<KeyInput>   activeKeyInputs   = ConcurrentHashMap.newKeySet();
@@ -103,6 +118,18 @@ public class BindController {
     public BindController(Map<Shortcut, Bind<?>[]> binds) {
         if (binds != null) setBinds(binds);
         else               setBinds(getDefaults());
+    }
+    
+    /**
+     * Loads any valid custom modifiers provided in the passed {@link Map}.
+     * 
+     * @param map - a {@link Map} with custom modifier masks and an input code bound
+     *            to each.
+     * @return this {@link BindController} instance.
+     */
+    public BindController loadCustomModifiers(Map<ShortcutMask, Integer> map) {
+        this.customModsManager.load(map);
+        return this;
     }
     
     /**
@@ -275,7 +302,99 @@ public class BindController {
     public boolean hitsMultOfBind(int bindHits, int inputHits) {
         return (inputHits >= bindHits && inputHits % bindHits == 0);
     }
+
+    /**
+     * Removes all active key inputs that have a key code matching the passed
+     * integer.
+     * <p>
+     * This method is preferred when a key has been released, since the modifiers
+     * become partially irrelevant. What modifiers were pressed makes no difference
+     * as to whether or not an input should be considered released. The key was
+     * released, end of story.
+     * <p>
+     * We still keep and consider the modifiers in order to trigger release-specific
+     * binds, but we must remove all instances of the press.
+     * 
+     * @param code - the key code of the active inputs to remove.
+     */
+    private void removeAllKeyPressesOf(int code) {
+        this.activeKeyInputs.removeIf(i -> i.code() == code);
+    }
     
+    /**
+     * Removes all active mouse inputs that have a mouse code matching the passed
+     * integer.
+     * <p>
+     * This method is preferred when a button has been released, since the modifiers
+     * become partially irrelevant. What modifiers were pressed makes no difference
+     * as to whether or not an input should be considered released. The button was
+     * released, end of story.
+     * <p>
+     * We still keep and consider the modifiers in order to trigger release-specific
+     * binds, but we must remove all instances of the press.
+     * 
+     * @param code - the mouse button code of the active inputs to remove.
+     */
+    private void removeAllMousePressesOf(int code) {
+        this.activeMouseInputs.removeIf(i -> i.code() == code);
+    }
+    
+    /**
+     * Checks if the passed input code integer is a <b>modifier</b>. This method
+     * checks for matches against all <b>custom modifiers</b> as well as Java's
+     * built-in options like {@link InputEvent#CTRL_DOWN_MASK}.
+     * 
+     * @param code - an integer with the input code to check.
+     * @return {@code true} if the input code matches a modifier key; {@code false}
+     *         otherwise.
+     */
+    public boolean isModifier(int code) {
+        return this.customModsManager.isCustomModifier(code) || BindInput.inputCodeAsMask(code) != -1;
+    }
+
+    /**
+     * Gets all of the actively pressed <b>custom</b> modifiers as a single bitwise
+     * mask.
+     * 
+     * @return an int with the combined bitwise mask of all pressed custom
+     *         modifiers. If none are pressed, the value will be {@code 0}.
+     */
+    public int getCustomModifiers() {
+        return getCustomKeyModifiers() | getCustomMouseModifiers();
+    }
+
+    /**
+     * Gets all of the actively pressed <b>custom</b> key modifiers as a single
+     * bitwise mask.
+     * 
+     * @return an int with the combined bitwise mask of all pressed custom
+     *         modifiers. If none are pressed, the value will be {@code 0}.
+     */
+    public int getCustomKeyModifiers() {
+        return activeKeyInputs.stream()
+                .map(KeyInput::code)
+                .map(customModsManager::getCustomModifier)
+                .filter(Objects::nonNull)
+                .map(ShortcutMask::mask)
+                .reduce(0, (mask, i) -> mask | i);
+    }
+
+    /**
+     * Gets all of the actively pressed <b>custom</b> mouse modifiers as a single
+     * bitwise mask.
+     * 
+     * @return an int with the combined bitwise mask of all pressed custom
+     *         modifiers. If none are pressed, the value will be {@code 0}.
+     */
+    public int getCustomMouseModifiers() {
+        return activeMouseInputs.stream()
+                .map(MouseInput::code)
+                .map(customModsManager::getCustomModifier)
+                .filter(Objects::nonNull)
+                .map(ShortcutMask::mask)
+                .reduce(0, (mask, i) -> mask | i);
+    }
+
     /**
      * Registers a key down under the passed {@link KeyInput}. If the key is already
      * down, nothing will happen and <code>null</code> will be returned. Otherwise,
@@ -351,11 +470,11 @@ public class BindController {
      *         conditions for.
      */
     public List<BindDetails<KeyInput>> keyUp(KeyInput input) {
-        // Key input was already up. Return null early.
-        if (!isKeyDown(input)) return null;
+        // Key was already up. Return null early.
+        if (!isKeyDownAny(input.code())) return null;
         
-        // Remove from active inputs map.
-        activeKeyInputs.remove(input);
+        // Remove every press instance, even if modifiers are different, since the key is now up.
+        removeAllKeyPressesOf(input.code());
         
         // Get the map of all binds under the passed input.
         final ConcurrentSkipListMap<Integer, BindDetails<KeyInput>> binds = keyBinds.get(input);
@@ -536,11 +655,11 @@ public class BindController {
      *         can activate.
      */
     public List<BindDetails<MouseInput>> mouseUp(MouseInput input) {
-        // Mouse input was already up. Return null early.
-        if (!isMouseDown(input)) return null;
+        // Mouse button was already up. Return null early.
+        if (!isMouseDownAny(input.code())) return null;
         
-        // Remove from active inputs map.
-        activeMouseInputs.remove(input);
+        // Remove every press instance, even if modifiers are different, since the button is now up.
+        removeAllMousePressesOf(input.code());
         
         // Get all binds under input.
         final ConcurrentSkipListMap<Integer, BindDetails<MouseInput>> binds = mouseBinds.get(input);
