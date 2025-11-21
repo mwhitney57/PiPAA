@@ -315,6 +315,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         textField.setDropTarget(listeners.dndTarget());
         textField.addMouseMotionListener(listeners.kbmHook());
         textField.addMouseListener(listeners.kbmHook());
+        textField.addMouseWheelListener(listeners.kbmHook());
         // Text Field-Related Objects
         textResetTimer = new Timer(3000, e -> PiPWindow.this.textField.setText(DEFAULT_FIELD_TXT));
         textResetTimer.setRepeats(false);
