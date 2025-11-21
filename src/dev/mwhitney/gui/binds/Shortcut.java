@@ -145,7 +145,8 @@ public enum Shortcut {
         new MouseBind(BindOptions.build().useDelay(250), MouseEvent.BUTTON1)
     ),
     PLAY_PAUSE_ALL(
-        new KeyBind(KeyEvent.VK_SPACE, SHIFT_DOWN_MASK)
+        new KeyBind(KeyEvent.VK_SPACE, SHIFT_DOWN_MASK),
+        new MouseBind(MouseEvent.BUTTON1, SHIFT_DOWN_MASK)
     ),
     PLAYBACK_RATE_0(
         new KeyBind(KeyEvent.VK_0, ALT_DOWN_MASK),
