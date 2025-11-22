@@ -1601,7 +1601,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     
     @Override
     public void pickTheme(THEME_OPTION theme) {
-        contentPane.setBackground(theme.color(COLOR.BG));
         textField.setBackground(theme.color(COLOR.BG));
         textField.setForeground(theme.color(COLOR.TXT));
         textField.setBorder(new OffsetRoundedLineBorder(theme.color(COLOR.BG_ACCENT), 10));
