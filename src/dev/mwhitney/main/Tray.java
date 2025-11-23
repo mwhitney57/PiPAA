@@ -187,17 +187,39 @@ public class Tray implements PropertyListener {
      */
     private void setupTrayMenuItems() {
         final MenuItem aboutItem = new MenuItem("About", evt ->
-            TopDialog.showMsg(AppRes.APP_NAME + "\nVersion: " + AppRes.APP_BUILD + "\n\n" + String.format("""
-                    Packaged with:
-                    - LibVlc      [%s] (video/advanced GIF playback)
-                    - yt-dlp      [%s] (media downloads)
-                    - gallery-dl  [%s] (IMG/GIF media downloads)
-                    - ffmpeg      [%s] (GIF conversions)
-                    - ImageMagick [%s] (IMG/GIF conversions)
-                    
-                    Tray Menu Icons by:
-                    Icons8 @ icons8.com
-                    """, AppRes.VERS_VLC, Bin.YT_DLP.version(), Bin.GALLERY_DL.version(), Bin.FFMPEG.version(), Bin.IMGMAGICK.version()),
+            TopDialog.showMsg(String.format("""
+                    <html>
+                        <head>
+                            <style>
+                                p { margin-bottom: 10px; }
+                                ul { margin-left: 10px; }
+                                li { margin-top: 8px; }
+                                .ntm { margin-top: 0; }
+                                .nbm { margin-bottom: 0; }
+                                .nm { margin-top: 0; margin-bottom: 0; }
+                            </style>
+                        </head>
+                        <body>
+                            <h2 class="nm">%s</h2>
+                            <h3 class="nm">
+                                Version: <span style="font-weight: normal; font-size: 1em;">%s</span>
+                            </h3>
+                            <h3 class="nbm">Packaged with:</h3>
+                            <ul class="ntm">
+                                <li><b>LibVlc</b> [%s]<br><i>Video, audio, and advanced GIF playback.</i></li>
+                                <li><b>yt-dlp</b> [%s]<br><i>Primary media downloader.</i></li>
+                                <li><b>gallery-dl</b> [%s]<br><i>Image and GIF downloader.</i></li>
+                                <li><b>ffmpeg</b> [%s]<br><i>Video and GIF conversions.</i></li>
+                                <li><b>ImageMagick</b> [%s]<br><i>Image conversions & transparency trimming.</i></li>
+                            </ul>
+                            <p class="nbm">
+                                <b>Tray Menu Icons by:</b><br>
+                                Icons8 @ icons8.com
+                            </p>
+                        </body>
+                    </html>
+                    """, AppRes.APP_NAME_FULL, AppRes.APP_BUILD, AppRes.VERS_VLC,
+                    Bin.YT_DLP.version(), Bin.GALLERY_DL.version(), Bin.FFMPEG.version(), Bin.IMGMAGICK.version()),
                     "PiPAA Info", JOptionPane.INFORMATION_MESSAGE, TRAY_IMAGEICON_32)
         );
         final MenuItem configItem = new MenuItem("Config...",   evt -> SwingUtilities.invokeLater(() -> configWin.setVisible(true)));
