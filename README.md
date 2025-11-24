@@ -311,7 +311,7 @@ In this case, **PiPAA does not perform any tracking or collection of data.** It 
 PiPAA is actively being developed and not yet at a Release v1.0 state. Major known issues will be cataloged here for maximum transparency until then.
 - Background processes, such as downloading/caching media, may continue running until they complete, even after the application closes.
     - This is due to how PiPAA asynchronously executes these tasks without tracking or monitoring them.
-    - **A fix has been implemented and is being tested.** Lookout for it in the latest Snapshot release.
+    - **A fix has been implemented and is being tested in the latest Snapshot release.**
     - If you encounter this issue in the meantime, open `Task Manager` and terminate the processes. Look for processes named:
         - `javaw`
         - `yt-dlp`
