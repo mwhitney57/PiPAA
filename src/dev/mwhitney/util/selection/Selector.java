@@ -116,6 +116,86 @@ public class Selector <T> {
     }
     
     /**
+     * Selects the previous element out of the available selections, going from the
+     * current selection. If the current selection is already the first possible
+     * selection, then the selection won't change.
+     * 
+     * @return this Selector instance.
+     */
+    public Selector<T> selectPrevious() {
+        return select(selectionIndex - 1);
+    }
+    
+    /**
+     * Selects and returns the previous element out of the available selections,
+     * going from the current selection. If the current selection is already the
+     * first possible selection, then the selection won't change.
+     * 
+     * @return the new selection.
+     */
+    public T selectPreviousAndGet() {
+        return selectPrevious().selection();
+    }
+
+    /**
+     * Selects the next element out of the available selections, going from the
+     * current selection. If the current selection is already the last possible
+     * selection, then the selection won't change.
+     * 
+     * @return this Selector instance.
+     */
+    public Selector<T> selectNext() {
+        return select(selectionIndex + 1);
+    }
+    
+    /**
+     * Selects and returns the next element out of the available selections, going
+     * from the current selection. If the current selection is already the last
+     * possible selection, then the selection won't change.
+     * 
+     * @return the new selection.
+     */
+    public T selectNextAndGet() {
+        return selectNext().selection();
+    }
+    
+    /**
+     * Selects the first element out of the available selections.
+     * 
+     * @return this Selector instance.
+     */
+    public Selector<T> selectFirst() {
+        return this.select(0);
+    }
+    
+    /**
+     * Selects and returns the first element out of the available selections.
+     * 
+     * @return the new selection.
+     */
+    public T selectFirstAndGet() {
+        return selectFirst().selection();
+    }
+    
+    /**
+     * Selects the last element out of the available selections.
+     * 
+     * @return this Selector instance.
+     */
+    public Selector<T> selectLast() {
+        return this.select(this.selections.length - 1);
+    }
+    
+    /**
+     * Selects and returns the last element out of the available selections.
+     * 
+     * @return the new selection.
+     */
+    public T selectLastAndGet() {
+        return selectLast().selection();
+    }
+    
+    /**
      * Checks if the current selection matches the passed element.
      * 
      * @param selection - the available element to check.
