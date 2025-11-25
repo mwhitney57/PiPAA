@@ -143,12 +143,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     private static final Dimension MAXIMUM_AUDIO_SIZE = new Dimension(128 + (BORDER_SIZE*2), 128 + (BORDER_SIZE*2));
     
     /* Colors */
-    /**
-     * The {@link Color} that is almost entirely transparent. Its specific non-zero
-     * alpha value is specified to keep the border both invisible and functional,
-     * allowing the user to interact with it to resize the window.
-     */
-    public static final Color TRANSPARENT_BG  = new Color(0,   0,   0,   1);
     public static final Color BORDER_NORMAL   = new Color(0,   69,  107, 200);
     public static final Color BORDER_OK       = new Color(152, 236, 133, 200);
     public static final Color BORDER_PROGRESS = new Color(249, 248, 113, 200);
@@ -260,7 +254,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             SwingUtilities.invokeLater(() -> this.imgLabel.setBackground(AppRes.COLOR_TRANSPARENT))
         );
         state.hook(PASSTHROUGH, false, (PermanentRunnable) () -> 
-            SwingUtilities.invokeLater(() -> this.imgLabel.setBackground(TRANSPARENT_BG))
+            SwingUtilities.invokeLater(() -> this.imgLabel.setBackground(AppRes.NEAR_TRANSPARENT))
         );
         state.hook(PLAYER_NONE,  true, (PermanentRunnable) () -> SwingUtilities.invokeLater(this.glassPane::conceal));
         state.hook(PLAYER_SWING, true, (PermanentRunnable) () -> SwingUtilities.invokeLater(this.glassPane::conceal));
@@ -288,7 +282,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         contentPane = new JPanel(new BorderLayout());
         contentPane.setFocusable(false);
         contentPane.setOpaque(false);
-        contentPane.setBackground(TRANSPARENT_BG);
+        contentPane.setBackground(AppRes.NEAR_TRANSPARENT);
         contentPane.setBorder(fadingBorder);
         contentPane.setDropTarget(listeners.dndTargetSecondary());
         

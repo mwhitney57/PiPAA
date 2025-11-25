@@ -139,6 +139,8 @@ public abstract class AppRes {
     
     // Colors
     public static final Color COLOR_TRANSPARENT             = new Color(0, 0, 0, 0);
+    /** The {@link Color} that is almost entirely transparent. It has an alpha value of 1 to keep things near-invisible and still interactable. */
+    public static final Color NEAR_TRANSPARENT              = new Color(0, 0, 0, 1);
     /** Lighter than {@link Color#lightGray}, but darker than {@link Color#white}. */
     public static final Color COLOR_OFF_WHITE               = new Color(240, 240, 240);
     /** Nearly pure {@link Color#white}. Lighter than {@link #COLOR_OFF_WHITE}. */

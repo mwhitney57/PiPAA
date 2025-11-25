@@ -15,6 +15,7 @@ import javax.swing.JFrame;
 
 import dev.mwhitney.gui.PiPWindow;
 import dev.mwhitney.gui.PiPWindowState;
+import dev.mwhitney.resources.AppRes;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 /**
@@ -125,7 +126,7 @@ public class SpecialGlassPane extends JComponent {
             }
             
 //            g2d.setColor(new Color(255, 0, 0, 122));  // Red Debug Color for Visibility
-            g2d.setColor(PiPWindow.TRANSPARENT_BG);
+            g2d.setColor(AppRes.NEAR_TRANSPARENT);
             g2d.fillRect(x, y, w, h);
         } finally {
             g2d.dispose();
