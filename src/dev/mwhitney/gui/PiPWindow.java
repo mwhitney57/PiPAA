@@ -614,7 +614,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             @Override
             public void paused(MediaPlayer mediaPlayer) {
                 // Manual repeat logic: The media was not manually paused; it finished. Restart it.
-                if(state.not(MANUALLY_PAUSED)) {
+                if (state.not(MANUALLY_PAUSED)) {
                     mediaCommand(PiPMediaCMD.SEEK, "SET", "0.00f");
                     mediaCommand(PiPMediaCMD.PLAY);
                 }
@@ -622,7 +622,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             @Override
             public void stopped(MediaPlayer mediaPlayer) {
                 // Only attempt to play stopped media again if window is not closing/closed.
-                if(state.not(CLOSING, MANUALLY_STOPPED)) mediaCommand(PiPMediaCMD.PLAY);
+                if (state.not(CLOSING, MANUALLY_STOPPED)) mediaCommand(PiPMediaCMD.PLAY);
             }
         });
     }
@@ -713,16 +713,15 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case PAUSE:
             case PLAY:
             case PLAY_PAUSE:
-                final PiPMediaCMD playPause = switch(shortcut) {
+                // Cancel command if not using compatible player.
+                if (state.any(PLAYER_NONE, PLAYER_SWING)) break;
+                
+                // Flash Borders with Play/Pause if using Combo Player. Both cases are manual (true).
+                mediaCommand(switch(shortcut) {
                 case PAUSE -> PiPMediaCMD.PAUSE;
                 case PLAY  -> PiPMediaCMD.PLAY;
                 default    -> PiPMediaCMD.PLAYPAUSE;
-                };
-                // Command, Flash Borders? (Only for Audio Media), Manual? (Yes)
-                if (state.is(PLAYER_COMBO))
-                    mediaCommand(playPause, "true", "true");
-                else if (state.is(PLAYER_VLC))
-                    mediaCommand(playPause, "false", "true");
+                }, state.is(PLAYER_COMBO) ? "true" : "false", "true");
                 break;
             // SEEK SPECIFIC
             case SEEK:
@@ -1655,7 +1654,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             return;
         }
         // New media to replace current media -- Close current media first.
-        else if(hasMedia() && !mediaCommand(PiPMediaCMD.CLOSE, "true")) {
+        else if (hasMedia() && !mediaCommand(PiPMediaCMD.CLOSE, "true")) {
             System.err.println("Warning: Cancelled setting media: Window's media player has crashed.");
             return;
         }
@@ -1795,7 +1794,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         final boolean noDownload    = (!forceDownload && dlOption.is(DOWNLOAD_OPTION.NEVER)); // True if not forced and option set.
         
         // Try to load direct remote/web media without caching.
-        if(adjustedWebSrc != null && !ogSrcOverride && !forceDownload)
+        if (adjustedWebSrc != null && !ogSrcOverride && !forceDownload)
             src = adjustedWebSrc;
         // Return null if configuration disallows download when it's necessary.
         if (noDownload && attributes.needsDownload()) {
@@ -2020,7 +2019,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         }
         
         // SWING and COMBO Players
-        if(state.is(PLAYER_SWING)) {
+        if (state.is(PLAYER_SWING)) {
             // Image and Basic GIF Playback Media
             try {
                 setImgViewerSrc(args[0], null);
@@ -2033,7 +2032,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             state.off(LOADING);
         }
         // VLC and COMBO Players
-        if(state.not(PLAYER_SWING)) {
+        if (state.not(PLAYER_SWING)) {
             // Set repeat as false -- restart playback is handled manually for more control.
             mediaPlayer.mediaPlayer().controls().setRepeat(false);
             mediaPlayer.mediaPlayer().media().play(args[0], options);
@@ -2477,7 +2476,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     @Override
     public void propertyChanged(PiPProperty prop, String value) {
         // Return if property value is null. This is currently not an acceptable value.
-        if(value == null || state.is(CLOSING)) return;
+        if (value == null || state.is(CLOSING)) return;
         System.out.println("prop changed in PiPWindow");
         
         // Already on EDT since prop change occurs in a Swing GUI.
