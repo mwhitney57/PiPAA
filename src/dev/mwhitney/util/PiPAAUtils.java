@@ -1,6 +1,8 @@
 package dev.mwhitney.util;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -258,6 +260,64 @@ public class PiPAAUtils {
             outF = new File(AppRes.APP_CLIPBOARD_FOLDER + "/" + nameNoExt + (int) (Math.random() * 100000) + "." + nameExt);
         }
         return outF;
+    }
+    
+    /**
+     * Gets a {@link Color} with the smallest alpha of {@code 1-255} such that a
+     * component could remain mouse-interactive when
+     * {@link Window#setOpacity(float)} is applied with the passed float. The goal
+     * is for the alpha value to be as low as possible–just high enough to be able
+     * to interact with it, but low enough that it is almost invisible.
+     * 
+     * @param opacity - the opacity of the window in which the color will be
+     *                displayed.
+     * @return the {@link Color} with a minimum interactable alpha value.
+     * @since 0.9.5
+     */
+    public static Color getMinimumInteractableColor(float opacity) {
+        return opacity >= 1.0f ? AppRes.NEAR_TRANSPARENT : new Color(0, 0, 0, getMinimumInteractableAlpha(opacity));
+    }
+
+    /**
+     * Gets the smallest alpha of {@code 1-255} such that a component could remain
+     * mouse-interactive when {@link Window#setOpacity(float)} is applied with the
+     * passed float. The goal is for the alpha value to be as low as possible–just
+     * high enough to be able to interact with it, but low enough that it is almost
+     * invisible.
+     * <h2>An Imperfect Approach and Why It's Being Used</h2>
+     * This method is <b>not perfect</b> by any means. It should work for opacities
+     * in the range: {@code 0.05-1.00}. To support opacities lower than this, the
+     * algorithm should be replaced, or special handling should be added beforehand.
+     * This approach involves countering the effects of setting a window's opacity,
+     * so it's naturally "hacky" and not ideal. However, there are very few options.
+     * <p>
+     * One option would be to alter every component in the window such that its
+     * individual opacity can be adjusted. This allows for selective transparency,
+     * but needlessly complicates the code. Most importantly, it doesn't solve the
+     * problem for the vlcj media player component, which uses a heavyweight Canvas
+     * for displaying media. There are workarounds to this, like using direct
+     * rendering, but even that may come with drawbacks.
+     * <p>
+     * The second option, the one implemented here, is using the
+     * {@link Window#setOpacity} method and adjusting the transparency of
+     * everything. Adjustments are made to the few components that need them.
+     * <p>
+     * Changes may be made in future versions to provide a better solution, but
+     * getting the feature implemented and working is a greater priority at this
+     * time.
+     * 
+     * @param opacity - the float opacity to be used.
+     * @return an int alpha value between {@code 1-255}.
+     * @since 0.9.5
+     */
+    public static int getMinimumInteractableAlpha(float opacity) {
+        // Account for edge cases and return simple values.
+        if (opacity >= 1.00f) return 1;
+        if (opacity <= 0.01f) return 255;
+        
+        // Calculate alpha. Add tiny epsilon to prevent landing on exact value.
+        final int alpha = (int) Math.ceil(0.5d / opacity + 1e-10);
+        return Math.clamp(alpha, 1, 255);
     }
 
     /**

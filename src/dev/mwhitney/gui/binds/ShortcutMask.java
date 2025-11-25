@@ -55,8 +55,8 @@ public enum ShortcutMask {
     ),
     /** Mask Value: 1 << 27 */
     CUSTOM_MASK_2(
-        1 << 27
-        // No default input.
+        1 << 27,
+        KeyEvent.VK_BACK_SLASH
     ),
     /** Mask Value: 1 << 28 */
     CUSTOM_MASK_3(

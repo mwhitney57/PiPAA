@@ -11,7 +11,9 @@ import java.util.Objects;
 import javax.swing.Timer;
 import javax.swing.border.LineBorder;
 
+import dev.mwhitney.gui.interfaces.AdaptiveOpacity;
 import dev.mwhitney.listeners.PaintRequester;
+import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.PiPAAUtils;
 
 /**
@@ -20,7 +22,7 @@ import dev.mwhitney.util.PiPAAUtils;
  * 
  * @author mwhitney57
  */
-public class FadingLineBorder extends LineBorder implements PaintRequester {
+public class FadingLineBorder extends LineBorder implements PaintRequester, AdaptiveOpacity {
     /** The randomly-generated serial UID. */
     private static final long serialVersionUID = -960971844424714747L;
 
@@ -37,6 +39,8 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
      * should be technically visible, with an alpha value greater than zero.
      */
     private boolean fullTransparency = false;
+    /** The opacity of the window in which this border is displayed. */
+    private float windowOpacity = 1.0f;
     
     /**
      * Creates a new {@link FadingLineBorder} which is a simple extension upon
@@ -55,7 +59,7 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
         
         // Save normal color and its faded counterpart, then set color to faded.
         this.colorNormal = Objects.requireNonNullElse(color, COLOR_DEFAULT);
-        this.lineColor   = fadedOf(Objects.requireNonNullElse(color, COLOR_DEFAULT));
+        this.lineColor   = fadedColor();
     }
     
     /**
@@ -77,9 +81,7 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
         this.fullTransparency = t;
         
         // Refresh the line color to be faded to the right amount.
-        if (faded) this.lineColor = fadedOf(this.colorNormal);
-        
-        PiPAAUtils.invokeNowOrLater(this::requestPaint);
+        if (faded) refreshFadedLineColor();
         
         return this;
     }
@@ -112,9 +114,9 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
     
     /**
      * Handles an event firing from the Swing {@link #fadeTimer}. Each call of this
-     * method works to fade the border further, until its alpha value has reached
-     * zero. At that point, the border is fully faded and transparent, so the timer
-     * will be stopped.
+     * method works to fade the border further, until its alpha value is
+     * sufficiently low. At that point, the border is fully faded and transparent,
+     * so the timer will be stopped.
      * 
      * @param e - the {@link ActionEvent} supplied by the timer.
      */
@@ -122,15 +124,16 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
         // Apply Default Color if null
         if (this.lineColor == null)
             this.lineColor = COLOR_DEFAULT;
-        // Stop Timer if Alpha has Reached 0 (Faded)
+        // Stop Timer if Alpha has Reached Faded Value
         if (isFaded()) {
             fadeTimer.stop();
+            refreshFadedLineColor();
             return;
         }
         
         // Adjust the border line color's transparency value and request a repaint.
         final int r = lineColor.getRed(), g = lineColor.getGreen(), b = lineColor.getBlue(), a = lineColor.getAlpha();
-        this.lineColor = new Color(r, g, b, Math.max(fullTransparency ? 0 : 1, a - 2));
+        this.lineColor = new Color(r, g, b, Math.max(fullTransparency ? 0 : PiPAAUtils.getMinimumInteractableAlpha(windowOpacity), a - 2));
         requestPaint();
     }
     
@@ -143,7 +146,7 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
      *         <code>false</code> otherwise.
      */
     public boolean isFaded() {
-        return this.lineColor.getAlpha() <= (fullTransparency ? 0 : 1);
+        return this.lineColor.getAlpha() <= (fullTransparency ? 0 : PiPAAUtils.getMinimumInteractableAlpha(windowOpacity));
     }
     
     /**
@@ -171,14 +174,19 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
     }
     
     /**
-     * Calculates and returns a faded (transparent) version of the passed
-     * {@link Color}.
+     * Gets a faded {@link Color}. If full transparency mode is active, the method
+     * will simply return {@link AppRes#COLOR_TRANSPARENT}. Otherwise, a color will
+     * be retrieved using {@link PiPAAUtils#getMinimumInteractableColor(float)}.
+     * <p>
+     * In that case, the faded {@link Color} is intended to be imperceptible, but
+     * not invisible. The border is actually much more visible with higher RGB
+     * values. Therefore, a full black is used with the lowest interactable alpha
+     * value given the current {@link #windowOpacity}.
      * 
-     * @param c - the {@link Color} to get a faded version of.
-     * @return the passed {@link Color}, but faded (transparent).
+     * @return a fully faded {@link Color}.
      */
-    private Color fadedOf(final Color c) {
-        return new Color(c.getRed(), c.getGreen(), c.getBlue(), (this.fullTransparency ? 0 : 1));
+    private Color fadedColor() {
+        return fullTransparency ? AppRes.COLOR_TRANSPARENT : PiPAAUtils.getMinimumInteractableColor(windowOpacity);
     }
     
     /**
@@ -188,9 +196,30 @@ public class FadingLineBorder extends LineBorder implements PaintRequester {
     public void cancelFade() {
         fadeTimer.stop();
         
-        this.lineColor = fadedOf(colorNormal);
+        refreshFadedLineColor();
+    }
+    
+    /**
+     * Updates the line color to a faded state and immediately requests a paint.
+     * 
+     * @since 0.9.5
+     */
+    private void refreshFadedLineColor() {
+        this.lineColor = fadedColor();
+        PiPAAUtils.invokeNowOrLater(this::requestPaint);
     }
     
     @Override
     public void requestPaint() {}
+
+    @Override
+    public void adaptToOpacity(float opacity) {
+        // Check if border was faded prior to changing window opacity.
+        final boolean faded = isFaded();
+        
+        this.windowOpacity = Math.clamp(opacity, 0.0f, 1.0f);
+        
+        // Refresh the line color to be faded to the right amount.
+        if (faded) refreshFadedLineColor();
+    }
 }

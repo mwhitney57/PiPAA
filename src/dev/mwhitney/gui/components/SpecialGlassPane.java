@@ -15,7 +15,9 @@ import javax.swing.JFrame;
 
 import dev.mwhitney.gui.PiPWindow;
 import dev.mwhitney.gui.PiPWindowState;
+import dev.mwhitney.gui.interfaces.AdaptiveOpacity;
 import dev.mwhitney.resources.AppRes;
+import dev.mwhitney.util.PiPAAUtils;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 /**
@@ -49,7 +51,7 @@ import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
  * @author mwhitney57
  * @since 0.9.5
  */
-public class SpecialGlassPane extends JComponent {
+public class SpecialGlassPane extends JComponent implements AdaptiveOpacity {
     /** The randomly-generated serial ID. */
     private static final long serialVersionUID = 2303414505288020519L;
 
@@ -70,6 +72,7 @@ public class SpecialGlassPane extends JComponent {
     public SpecialGlassPane(PiPWindow parent) {
         this.parent = Objects.requireNonNull(parent, "The provided parent frame for SpecialGlassPane must be non-null.");
         
+        this.setBackground(AppRes.NEAR_TRANSPARENT);
         this.setOpaque(false);
         this.setFocusable(false);
     }
@@ -126,10 +129,15 @@ public class SpecialGlassPane extends JComponent {
             }
             
 //            g2d.setColor(new Color(255, 0, 0, 122));  // Red Debug Color for Visibility
-            g2d.setColor(AppRes.NEAR_TRANSPARENT);
+            g2d.setColor(getBackground());
             g2d.fillRect(x, y, w, h);
         } finally {
             g2d.dispose();
         }
+    }
+
+    @Override
+    public void adaptToOpacity(float opacity) {
+        this.setBackground(PiPAAUtils.getMinimumInteractableColor(opacity));
     }
 }

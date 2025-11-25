@@ -193,6 +193,30 @@ public enum Shortcut {
     MOVE_WINDOWS_N_MORE(
         new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_1.mask() | SHIFT_DOWN_MASK | CTRL_DOWN_MASK)
     ),
+    OPACITY_MAX_ALL(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_2.mask() | SHIFT_DOWN_MASK | CTRL_DOWN_MASK)
+    ),
+    OPACITY_INCREASE_ALL(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_2.mask() | SHIFT_DOWN_MASK)
+    ),
+    OPACITY_DECREASE_ALL(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_2.mask() | SHIFT_DOWN_MASK)
+    ),
+    OPACITY_MIN_ALL(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_2.mask() | SHIFT_DOWN_MASK | CTRL_DOWN_MASK)
+    ),
+    OPACITY_MAX(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_2.mask() | CTRL_DOWN_MASK)
+    ),
+    OPACITY_INCREASE(
+        new KeyBind(KeyEvent.VK_UP, CUSTOM_MASK_2.mask())
+    ),
+    OPACITY_DECREASE(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_2.mask())
+    ),
+    OPACITY_MIN(
+        new KeyBind(KeyEvent.VK_DOWN, CUSTOM_MASK_2.mask() | CTRL_DOWN_MASK)
+    ),
     OPEN_MEDIA_DIRECTORY(
         new KeyBind(KeyEvent.VK_O, CTRL_DOWN_MASK)
     ),

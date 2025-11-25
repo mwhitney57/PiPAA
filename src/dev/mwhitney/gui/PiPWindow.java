@@ -46,6 +46,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import darrylbu.icon.StretchIcon;
 import dev.mwhitney.gui.PiPWindowSnapshot.SnapshotData;
+import dev.mwhitney.gui.PiPWindowState.StateProp;
 import dev.mwhitney.gui.binds.BindDetails;
 import dev.mwhitney.gui.binds.BindHandler;
 import dev.mwhitney.gui.binds.MouseInput;
@@ -175,6 +176,47 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     /** A {@link PiPWindowState} instance which tracks the state of the window. */
     private final PiPWindowState state = new PiPWindowState();
     
+    /**
+     * A {@link Selector} of accepted opacity values for the window. The values
+     * range from lowest to highest, with the initial selection being {@code 1.0f}.
+     * <p>
+     * These specific values, even if odd, have been tested and were quite
+     * consistent in their rendering. Using clean increments of {@code 0.05f} or
+     * otherwise may not be best. Ideal alpha values vary depending on the opacity
+     * used, and some opacity increments could lie right beyond an alpha value
+     * threshold, increasing the likelihood of a darker-than-desired paint.
+     * <p>
+     * For example, using an opacity of {@code 0.25f} consistently caused the
+     * painted color to be darker than it should be, despite having the lowest alpha
+     * value that would still be interactable. To fix this, that opacity stage was
+     * moved up slightly to {@code 0.26f}, which did not show the same consistent
+     * problem. Overall, these values seemed to hold up in testing but are subject
+     * to adjustment.
+     * 
+     * @since 0.9.5
+     */
+    private final Selector<Float> opacitySelector = new Selector<>(
+            0.052f,
+            0.102f,
+            0.152f,
+            0.198f,
+            0.260f, // 0.25f consistently displayed darker.
+            0.302f,
+            0.345f, // 0.35f often displayed darker.
+            0.402f,
+            0.452f,
+            0.50f,
+            0.55f,
+            0.60f,
+            0.65f,
+            0.70f,
+            0.75f,
+            0.80f,
+            0.85f,
+            0.90f,
+            0.95f,
+            1.0f
+    ).selectLast();
     /** A {@link SpecialGlassPane} for the window. Keeps the content area clickable when in use, particularly with the VLC player. */
     private final SpecialGlassPane glassPane = new SpecialGlassPane(this);
     /** This window's content pane. */
@@ -251,10 +293,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             })
         );
         state.hook(PASSTHROUGH, true,  (PermanentRunnable) () -> 
-            SwingUtilities.invokeLater(() -> this.imgLabel.setBackground(AppRes.COLOR_TRANSPARENT))
+            SwingUtilities.invokeLater(this::adaptComponentsToOpacity)
         );
         state.hook(PASSTHROUGH, false, (PermanentRunnable) () -> 
-            SwingUtilities.invokeLater(() -> this.imgLabel.setBackground(AppRes.NEAR_TRANSPARENT))
+            SwingUtilities.invokeLater(this::adaptComponentsToOpacity)
         );
         state.hook(PLAYER_NONE,  true, (PermanentRunnable) () -> SwingUtilities.invokeLater(this.glassPane::conceal));
         state.hook(PLAYER_SWING, true, (PermanentRunnable) () -> SwingUtilities.invokeLater(this.glassPane::conceal));
@@ -282,7 +324,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         contentPane = new JPanel(new BorderLayout());
         contentPane.setFocusable(false);
         contentPane.setOpaque(false);
-        contentPane.setBackground(AppRes.NEAR_TRANSPARENT);
+        contentPane.setBackground(AppRes.COLOR_TRANSPARENT);
         contentPane.setBorder(fadingBorder);
         contentPane.setDropTarget(listeners.dndTargetSecondary());
         
@@ -703,6 +745,18 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 // Only copy String source if it is available.
                 if (hasMedia() && this.media.hasSrc())
                     Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(this.media.getSrc()), null);
+                break;
+            case OPACITY_MAX:
+                setOpacity(this.opacitySelector.selectLastAndGet());
+                break;
+            case OPACITY_INCREASE:
+                setOpacity(this.opacitySelector.selectNextAndGet());
+                break;
+            case OPACITY_DECREASE:
+                setOpacity(this.opacitySelector.selectPreviousAndGet());
+                break;
+            case OPACITY_MIN:
+                setOpacity(this.opacitySelector.selectFirstAndGet());
                 break;
             case PAUSE:
             case PLAY:
@@ -2173,7 +2227,30 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     public void flashBorder(final Color c) {
         PiPAAUtils.invokeNowOrLater(() -> fadingBorder.fade(c));
     }
+    
+    /**
+     * Adapts components of this window to its current opacity setting.
+     * <p>
+     * It is crucial that this method be called whenever the window's opacity
+     * changes so that nearly transparent component backgrounds and borders can
+     * increase their alpha values and maintain interactivity.
+     * <p>
+     * Beyond that, it may be easiest to simply call this method when certain
+     * properties change, such as {@link StateProp#PASSTHROUGH}, which involves
+     * tweaking component backgrounds, potentially overriding opacity-related
+     * adjustments.
+     * 
+     * @since 0.9.5
+     */
+    private void adaptComponentsToOpacity() {
+        final float opacity = getOpacity();
         
+        // The image label's background can simply be transparent if pass-through is enabled.
+        imgLabel.setBackground(state.is(PASSTHROUGH) ? AppRes.COLOR_TRANSPARENT : PiPAAUtils.getMinimumInteractableColor(opacity));
+        glassPane.adaptToOpacity(opacity);
+        fadingBorder.adaptToOpacity(opacity);
+    }
+    
     /**
      * Updates the status pretext within the window's title to the passed String. To
      * reset the title status, pass <code>null</code> or an empty String. <b>This
@@ -2462,6 +2539,14 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 imgLabelIcon.applySnapshot(imgSnapshotFull);
             }
         }
+    }
+    
+    @Override
+    public void setOpacity(float opacity) {
+        super.setOpacity(opacity);
+        
+        // Make adjustments to components that change with opacity.
+        adaptComponentsToOpacity();
     }
     
     @Override

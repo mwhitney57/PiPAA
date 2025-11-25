@@ -660,6 +660,18 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         case MOVE_WINDOWS_N_MORE:
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.MOVE_WINDOW_N_MORE)));
             break;
+        case OPACITY_MAX_ALL:
+            callInLiveWindows(windows -> windows.handleShortcutBind(BindDetails.createDummy(Shortcut.OPACITY_MAX)));
+            break;
+        case OPACITY_INCREASE_ALL:
+            callInLiveWindows(windows -> windows.handleShortcutBind(BindDetails.createDummy(Shortcut.OPACITY_INCREASE)));
+            break;
+        case OPACITY_DECREASE_ALL:
+            callInLiveWindows(windows -> windows.handleShortcutBind(BindDetails.createDummy(Shortcut.OPACITY_DECREASE)));
+            break;
+        case OPACITY_MIN_ALL:
+            callInLiveWindows(windows -> windows.handleShortcutBind(BindDetails.createDummy(Shortcut.OPACITY_MIN)));
+            break;
         case PAUSE_ALL:
             callInLiveWindows(window -> window.handleShortcutBind(BindDetails.createDummy(Shortcut.PAUSE)));
             break;
