@@ -1,6 +1,6 @@
 package dev.mwhitney.util.selection;
 
-import org.apache.commons.lang3.ArrayUtils;
+import java.util.Objects;
 
 /**
  * A basic selector class which simplifies the process of selecting from a list of options.
@@ -57,6 +57,35 @@ public class Selector <T> {
     }
     
     /**
+     * Checks the index of the passed value within the array of available
+     * selections. If the value is not present, {@code -1} is returned.
+     * 
+     * @param value - the object to check for in the selections.
+     * @return the index of the value in the selections array, or {@code -1} if it
+     *         is not present.
+     */
+    private int indexOf(T value) {
+        // Check for match in selections, returning the index.
+        for (int i = 0; i < selections.length; i++) {
+            if (Objects.equals(selections[i], value)) {
+                return i;
+            }
+        }
+        return -1;  // No matching selection found. Return -1.
+    }
+    
+    /**
+     * Checks if the passed value is present in the available selections.
+     * 
+     * @param value - the object to check for in the selections.
+     * @return {@code true} if the value exists in the selections; {@code false}
+     *         otherwise.
+     */
+    private boolean contains(T value) {
+        return indexOf(value) != -1;
+    }
+    
+    /**
      * Selects the passed element, so long as it matches an available selection.
      * <p>
      * The selection will not change if the passed element does not match a
@@ -66,9 +95,8 @@ public class Selector <T> {
      * @return this Selector instance.
      */
     public Selector<T> select(T selection) {
-        final int index = ArrayUtils.indexOf(this.selections, selection);
-        if (index != ArrayUtils.INDEX_NOT_FOUND)
-            this.selectionIndex = index;
+        final int index = indexOf(selection);
+        if (index != -1) this.selectionIndex = index;
         return this;
     }
 
@@ -204,8 +232,8 @@ public class Selector <T> {
      */
     public boolean selected(T selection) {
         if (hasSelections()) {
-            final int index = ArrayUtils.indexOf(this.selections, selection);
-            return (index != ArrayUtils.INDEX_NOT_FOUND && index == this.selectionIndex);
+            final int index = indexOf(selection);
+            return (index != -1 && index == this.selectionIndex);
         }
         return false;
     }
@@ -233,7 +261,7 @@ public class Selector <T> {
      *         <code>false</code> otherwise.
      */
     public boolean hasSelection(T selection) {
-        return ArrayUtils.contains(this.selections, selection);
+        return contains(selection);
     }
     
     /**
