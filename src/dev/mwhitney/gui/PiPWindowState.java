@@ -590,6 +590,24 @@ public class PiPWindowState {
     }
     
     /**
+     * Copies all specified {@link StateProp} values from another
+     * {@link PiPWindowState} instance to this one.
+     * 
+     * @param state - the {@link PiPWindowState} instance to copy from.
+     * @return this PiPWindowState instance.
+     * @since 0.9.5
+     */
+    public PiPWindowState copyFrom(PiPWindowState state, StateProp... props) {
+        // Null safety check.
+        if (props == null) props = new StateProp[0];
+        // Only set the props which should be copied.
+        for (final StateProp prop : props) {
+            set(prop, state.is(prop));
+        }
+        return this;
+    }
+    
+    /**
      * Runs any and all hooks into the passed {@link StateProp} with the passed
      * boolean value.
      * 

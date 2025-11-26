@@ -955,6 +955,12 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 flashBorder(state.is(LOCALLY_MUTED) ? BORDER_OK : BORDER_ERROR);
                 mediaCommand(PiPMediaCMD.MUTEUNMUTE);
                 break;
+            case VOLUME_MUTE:
+                mediaCommand(PiPMediaCMD.MUTE);
+                break;
+            case VOLUME_UNMUTE:
+                mediaCommand(PiPMediaCMD.UNMUTE);
+                break;
             case CYCLE_AUDIO_TRACKS:
                 // Only cycle tracks under applicable players.
                 if (state.not(PLAYER_VLC, PLAYER_COMBO)) break;

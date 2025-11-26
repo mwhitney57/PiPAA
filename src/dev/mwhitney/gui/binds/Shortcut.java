@@ -566,6 +566,12 @@ public enum Shortcut {
     VOLUME_MUTE_UNMUTE(
         new KeyBind(KeyEvent.VK_M)
 	),
+    VOLUME_MUTE(
+        new KeyBind(KeyEvent.VK_M, CUSTOM_MASK_1.mask() | CTRL_DOWN_MASK)
+    ),
+    VOLUME_UNMUTE(
+        new KeyBind(KeyEvent.VK_M, CUSTOM_MASK_1.mask() | ALT_DOWN_MASK)
+    ),
     // Step increase/decrease size of window.
     WINDOW_SIZE_INCREASE_LESS(
         new KeyBind(KeyEvent.VK_QUOTE, SHIFT_DOWN_MASK)

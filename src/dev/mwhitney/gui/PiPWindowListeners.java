@@ -3,8 +3,11 @@ package dev.mwhitney.gui;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.CLOSING_MEDIA;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.FLIP_HORIZONTAL;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.FLIP_VERTICAL;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.FULLSCREEN;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOADING;
+import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCALLY_MUTED;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_FULLSCREEN;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_MEDIA;
 import static dev.mwhitney.gui.PiPWindowState.StateProp.LOCKED_POSITION;
@@ -66,13 +69,13 @@ import dev.mwhitney.main.Binaries;
 import dev.mwhitney.media.MediaExt;
 import dev.mwhitney.media.MediaFlavorPicker;
 import dev.mwhitney.media.MediaFlavorPicker.MediaFlavor;
-import dev.mwhitney.media.attribution.AttributeUpdateListener;
-import dev.mwhitney.media.attribution.AttributionFlag;
-import dev.mwhitney.media.attribution.AttributionRequest;
-import dev.mwhitney.media.attribution.AttributeRequestListener;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;
 import dev.mwhitney.media.PiPMediaCMD;
+import dev.mwhitney.media.attribution.AttributeRequestListener;
+import dev.mwhitney.media.attribution.AttributeUpdateListener;
+import dev.mwhitney.media.attribution.AttributionFlag;
+import dev.mwhitney.media.attribution.AttributionRequest;
 import dev.mwhitney.media.exceptions.InvalidTransferMediaException;
 import dev.mwhitney.properties.PiPProperty;
 import dev.mwhitney.properties.PiPProperty.PropDefault;
@@ -804,20 +807,24 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             break;
         case DUPLICATE_WINDOW:
             final PiPWindow dupeWindow = handoff(null);
-            if (get().hasMedia()) {
-                // Create READY hook and adjust size and location relative to current window.
-                dupeWindow.state().hook(READY, true, () -> {
-                    dupeWindow.changeSize(get().getSize(), true);
-                    dupeWindow.setLocation(get().getX() + 40, get().getY() + 25);
-                    dupeWindow.ensureOnScreen();
-                });
-                // Set media, which eventually executes the above hook or unhooks it if the window fails to load.
-                dupeWindow.setMedia(new PiPMedia(get().getMedia()));
-            } else {
+            final Runnable duplication = () -> {
                 dupeWindow.changeSize(get().getSize(), true);
                 dupeWindow.setLocation(get().getX() + 40, get().getY() + 25);
                 dupeWindow.ensureOnScreen();
+            };
+            // Media-pending duplication translations.
+            if (get().hasMedia()) {
+                // Create READY hook and adjust size and location relative to current window.
+                dupeWindow.state().hook(READY, true, () -> SwingUtilities.invokeLater(duplication::run));
+                // Set media, which eventually executes the above hook or unhooks it if the window fails to load.
+                dupeWindow.setMedia(new PiPMedia(get().getMedia()));
+            } else {
+                duplication.run();
             }
+            // Sharing of general properties.
+            dupeWindow.setOpacity(get().getOpacity());
+            dupeWindow.state().copyFrom(get().state(), FLIP_HORIZONTAL, FLIP_VERTICAL);
+            if (get().state().is(LOCALLY_MUTED)) dupeWindow.handleShortcutBind(BindDetails.createDummy(Shortcut.VOLUME_MUTE));
             break;
         // CLOSE MEDIA
         case CLOSE_MEDIA:
