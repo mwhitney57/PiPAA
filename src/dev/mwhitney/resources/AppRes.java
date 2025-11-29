@@ -40,6 +40,7 @@ public abstract class AppRes {
     public static final String APP_NAME_SHORT               = "PiPAA";
     public static final String APP_NAME                     = "PiP Anything Anywhere";
     public static final String APP_NAME_FULL                = "Picture-in-Picture Anything Anywhere";
+    public static final String APP_REPOSITORY               = "https://github.com/mwhitney57/PiPAA";
     public static final Build  APP_BUILD                    = new Build(new Version(0,9,5), TYPE_OPTION.SNAPSHOT);
     
     // Application Folders

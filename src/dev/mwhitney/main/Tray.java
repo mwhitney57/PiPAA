@@ -75,6 +75,7 @@ public class Tray implements PropertyListener {
                     <h3 class="nm">
                         Version: <span style="font-weight: normal; font-size: 1em;">%s</span>
                     </h3>
+                    %s
                     <h3 class="nbm">Packaged with:</h3>
                     <ul class="ntm">
                         <li><b>LibVlc</b> [%s]<br><i>Video, audio, and advanced GIF playback.</i></li>
@@ -89,7 +90,7 @@ public class Tray implements PropertyListener {
                     </p>
                 </body>
             </html>
-            """, AppRes.APP_NAME_FULL, AppRes.APP_BUILD, AppRes.VERS_VLC,
+            """, AppRes.APP_NAME_FULL, AppRes.APP_BUILD, AppRes.APP_REPOSITORY, AppRes.VERS_VLC,
             Bin.YT_DLP.version(), Bin.GALLERY_DL.version(), Bin.FFMPEG.version(), Bin.IMGMAGICK.version());
     
     @SuppressWarnings("unused")
