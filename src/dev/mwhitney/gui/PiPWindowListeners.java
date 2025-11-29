@@ -86,8 +86,15 @@ import dev.mwhitney.util.UnsetBool;
 import dev.mwhitney.util.selection.ReloadSelection.ReloadSelections;
 
 /**
- * The listeners for PiPWindows and their components, especially those relating
- * to media transfers such as drag and drop and copy/paste.
+ * A class that houses a combination of listeners for a {@link PiPWindow} and
+ * its components. This includes listeners for media transfers (drag and drop,
+ * copy/paste), media attribute updates, and keyboard and mouse input.
+ * <p>
+ * Along with custom {@link Shortcut} binds, this class implements defaults for
+ * core actions like moving the window or zooming.
+ * <p>
+ * This class also does the grunt work in attempting the loading of media in
+ * various ways when its transfer source is ambiguous.
  * 
  * @author mwhitney57
  */
