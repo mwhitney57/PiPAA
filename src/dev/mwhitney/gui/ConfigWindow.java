@@ -59,7 +59,16 @@ import dev.mwhitney.util.PiPAAUtils;
 import net.miginfocom.swing.MigLayout;
 
 /**
- * The configuration window for PiPAA.
+ * The window for user configuration of application settings, with access to
+ * additional controls.
+ * <p>
+ * For example, over-the-air updates can be initiated manually, and there are
+ * many useful buttons available, whether it's for quickly accessing application
+ * folders, or for managing the cache.
+ * <p>
+ * Displaying in always-on-top mode and hiding whenever focus is lost, this
+ * undecorated window is intended to be snappy and easy to use. It is
+ * prominently shown when its needed, but gets out of the way when it's not.
  * 
  * @author mwhitney57
  */
