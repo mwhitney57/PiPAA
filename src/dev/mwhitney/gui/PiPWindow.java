@@ -1162,6 +1162,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case WINDOW_SIZE_INCREASE_LESS:
             case WINDOW_SIZE_INCREASE:
             case WINDOW_SIZE_INCREASE_MORE:
+                // Make no adjustment if size is locked.
+                if (state.is(LOCKED_SIZE)) break;
+                
                 final int adjustment = switch (shortcut) {
                     case WINDOW_SIZE_DECREASE_LESS -> -5;
                     case WINDOW_SIZE_DECREASE      -> -10;
