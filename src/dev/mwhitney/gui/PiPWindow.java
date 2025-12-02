@@ -1968,10 +1968,6 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         final File outFile = new File(out);
         if (!outFile.exists()) {
             outFile.getParentFile().mkdirs();
-            System.out.println("MP4 DOESN'T EXIST");
-            System.out.println("     Conv-IN: " + in);
-            System.out.println("    Conv-OUT: " + out);
-            System.out.println("ConvOUT-PATH: " + outFile.getPath());
             try {
                 Binaries.execAndWait(Binaries.bin(Bin.FFMPEG), "-y", "-i", "\"" + in + "\"", "-movflags", "faststart",
                         "-pix_fmt", "yuv420p", "-vf", "\"scale=trunc(iw/2)*2:trunc(ih/2)*2\"", outFile.getPath(),
