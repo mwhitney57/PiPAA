@@ -481,7 +481,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      * @return the {@link MediaPlayer}, A.K.A. the VLC media player.
      */
     public MediaPlayer getMediaPlayer() {
-        return (mediaPlayerValid() ? this.mediaPlayer.mediaPlayer() : null);
+        return mediaPlayerValid() ? this.mediaPlayer.mediaPlayer() : null;
     }
     
     /**
@@ -618,7 +618,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                                 file = new File(URI.create(mediaPlayer.media().meta().get(Meta.ARTWORK_URL)));
                         } catch (Exception e) { System.err.println("Warning: Couldn't load media artwork, it may not exist. Using default..."); }
                         try {
-                            setImgViewerSrc((file != null ? file.getPath() : null), PiPWindow.class.getResource(AppRes.ICON_AUDIO_128));
+                            setImgViewerSrc(file != null ? file.getPath() : null, PiPWindow.class.getResource(AppRes.ICON_AUDIO_128));
                             if (file == null) PiPWindow.this.cr.setMaximumSize(MAXIMUM_AUDIO_SIZE);
                         } catch (InvalidMediaException e) { e.printStackTrace(); }
                         
@@ -1258,7 +1258,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
 //            System.out.println(Objects.toString(cmdArgs, "<null cmd args>"));   //Debug - Print arguments.
             // Determine if there are any arguments and if they are Strings.
             final boolean anyArgs = cmdArgs != null && !cmdArgs.isEmpty();
-            final String[] args   = (anyArgs && cmdArgs.isOfType(String.class) ? cmdArgs.raw().toArray(new String[0]) : null);
+            final String[] args   = anyArgs && cmdArgs.isOfType(String.class) ? cmdArgs.raw().toArray(new String[0]) : null;
             final boolean strArgs = args != null;
             
             switch (cmd) {
@@ -1450,8 +1450,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             case CLOSE:
                 System.out.println("Got req to close media.");
                 titleStatusUpdate("[Closing...]");
-                final boolean replacing = (strArgs    ? Boolean.valueOf(args[0])    : false);
-                final boolean marked    = (hasMedia() ? media.isMarkedForDeletion() : false);
+                final boolean replacing = strArgs    ? Boolean.valueOf(args[0])    : false;
+                final boolean marked    = hasMedia() ? media.isMarkedForDeletion() : false;
                 final PiPWindowSnapshot srcSnap = new PiPWindowSnapshot(SnapshotData.MEDIA_SOURCES).capture(this);
                 final boolean hasCacheSrc = srcSnap.hasMediaCacheSrc(),
                               hasTrimSrc  = srcSnap.hasMediaTrimSrc(),
@@ -1759,7 +1759,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         // Try downloading with the same binary that the attributor succeeded in using, but prefer override value if passed.
         //     Defaults to gallery-dl if format is null.
         boolean useYTDLP = (webFormat != null && FORMAT.GALLERY_DL.not(webFormat));
-        useYTDLP = (binOverride == Bin.YT_DLP ? true : (binOverride == Bin.GALLERY_DL ? false : useYTDLP));
+        useYTDLP = binOverride == Bin.YT_DLP ? true : (binOverride == Bin.GALLERY_DL ? false : useYTDLP);
         
         // Change Commands Depending on Remote Source Platform (if any)
         SRC_PLATFORM platform = media.getAttributes().getSrcPlatform();
@@ -1790,7 +1790,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             default:
                 if (!useYTDLP) {
                     platformArgs.add("--range");
-                    platformArgs.add((multiMedia ? wmf.item() + "-" + wmf.item() : "1"));
+                    platformArgs.add(multiMedia ? wmf.item() + "-" + wmf.item() : "1");
                 }
                 break;
             }
@@ -1886,7 +1886,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             // First download attempt.
             dlResult = downloadMedia(media, cacheFolder.toString(), platformArgs.toArray(new String[0]));
             if (dlResult == null) { // First attempt failed. Try with other binary.
-                platformArgs = getRemoteArgs(src,   cacheFolder.toString(), media, (triedDLPFirst ? Bin.GALLERY_DL : Bin.YT_DLP));
+                platformArgs = getRemoteArgs(src,   cacheFolder.toString(), media, triedDLPFirst ? Bin.GALLERY_DL : Bin.YT_DLP);
                 dlResult     = downloadMedia(media, cacheFolder.toString(), platformArgs.toArray(new String[0]));
             }
         } catch (InterruptedException ie) {
@@ -2269,8 +2269,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     public void titleStatusUpdate(String txt) {
         // Sets the text on the EDT, then starts the text reset timer.
         SwingUtilities.invokeLater(() -> {
-            final String title = (hasAttributedMedia() ? media.getAttributes().getTitle() : "");
-            PiPWindow.this.setTitle((txt == null) ? title : (txt + " " + title).trim());
+            final String title = hasAttributedMedia() ? media.getAttributes().getTitle() : "";
+            PiPWindow.this.setTitle(txt == null ? title : (txt + " " + title).trim());
         });
     }
     
@@ -2288,7 +2288,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     public void statusUpdate(String txt) {
         // Sets the text on the EDT, then starts the text reset timer.
         SwingUtilities.invokeLater(() -> {
-            PiPWindow.this.textField.setText((txt == null) ? "" : txt.trim());
+            PiPWindow.this.textField.setText(txt == null ? "" : txt.trim());
             PiPWindow.this.textResetTimer.restart();
         });
     }
@@ -2435,8 +2435,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         final GraphicsDevice screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         // Call once, as each call creates a new DisplayMode object. This is slightly more efficient.
         final DisplayMode displayMode = screen.getDisplayMode();
-        final int adjX  = Math.max(0, Math.min(x, displayMode.getWidth()  - getWidth())),
-                  adjY  = Math.max(0, Math.min(y, displayMode.getHeight() - getHeight()));
+        final int adjX = Math.max(0, Math.min(x, displayMode.getWidth()  - getWidth())),
+                  adjY = Math.max(0, Math.min(y, displayMode.getHeight() - getHeight()));
         
         PiPWindow.this.setLocation(adjX, adjY);
     }
@@ -2610,7 +2610,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         
         // Initialize variables.
         final StringBuilder info = new StringBuilder();
-        final String mediaString = (hasAttrMedia ? this.media.toString() : null);
+        final String mediaString = hasAttrMedia ? this.media.toString() : null;
         
         // Find character length of longest line to allow for centering of some text lines.
         int longestLine = -1;
@@ -2646,7 +2646,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             // Audio Media
             if (media.getAttributes().isAudio()) {
                 final List<AudioTrackInfo> tracks = mediaPlayer.mediaPlayer().media().info().audioTracks();
-                final AudioTrackInfo track = (tracks != null && tracks.size() > 0 ? tracks.get(0) : null);
+                final AudioTrackInfo track = tracks != null && tracks.size() > 0 ? tracks.get(0) : null;
                 if (track != null) {
                     info
                     .append("Duration: ").append(PiPAAUtils.toStringHMS(mediaPlayer.mediaPlayer().media().info().duration())).append("\n")
@@ -2667,7 +2667,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             // Video Media
             else if (media.getAttributes().isVideo()) {
                 final List<VideoTrackInfo> tracks = mediaPlayer.mediaPlayer().media().info().videoTracks();
-                final VideoTrackInfo track = (tracks != null && tracks.size() > 0 ? tracks.get(0) : null);
+                final VideoTrackInfo track = tracks != null && tracks.size() > 0 ? tracks.get(0) : null;
                 if (track != null) {
                     final int qualityX = track != null ? track.width() : -1, qualityY = track != null ? track.height() : -1;
                     info.append("Duration: ").append(PiPAAUtils.toStringHMS(mediaPlayer.mediaPlayer().media().info().duration())).append("\n")
