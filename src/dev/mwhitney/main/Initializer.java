@@ -135,8 +135,9 @@ public class Initializer {
             @Override
             public BindController getController() { return bindController; }
         };
-        // Add a window when the loading process completes.
-        progressWin.whenComplete(windowManager::addWindow);
+        // Add a window when the loading process completes, if configured to.
+        if (propListener.propertyState(PiPProperty.OPEN_WINDOW_AT_LAUNCH, Boolean.class))
+            progressWin.whenComplete(windowManager::addWindow);
 
         loadingProgress("Setting up the tray...", 90);
         

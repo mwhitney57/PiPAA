@@ -140,6 +140,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private BetterComboBox comboOverwriteCache;
     /** The BetterCheckbox for the {@link PiPProperty#TRANSPARENT_PASS} property. */
     private BetterCheckbox chkPassThrough;
+    /** The BetterCheckbox for the {@link PiPProperty#OPEN_WINDOW_AT_LAUNCH} property. */
+    private BetterCheckbox chkOpenWinAtLaunch;
     /** The BetterComboBox for the {@link PiPProperty#APP_UPDATE_FREQUENCY} property. */
     private BetterComboBox comboAppUpdateFreq;
     /** The BetterComboBox for the {@link PiPProperty#APP_UPDATE_TYPE} property. */
@@ -356,6 +358,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         });
         
         // -------------------- Window Panel --------------------
+        chkOpenWinAtLaunch = new BetterCheckbox("Open Window at Launch", true, titleFont);
+        chkOpenWinAtLaunch.addActionListener(e -> propertyChanged(PiPProperty.OPEN_WINDOW_AT_LAUNCH, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        
         chkPassThrough = new BetterCheckbox("Transparent Pass-Through", true, titleFont);
         chkPassThrough.addActionListener(e -> propertyChanged(PiPProperty.TRANSPARENT_PASS, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblPassThrough = new BetterLabel(PiPPropertyDesc.TRANSPARENT_PASS, textFont);
@@ -498,6 +503,7 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         paneCache.add(btnOpenVLCCache, "gaptop 0px, split 2, w 100%, h pref!");
         paneCache.add(btnClearVLCCache, "w 100%, h pref!, wrap");
         // Window Pane
+        paneWindow.add(chkOpenWinAtLaunch, "wrap");
         paneWindow.add(chkPassThrough, "wrap 0px");
         paneWindow.add(lblPassThrough, "wrap");
         // Updates Pane
@@ -760,6 +766,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         case OVERWRITE_CACHE:
             final OVERWRITE_OPTION overwrite = PropDefault.OVERWRITE.matchAny(propertyState(prop, String.class));
             comboOverwriteCache.setSelectedIndex(overwrite.index());
+            break;
+        case OPEN_WINDOW_AT_LAUNCH:
+            chkOpenWinAtLaunch.setSelected(propertyState(prop, Boolean.class));
             break;
         case TRANSPARENT_PASS:
             chkPassThrough.setSelected(propertyState(prop, Boolean.class));
