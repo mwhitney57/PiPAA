@@ -213,7 +213,7 @@ public class Tray implements PropertyListener {
         // Add Tray Icon to System Tray
         tray.setImage(TRAY_IMAGE);
         tray.setTooltip(AppRes.APP_NAME);
-        tray.setStatus("Running Windows: 0");
+        tray.setStatus(AppRes.TRAY_NO_WINDOWS_STATUS);
     }
     
     /**

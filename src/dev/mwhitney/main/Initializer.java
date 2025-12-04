@@ -169,7 +169,7 @@ public class Initializer {
         // Set Listeners
         windowManager.setWindowCountListener(() ->
             // Updates tray's status with window count.
-            tray.updateStatus(windowManager.liveWindowCount() == 0 ? "No Windows Running..." : "Running Windows: " + windowManager.liveWindowCount())
+            tray.updateStatus(windowManager.liveWindowCount() == 0 ? AppRes.TRAY_NO_WINDOWS_STATUS : "Running Windows: " + windowManager.liveWindowCount())
         );
         tray.setTrayListener(new PiPTrayAdapter() {
             @Override

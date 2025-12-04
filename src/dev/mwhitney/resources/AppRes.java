@@ -156,6 +156,9 @@ public abstract class AppRes {
     public static final Font FONT_TOOLTIP                   = FONT_POPUP.deriveFont(Font.PLAIN, 14f);
     public static final Font FONT_TEXT_COMPONENT            = new Font("Monospaced", Font.BOLD, 14);
     
+    // Common Strings
+    public static final String TRAY_NO_WINDOWS_STATUS       = "No Windows Running...";
+    
     // Shortcuts Printout - Temporary Until Shortcuts Customization
     public static final String SHORTCUTS                    = """
                                                        PiPAA Keyboard and Mouse Controls
