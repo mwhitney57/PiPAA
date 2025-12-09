@@ -574,9 +574,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
 
             @Override
             public void positionChanged(MediaPlayer mediaPlayer, float newPosition) {
-//                System.out.println("POSITION CHANGED: [" + newPosition + "]" + (System.nanoTime() / 1000000));
                 // Sets the media to be done loading if it was still loading and the position changed.
-                if (media != null && media.isLoading() && newPosition > 0.0f) {
+                if (hasMedia() && media.isLoading() && newPosition > 0.0f) {
                     media.setLoading(false);
                     state.off(LOADING);
 
@@ -590,54 +589,57 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             
             @Override
             public void videoOutput(MediaPlayer mediaPlayer, int newCount) {
-//                System.out.println("VIDEOOUTPUT EVENT " + (System.nanoTime() / 1000000));
-//                System.err.println("NEW VIDEO OUTPUT DETECTED.");
-                
                 // Only fire when the media is loading. Otherwise, ignore.
-                if (media != null && media.isLoading()) {
+                if (hasMedia() && media.isLoading()) {
                     applyAudio();
                 }
             }
             @Override
             public void playing(MediaPlayer mediaPlayer) {
-//                System.err.println("PLAYING EVENT");
-                // AUDIO Media.
-                if (media != null && media.isLoading() && media.hasAttributes() && media.getAttributes().isAudio()) {
-                    // Set that the media loading is being handled (false).
-                    media.setLoading(false);
-                    state.off(LOADING);
-                    
-                    // Run further operations asynchronously.
-                    CompletableFuture.runAsync(() -> {
-                        // Load album artwork (if available)
-                        File file = null;
-                        try {
-//                            System.out.println(mediaPlayer.media().meta().get(Meta.ARTWORK_URL));
-                            // Only bother attempting to change the artwork if the type of audio file supports it.
-                            if (MediaExt.supportsArtwork(media.getAttributes().getFileExtension()))
-                                file = new File(URI.create(mediaPlayer.media().meta().get(Meta.ARTWORK_URL)));
-                        } catch (Exception e) { System.err.println("Warning: Couldn't load media artwork, it may not exist. Using default..."); }
-                        try {
-                            setImgViewerSrc(file != null ? file.getPath() : null, PiPWindow.class.getResource(AppRes.ICON_AUDIO_128));
-                            if (file == null) PiPWindow.this.cr.setMaximumSize(MAXIMUM_AUDIO_SIZE);
-                        } catch (InvalidMediaException e) { e.printStackTrace(); }
-                        
-                        // Ensure that audio is able to be set. Sleep until the -1 volume value becomes greater.
-                        float sleepMS = 1.00f;
-                        while (mediaPlayer.audio().volume() == -1) {
-//                            System.out.println("Volume still -1, sleeping " + sleepMS + "ms");
-                            try {
-                                Thread.sleep((int) sleepMS);
-                            } catch (InterruptedException e) { e.printStackTrace(); }
-//                            System.out.print("Before MS: " + sleepMS);
-                            sleepMS += Math.log10(sleepMS + 1);
-//                            System.out.println(" | After MS: " + sleepMS);
+                // Return early if there's no attributed audio media loading.
+                if (!hasMedia() || !media.isLoading() || !media.hasAttributes() || !media.getAttributes().isAudio())
+                    return;
+                
+                // Indicate that media loading is being handled (false).
+                media.setLoading(false);
+                state.off(LOADING);
+                
+                // Run further operations asynchronously.
+                CompletableFuture.runAsync(() -> {
+                    // Load album artwork (if available).
+                    File file = null;
+                    try {
+                        // Only bother attempting to change the artwork if the type of audio file supports it.
+                        if (MediaExt.supportsArtwork(media.getAttributes().getFileExtension())) {
+                            file = new File(URI.create(mediaPlayer.media().meta().get(Meta.ARTWORK_URL)));
                         }
-                        
-                        // Audio is not settable, so apply audio.
-                        applyAudio();
-                    });
-                }
+                    } catch (Exception e) {
+                        System.err.println("Warning: Couldn't load media artwork, it may not exist. Using default...");
+                    }
+                    
+                    // Set the image viewer to use the embedded artwork, or the application default.
+                    try {
+                        setImgViewerSrc(file != null ? file.getPath() : null, PiPWindow.class.getResource(AppRes.ICON_AUDIO_128));
+                        if (file == null) PiPWindow.this.cr.setMaximumSize(MAXIMUM_AUDIO_SIZE);
+                    } catch (InvalidMediaException e) {
+                        // This exception only occurs when both source options are null: Developer error. Notify the user.
+                        setMedia(null);
+                        statusUpdate("Error: LM-00");  // TODO Update when error codes system is implemented across the app.
+                        return;
+                    }
+                    
+                    // Continually sleep until player's volume value is valid (not -1).
+                    float sleepMS = 1.00f;
+                    try {
+                        while (mediaPlayer.audio().volume() == -1) {
+                            Thread.sleep((int) sleepMS);
+                            sleepMS += Math.log10(sleepMS + 1);
+                        }
+                    } catch (InterruptedException ignore) {}  // Audio settings may not stay applied, but that's fine.
+                    
+                    // Apply audio configuration to player once playback has fully started.
+                    applyAudio();
+                }, CFExec.VIRTUAL_EXECUTOR);  // Virtual executor should be preferable due to sleep operations.
             }
         };
         mediaPlayer.mediaPlayer().controls().setRepeat(false);  // Repeats handled manually.
@@ -1673,7 +1675,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      *         otherwise.
      */
     public boolean hasMedia() {
-        return (this.media != null);
+        return this.media != null;
     }
     
     /**
@@ -2071,7 +2073,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             }
         }
         
-        // SWING and COMBO Players
+        // SWING Player
         if (state.is(PLAYER_SWING)) {
             // Image and Basic GIF Playback Media
             try {
@@ -2086,7 +2088,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
         }
         // VLC and COMBO Players
         if (state.not(PLAYER_SWING)) {
-            // Set repeat as false -- restart playback is handled manually for more control.
+            // Don't auto-repeat -- playback restart is handled manually for more control.
             mediaPlayer.mediaPlayer().controls().setRepeat(false);
             mediaPlayer.mediaPlayer().media().play(args[0], options);
         }
@@ -2175,7 +2177,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
     /**
      * Resets the Normal and Fullscreen mode zoom and pan snapshots to the default.
      * This method is intended to be used when changing media in the image viewer,
-     * as it clears snapshot data relating to the current media and its state.
+     * as it clears snapshot data that relates to the current media and its state.
      * 
      * @since 0.9.5
      */
@@ -2211,6 +2213,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 }
             } catch (IllegalArgumentException ex) { ex.printStackTrace(); }
         }
+        
         // Set Artwork Metadata, Save it to Underlying Media, then Reload to Show Art
 //        System.out.println(mediaPlayer.mediaPlayer().media().meta().get(Meta.ARTWORK_URL));
         mediaPlayer.mediaPlayer().media().meta().set(Meta.ARTWORK_URL,
