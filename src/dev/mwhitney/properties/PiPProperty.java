@@ -48,6 +48,8 @@ public enum PiPProperty {
     OPEN_WINDOW_AT_LAUNCH,
     /** Allows the window background to become fully transparent so that clicks can pass-through. */
     TRANSPARENT_PASS,
+    /** Resets the window opacity when media is closed. */
+    RESET_OPACITY_CLOSE,
     /** Trim any fully-transparent pixel edges from image and GIF media sources. */
     TRIM_TRANSPARENCY,
     /** The option selection for how {@link TRIM_TRANSPARENCY} should operate. */
@@ -103,6 +105,7 @@ public enum PiPProperty {
              GLOBAL_MUTED,
              SINGLE_PLAY_MODE,
              DISABLE_CACHE,
+             RESET_OPACITY_CLOSE,
              APP_UPDATE_FORCE,
              USE_SYS_VLC,
              USE_SYS_BINARIES,

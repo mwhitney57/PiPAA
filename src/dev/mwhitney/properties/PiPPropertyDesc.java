@@ -32,6 +32,7 @@ public final class PiPPropertyDesc {
         CONFIRM_CLOSE_ALL     = "Require confirmation before closing all windows using the shortcut.",
         TRIM_TRANSPARENCY     = "Trims transparent edges from images or GIFs before playing, keeping window edges closer to media content. Trimming can take a while for big or long GIFs. Results are saved to the cache.",
         TRANSPARENT_PASS      = "Allows clicks to pass-through transparent parts of the window. Useful when viewing images with transparency. Borders remain clickable unless size is locked.",
+        RESET_OPACITY_CLOSE   = "Restores the opacity of a window when its media is closed. Consider turning this on if you lose track of your see-through windows after closing media.",
         APP_UPDATES           = "Updates for the entire PiPAA application. Select the type of updates to check for below. Most users can stick with the default."
                 + " For newer builds that are less stable, select Beta or Snapshot versions. You can set the automatic update schedule or manually update using the button below.",
         BIN_UPDATES           = "Updates for certain binaries or packages shipped with PiPAA. These include yt-dlp and gallery-dl, which are critical for downloading media."

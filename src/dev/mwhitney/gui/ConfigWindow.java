@@ -138,10 +138,12 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     private BetterCheckbox chkDisCache;
     /** The BetterComboBox for the {@link PiPProperty#OVERWRITE_CACHE} property. */
     private BetterComboBox comboOverwriteCache;
-    /** The BetterCheckbox for the {@link PiPProperty#TRANSPARENT_PASS} property. */
-    private BetterCheckbox chkPassThrough;
     /** The BetterCheckbox for the {@link PiPProperty#OPEN_WINDOW_AT_LAUNCH} property. */
     private BetterCheckbox chkOpenWinAtLaunch;
+    /** The BetterCheckbox for the {@link PiPProperty#TRANSPARENT_PASS} property. */
+    private BetterCheckbox chkPassThrough;
+    /** The BetterCheckbox for the {@link PiPProperty#RESET_OPACITY_CLOSE} property. */
+    private BetterCheckbox chkResetOpacity;
     /** The BetterComboBox for the {@link PiPProperty#APP_UPDATE_FREQUENCY} property. */
     private BetterComboBox comboAppUpdateFreq;
     /** The BetterComboBox for the {@link PiPProperty#APP_UPDATE_TYPE} property. */
@@ -365,6 +367,10 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         chkPassThrough.addActionListener(e -> propertyChanged(PiPProperty.TRANSPARENT_PASS, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
         final BetterLabel lblPassThrough = new BetterLabel(PiPPropertyDesc.TRANSPARENT_PASS, textFont);
         
+        chkResetOpacity = new BetterCheckbox("Reset Window Opacity when Media is Closed", true, titleFont);
+        chkResetOpacity.addActionListener(e -> propertyChanged(PiPProperty.RESET_OPACITY_CLOSE, Boolean.toString(((BetterCheckbox) e.getSource()).isSelected())));
+        final BetterLabel lblResetOpacity = new BetterLabel(PiPPropertyDesc.RESET_OPACITY_CLOSE, textFont);
+        
         // -------------------- Updates Panel --------------------
         final BetterLabel lblAppUpdateTitle = new BetterLabel("Application Updates", headerFont);
         final BetterLabel lblAppUpdateDesc  = new BetterLabel(PiPPropertyDesc.APP_UPDATES, textFont);
@@ -506,6 +512,8 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
         paneWindow.add(chkOpenWinAtLaunch, "wrap");
         paneWindow.add(chkPassThrough, "wrap 0px");
         paneWindow.add(lblPassThrough, "wrap");
+        paneWindow.add(chkResetOpacity, "wrap 0px");
+        paneWindow.add(lblResetOpacity, "wrap");
         // Updates Pane
         paneUpdates.add(lblAppUpdateTitle, "alignx center, wrap 5px");
         paneUpdates.add(lblAppUpdateDesc, "wrap");
@@ -638,17 +646,16 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
      * @param jc - the parent component to theme, along with all of its children.
      */
     private void themeComponents(THEME_OPTION theme, JComponent jc) {
-        Color colorBG, colorFG, colorBord, colorBtnFG, colorBtn1, colorBtn2, colorBtn3, colorSli, colorSliK, colorSliE;
-        colorBG    = theme.color(COLOR.BG);
-        colorBord  = theme.color(COLOR.BG_ACCENT);
-        colorFG    = theme.color(COLOR.TXT);
-        colorBtnFG = theme.color(COLOR.BTN_TXT);
-        colorBtn1  = theme.color(COLOR.BTN);
-        colorBtn2  = theme.color(COLOR.BTN_PRESSED);
-        colorBtn3  = theme.color(COLOR.BTN_BORDER);
-        colorSli   = theme.color(COLOR.SLIDER);
-        colorSliK  = theme.color(COLOR.SLIDER_KNOB);
-        colorSliE  = theme.color(COLOR.SLIDER_EMPTY);
+        Color colorBG    = theme.color(COLOR.BG);
+        Color colorBord  = theme.color(COLOR.BG_ACCENT);
+        Color colorFG    = theme.color(COLOR.TXT);
+        Color colorBtnFG = theme.color(COLOR.BTN_TXT);
+        Color colorBtn1  = theme.color(COLOR.BTN);
+        Color colorBtn2  = theme.color(COLOR.BTN_PRESSED);
+        Color colorBtn3  = theme.color(COLOR.BTN_BORDER);
+        Color colorSli   = theme.color(COLOR.SLIDER);
+        Color colorSliK  = theme.color(COLOR.SLIDER_KNOB);
+        Color colorSliE  = theme.color(COLOR.SLIDER_EMPTY);
         
         if (jc instanceof BetterPanel panel) {
             panel.setBackground(colorBG);
@@ -772,6 +779,9 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
             break;
         case TRANSPARENT_PASS:
             chkPassThrough.setSelected(propertyState(prop, Boolean.class));
+            break;
+        case RESET_OPACITY_CLOSE:
+            chkResetOpacity.setSelected(propertyState(prop, Boolean.class));
             break;
         case APP_UPDATE_FREQUENCY:
             final FREQUENCY_OPTION appFrequency = PropDefault.FREQUENCY_APP.matchAny(propertyState(prop, String.class));

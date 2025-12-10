@@ -1549,6 +1549,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
             resetSize();
             cr.setAspectRatio(null);
             ensureOnScreen();
+            if (propertyState(PiPProperty.RESET_OPACITY_CLOSE, Boolean.class))
+                setOpacity(opacitySelector.selectLastAndGet());
             this.requestFocus();
             this.repaint();
             this.revalidate();
