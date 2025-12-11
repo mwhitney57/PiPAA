@@ -17,6 +17,7 @@ import dev.mwhitney.properties.PiPProperty;
 import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.PiPAAUtils;
+import dev.mwhitney.util.TryIgnore;
 import net.codejava.utility.UnzipUtility;
 
 /**
@@ -273,9 +274,7 @@ public class Binaries {
         final ProcessBuilder processBuilder = new ProcessBuilder(args).redirectErrorStream(redirError);
         
         // Build and start process. If failure or exception, return null.
-        Process process = null;
-        try { process = processBuilder.start(); }
-        catch (IOException ioe) {}
+        final Process process = TryIgnore.get(processBuilder::start);
         if (process == null) return null;
         
         // Reading implementation before 0.9.5 did not respect interrupts. This implementation does.

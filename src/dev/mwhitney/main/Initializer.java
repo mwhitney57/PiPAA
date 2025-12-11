@@ -50,6 +50,7 @@ import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
 import dev.mwhitney.update.api.Build;
 import dev.mwhitney.update.api.Version;
 import dev.mwhitney.util.PiPAAUtils;
+import dev.mwhitney.util.TryIgnore;
 import net.codejava.utility.UnzipUtility;
 import uk.co.caprica.vlcj.binding.support.runtime.RuntimeUtil;
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
@@ -150,9 +151,9 @@ public class Initializer {
                 case SET_ALL_PAUSED, SET_ALL_MUTED, SET_ALL_PLAYBACK_RATE, SET_ALL_VOLUME -> {}
                 case USE_SYS_BINARIES -> {
                     // Refresh available system binaries when property is enabled.
-                    if (Boolean.valueOf(value)) try {
-                        Binaries.refreshOnSys();
-                    } catch (InterruptedException ignore) {}
+                    if (Boolean.valueOf(value)) {
+                        TryIgnore.run(Binaries::refreshOnSys);
+                    }
 
                     propsManager.set(prop, value);
                 }

@@ -29,6 +29,7 @@ import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
 import dev.mwhitney.properties.PiPProperty.THEME_OPTION.COLOR;
 import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.PiPAAUtils;
+import dev.mwhitney.util.TryIgnore;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -474,9 +475,8 @@ public class ProgressWindow extends JFrame implements ThemedComponent {
     public void updateAndWait(String msg, float progress, int delay) {
         update(msg, progress);
         if (!SwingUtilities.isEventDispatchThread() && delay > 0) {
-            try {
-                Thread.sleep(Duration.ofMillis(delay));
-            } catch (InterruptedException ignore) {}  // Ignore and treat as cancel.
+            // If sleep is interrupted, safely ignore and treat as cancellation.
+            TryIgnore.runWith(Thread::sleep, Duration.ofMillis(delay));
         }
     }
     

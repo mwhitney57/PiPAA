@@ -96,6 +96,7 @@ import dev.mwhitney.util.FileSelection;
 import dev.mwhitney.util.Loop;
 import dev.mwhitney.util.PiPAAUtils;
 import dev.mwhitney.util.ScalingDimension;
+import dev.mwhitney.util.TryIgnore;
 import dev.mwhitney.util.UnsetBool;
 import dev.mwhitney.util.interfaces.PermanentRunnable;
 import dev.mwhitney.util.monitor.ProcessMonitor;
@@ -1064,25 +1065,23 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 if (state.not(PLAYER_COMBO)) break;
                 
                 final StringBuilder imgLoc = new StringBuilder();
-                try {
-                    SwingUtilities.invokeAndWait(() -> {
-                        final FileDialog dialog = new FileDialog(this, "Add Artwork to Media File", FileDialog.LOAD);
-                        dialog.setAlwaysOnTop(true);
-                        dialog.setDirectory("C:\\");
-                        dialog.setFile("*.jpg;*.jpeg;*.png");
-//                        dialog.setFilenameFilter((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png"));
-                        dialog.setVisible(true);
-                        final File[] files = dialog.getFiles();
-                        if (files.length < 1 || files[0] == null || !files[0].exists() ||
-                                (!files[0].getPath().endsWith("jpg") && !files[0].getPath().endsWith("jpeg") && !files[0].getPath().endsWith("png"))) {
-                            flashBorder(BORDER_ERROR);
-                        } else {
-                            imgLoc.append("file:///").append(files[0].getPath());
-                            flashBorder(BORDER_OK);
-                        }
-                        dialog.dispose();
-                    });
-                } catch (InvocationTargetException | InterruptedException ex) { ex.printStackTrace(); }
+                TryIgnore.runWith(SwingUtilities::invokeAndWait, () -> {
+                    final FileDialog dialog = new FileDialog(this, "Add Artwork to Media File", FileDialog.LOAD);
+                    dialog.setAlwaysOnTop(true);
+                    dialog.setDirectory("C:\\");
+                    dialog.setFile("*.jpg;*.jpeg;*.png");
+//                    dialog.setFilenameFilter((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png"));
+                    dialog.setVisible(true);
+                    final File[] files = dialog.getFiles();
+                    if (files.length < 1 || files[0] == null || !files[0].exists() ||
+                            (!files[0].getPath().endsWith("jpg") && !files[0].getPath().endsWith("jpeg") && !files[0].getPath().endsWith("png"))) {
+                        flashBorder(BORDER_ERROR);
+                    } else {
+                        imgLoc.append("file:///").append(files[0].getPath());
+                        flashBorder(BORDER_OK);
+                    }
+                    dialog.dispose();
+                });
                 if (!imgLoc.isEmpty()) replaceArtwork(imgLoc.toString());
                 break;
             case MOVE_WINDOW_W:
@@ -1463,9 +1462,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 state.off(LOADING);
                 state.on(CLOSING_MEDIA, MANUALLY_STOPPED);
                 if (state.is(PLAYER_SWING)) {
-                    try {
-                        PiPAAUtils.invokeNowAndWait(this::clearImgViewer);
-                    } catch (InvocationTargetException | InterruptedException e) { e.printStackTrace(); }
+                    TryIgnore.runWith(PiPAAUtils::invokeNowAndWait, this::clearImgViewer);
                 }
                 else if (mediaPlayerCanBeStopped()) {
                     // Not using a virtual thread, as this operation may use native code.

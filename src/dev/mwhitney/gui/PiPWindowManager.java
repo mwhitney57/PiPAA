@@ -5,7 +5,6 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +35,7 @@ import dev.mwhitney.properties.PiPProperty;
 import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.util.FileSelection;
 import dev.mwhitney.util.PiPAAUtils;
+import dev.mwhitney.util.TryIgnore;
 import dev.mwhitney.util.monitor.ProcessMonitor;
 import dev.mwhitney.util.monitor.ThreadMonitor;
 
@@ -394,9 +394,8 @@ public class PiPWindowManager implements PropertyListener, BindControllerFetcher
         this.windows.clear();
         
         // Conditionally prune the cache folder.
-        if (propertyState(PiPProperty.DISABLE_CACHE, Boolean.class)) try {
-            PiPAAUtils.pruneCacheFolder();
-        } catch (IOException e) {}
+        if (propertyState(PiPProperty.DISABLE_CACHE, Boolean.class))
+            TryIgnore.run(PiPAAUtils::pruneCacheFolder);
         
         // GC -- See Method's Doc. As To Why
         gcIfZeroCount();

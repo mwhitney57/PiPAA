@@ -3,6 +3,7 @@ package dev.mwhitney.properties;
 import java.awt.Color;
 
 import dev.mwhitney.resources.AppRes;
+import dev.mwhitney.util.TryIgnore;
 
 /**
  * Properties for the PiPAA application.
@@ -688,11 +689,7 @@ public enum PiPProperty {
          *         <code>null</code> if no match exists.
          */
         public static TYPE_OPTION parseSafe(String str) {
-            TYPE_OPTION ext = null;
-            try {
-                ext = TYPE_OPTION.valueOf(str);
-            } catch(IllegalArgumentException e) {}
-            return ext;
+            return TryIgnore.getWith(TYPE_OPTION::valueOf, str);
         }
         
         @Override
