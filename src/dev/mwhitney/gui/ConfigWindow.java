@@ -40,8 +40,6 @@ import dev.mwhitney.listeners.simplified.MouseReleaseListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.properties.PiPProperty;
-import dev.mwhitney.properties.PiPPropertyDesc;
-import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.properties.PiPProperty.DOWNLOAD_OPTION;
 import dev.mwhitney.properties.PiPProperty.FREQUENCY_OPTION;
 import dev.mwhitney.properties.PiPProperty.OVERWRITE_OPTION;
@@ -49,9 +47,12 @@ import dev.mwhitney.properties.PiPProperty.PLAYBACK_OPTION;
 import dev.mwhitney.properties.PiPProperty.PropDefault;
 import dev.mwhitney.properties.PiPProperty.SCALING_OPTION;
 import dev.mwhitney.properties.PiPProperty.THEME_OPTION;
+import dev.mwhitney.properties.PiPProperty.THEME_OPTION.COLOR;
 import dev.mwhitney.properties.PiPProperty.TRIM_OPTION;
 import dev.mwhitney.properties.PiPProperty.TYPE_OPTION;
-import dev.mwhitney.properties.PiPProperty.THEME_OPTION.COLOR;
+import dev.mwhitney.properties.PiPPropertyDesc;
+import dev.mwhitney.properties.PiPPropertyEnum;
+import dev.mwhitney.properties.PropertyListener;
 import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.update.PiPUpdater;
 import dev.mwhitney.update.PiPUpdater.PiPUpdateResult;
@@ -701,129 +702,137 @@ public class ConfigWindow extends JFrame implements PropertyListener, Themed {
     }
     
     /**
-     * Handles the change of the passed property and reflects the updated value in
-     * the ConfigWindow. This method will use the ConfigWindow's PropertyListener to
-     * pull the current property state. Therefore, one must update that property's
-     * state <i>prior</i> to calling this method in order for the change to be
-     * reflected in the ConfigWindow.
-     * <p>
-     * This method <b>does not</b> automatically run on the EDT. You should enclose
-     * this method call within a <code>SwingUtilities.invokeLater(Runnable)</code>
-     * block if necessary.
+     * Reduces boilerplate by utilizing Java {@code varargs} to cleanly pack one or
+     * more {@link JComponent} objects into an array.
      * 
-     * @param prop - the PiPProperty to handle a change for.
+     * @param comps - one or more {@link JComponent} objects to array-ify.
+     * @return the array of components.
+     * @since 0.9.5
+     */
+    private JComponent[] comp(JComponent... comps) {
+        return comps;
+    }
+    
+    /**
+     * Gets an array of {@link JComponent} objects that are directly tied to a given
+     * {@link PiPProperty}.
+     * <p>
+     * Some components may be associated with a property, but are not directly
+     * connected. For example, disabling {@link PiPProperty#USE_HW_DECODING} should
+     * disable any components connected to {@link PiPProperty#USE_SUPER_RES}, but
+     * this method won't include those components in the returned array. It will
+     * just return the directly related components. Therefore, if additional
+     * adjustments must be made to other components, do them elsewhere.
+     * 
+     * @param prop - the {@link PiPProperty} to get the linked components for.
+     * @return a never-{@code null} array of connected components.
+     * @since 0.9.5
+     */
+    private JComponent[] getComponentsForProperty(PiPProperty prop) {
+        return switch(prop) {
+        case APP_UPDATE_FORCE         -> comp(this.chkForceAppUpdate);
+        case APP_UPDATE_FREQUENCY     -> comp(this.comboAppUpdateFreq);
+        case APP_UPDATE_TYPE          -> comp(this.comboAppUpdateType);
+        case BIN_UPDATE_FREQUENCY     -> comp(this.comboBinUpdateFreq);
+        case CONFIRM_CLOSE_ALL        -> comp(this.chkConfirmClose);
+        case CONVERT_WEB_INDIRECT     -> comp(this.chkConvertIndWeb);
+        case DEFAULT_PLAYBACK_RATE    -> comp(this.sliderDefRate, this.lblDefRateTitle);
+        case DEFAULT_VOLUME           -> comp(this.sliderDefVol, this.lblDefVolTitle);
+        case DISABLE_CACHE            -> comp(this.chkDisCache);
+        case DND_PREFER_LINK          -> comp(this.chkPreferLinkDND);
+        case DOWNLOAD_WEB_MEDIA       -> comp(this.comboDLWebMedia);
+        case GIF_PLAYBACK_MODE        -> comp(this.comboGIFPlayback);
+        case GLOBAL_MUTED             -> comp(this.chkGlobMute);
+        case IMG_SCALING_QUALITY      -> comp(this.comboImgScaling);
+        case OPEN_WINDOW_AT_LAUNCH    -> comp(this.chkOpenWinAtLaunch);
+        case OVERWRITE_CACHE          -> comp(this.comboOverwriteCache);
+        case RESET_OPACITY_CLOSE      -> comp(this.chkResetOpacity);
+        case SINGLE_PLAY_MODE         -> comp(this.chkSinglePlay);
+        case THEME                    -> comp(this.comboTheme);
+        case TRANSPARENT_PASS         -> comp(this.chkPassThrough);
+        case TRIM_TRANSPARENCY        -> comp(this.chkTrimTransparency);
+        case TRIM_TRANSPARENCY_OPTION -> comp(this.comboTrim);
+        case USE_HW_DECODING          -> comp(this.chkHWDecoding);
+        case USE_SUPER_RES            -> comp(this.chkSuperRes);
+        case USE_SYS_BINARIES         -> comp(this.chkSystemBin);
+        case USE_SYS_VLC              -> comp(this.chkSystemVLC);
+        // No Value – Default is not used intentionally.
+        // When a property is added, the compiler tells us a value needs to be handled.
+        case APP_LAST_UPDATE_CHECK,
+             APP_UPDATING_FROM,
+             BIN_LAST_UPDATE_CHECK,
+             SET_ALL_MUTED,
+             SET_ALL_PAUSED,
+             SET_ALL_PLAYBACK_RATE,
+             SET_ALL_VOLUME -> new JComponent[0];
+        };
+    }
+    
+    /**
+     * Enables or disables components related, but not directly connected to, the
+     * passed property. The passed boolean determines whether these components will
+     * be enabled ({@code true}) or disabled ({@code false}).
+     * 
+     * @param prop  - the {@link PiPProperty} which these components are related to.
+     * @param value - a boolean for enabling or disabling the components.
+     * @since 0.9.5
+     */
+    private void enableDisableRelatedComponents(PiPProperty prop, boolean value) {
+        switch (prop) {
+        case USE_HW_DECODING -> chkSuperRes.setEnabled(value);
+        default -> {}
+        }
+    }
+
+    /**
+     * Handles the change of the passed property and reflects the updated value in
+     * the window. This method will use the window's {@link PropertyListener} to
+     * pull the current property state. Therefore, one must update that property's
+     * state <i>prior</i> to calling this method in order for the change(s) to be
+     * reflected in the UI.
+     * <p>
+     * This method should be called on the event-dispatch thread (EDT).
+     * 
+     * @param prop - the {@link PiPProperty} to handle a change for.
      */
     public void handlePropertyChange(PiPProperty prop) {
-        switch(prop) {
-        case THEME: {
-            final THEME_OPTION theme = PropDefault.THEME.matchAny(propertyState(prop, String.class));
-            comboTheme.setSelectedIndex(theme.index());
-            pickTheme(theme);
-            break;
+        // Get components DIRECTLY connected to the property.
+        final JComponent[] comps = getComponentsForProperty(prop);
+        
+        // Iterate over each component and ensure it reflects the property's current value.
+        for (final JComponent comp : comps) {
+            switch (comp) {
+            case BetterCheckbox checkbox -> {
+                final Boolean state = propertyState(prop, Boolean.class);
+                checkbox.setSelected(state);
+                
+                // Update other components whose state depends on this checkbox.
+                enableDisableRelatedComponents(prop, state);
+            }
+            case BetterComboBox comboBox -> {
+                final PiPPropertyEnum<?> stateOption = prop.stockOption().matchAny(propertyState(prop, String.class));
+                comboBox.setSelectedIndex(stateOption.index());
+                comboBox.setToolTipText(stateOption.description());
+            }
+            case BetterSlider slider -> {
+                slider.setValue(prop == PiPProperty.DEFAULT_PLAYBACK_RATE ? (int) (propertyState(prop, Float.class) * 100) : propertyState(prop, Integer.class));
+            }
+            case BetterLabel label -> {
+                label.setText(switch (prop) {
+                case DEFAULT_VOLUME        -> volTitleTxt();
+                case DEFAULT_PLAYBACK_RATE -> rateTitleTxt();
+                default -> label.getText();
+                });
+            }
+            case null -> {} // Ignore
+            default -> System.err.println("Unhandled component type while handling property change: " + comp.getClass());
+            }
         }
-        case GIF_PLAYBACK_MODE:
-            final PLAYBACK_OPTION playback = PropDefault.PLAYBACK.matchAny(propertyState(prop, String.class));
-            comboGIFPlayback.setSelectedIndex(playback.index());
-            comboGIFPlayback.setToolTipText(playback.description());
-            break;
-        case IMG_SCALING_QUALITY:
-            final SCALING_OPTION scaling = PropDefault.SCALING.matchAny(propertyState(prop, String.class));
-            comboImgScaling.setSelectedIndex(scaling.index());
-            comboImgScaling.setToolTipText(scaling.description());
-            break;
-        case DND_PREFER_LINK:
-            chkPreferLinkDND.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case DOWNLOAD_WEB_MEDIA:
-            final DOWNLOAD_OPTION download = PropDefault.DOWNLOAD.matchAny(propertyState(prop, String.class));
-            comboDLWebMedia.setSelectedIndex(download.index());
-            comboDLWebMedia.setToolTipText(download.description());
-            break;
-        case CONVERT_WEB_INDIRECT:
-            chkConvertIndWeb.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case CONFIRM_CLOSE_ALL:
-            chkConfirmClose.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case TRIM_TRANSPARENCY:
-            chkTrimTransparency.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case TRIM_TRANSPARENCY_OPTION:
-            final TRIM_OPTION option = PropDefault.TRIM.matchAny(propertyState(prop, String.class));
-            comboTrim.setSelectedIndex(option.index());
-            comboTrim.setToolTipText(option.description());
-            break;
-        case SINGLE_PLAY_MODE:
-            chkSinglePlay.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case GLOBAL_MUTED:
-            chkGlobMute.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case DEFAULT_VOLUME:
-            sliderDefVol.setValue(propertyState(prop, Integer.class));
-            lblDefVolTitle.setText(volTitleTxt());
-            break;
-        case DEFAULT_PLAYBACK_RATE:
-            sliderDefRate.setValue((int) (propertyState(PiPProperty.DEFAULT_PLAYBACK_RATE, Float.class) * 100));
-            lblDefRateTitle.setText(rateTitleTxt());
-            break;
-        case DISABLE_CACHE:
-            chkDisCache.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case OVERWRITE_CACHE:
-            final OVERWRITE_OPTION overwrite = PropDefault.OVERWRITE.matchAny(propertyState(prop, String.class));
-            comboOverwriteCache.setSelectedIndex(overwrite.index());
-            break;
-        case OPEN_WINDOW_AT_LAUNCH:
-            chkOpenWinAtLaunch.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case TRANSPARENT_PASS:
-            chkPassThrough.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case RESET_OPACITY_CLOSE:
-            chkResetOpacity.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case APP_UPDATE_FREQUENCY:
-            final FREQUENCY_OPTION appFrequency = PropDefault.FREQUENCY_APP.matchAny(propertyState(prop, String.class));
-            comboAppUpdateFreq.setSelectedIndex(appFrequency.index());
-            comboAppUpdateFreq.setToolTipText(appFrequency.description());
-            break;
-        case APP_UPDATE_TYPE:
-            final TYPE_OPTION type = PropDefault.TYPE.matchAny(propertyState(prop, String.class));
-            comboAppUpdateType.setSelectedIndex(type.index());
-            comboAppUpdateType.setToolTipText(type.description());
-            break;
-        case APP_UPDATE_FORCE:
-            chkForceAppUpdate.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case BIN_UPDATE_FREQUENCY:
-            final FREQUENCY_OPTION binFrequency = PropDefault.FREQUENCY_BIN.matchAny(propertyState(prop, String.class));
-            comboBinUpdateFreq.setSelectedIndex(binFrequency.index());
-            comboBinUpdateFreq.setToolTipText(binFrequency.description());
-            break;
-        case USE_SYS_VLC:
-            chkSystemVLC.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case USE_SYS_BINARIES:
-            chkSystemBin.setSelected(propertyState(prop, Boolean.class));
-            break;
-        case USE_HW_DECODING:
-            final boolean state = propertyState(prop, Boolean.class);
-            chkHWDecoding.setSelected(state);
-            chkSuperRes.setEnabled(state);      // Disable RTX Super Res. if this is disabled.
-            break;
-        case USE_SUPER_RES:
-            chkSuperRes.setSelected(propertyState(prop, Boolean.class));
-            break;
-        // Do Nothing
-        case APP_LAST_UPDATE_CHECK:
-        case APP_UPDATING_FROM:
-        case BIN_LAST_UPDATE_CHECK:
-        case SET_ALL_MUTED:
-        case SET_ALL_PAUSED:
-        case SET_ALL_PLAYBACK_RATE:
-        case SET_ALL_VOLUME:
-            break;
+        
+        // Optional, property-dependent code to execute after handling primary UI changes.
+        switch (prop) {
+        case THEME -> pickTheme(PropDefault.THEME.matchAny(propertyState(prop, String.class)));
+        default -> {}
         }
     }
     

@@ -79,11 +79,11 @@ public enum PiPProperty {
     SET_ALL_PLAYBACK_RATE;
     
     /**
-     * Gets the default value corresponding to this PiPProperty. If the PiPProperty
-     * is a pseudo-property, meaning it has no value, or simply has no default, then
-     * <code>null</code> will be returned.
+     * Gets the default value corresponding to this property. If the property is a
+     * pseudo-property, meaning it has no value, or simply has no default, then
+     * {@code null} will be returned.
      * 
-     * @return a String with the default value, if one exists; <code>null</code>
+     * @return a String with the default value, if one exists; {@code null}
      *         otherwise.
      */
     public String stock() {
@@ -114,9 +114,39 @@ public enum PiPProperty {
              USE_SUPER_RES            -> "false";
         case DEFAULT_VOLUME           -> "50";
         case DEFAULT_PLAYBACK_RATE    -> "1";
-        // Do Not Have Stored Properties
-        case SET_ALL_MUTED, SET_ALL_PAUSED, SET_ALL_PLAYBACK_RATE,
-            SET_ALL_VOLUME, APP_LAST_UPDATE_CHECK, APP_UPDATING_FROM, BIN_LAST_UPDATE_CHECK -> null;
+        // Do Not Have Defaults
+        case APP_LAST_UPDATE_CHECK, APP_UPDATING_FROM, BIN_LAST_UPDATE_CHECK,
+        // Do Not Have Defaults (Are Not Stored)
+             SET_ALL_MUTED, SET_ALL_PAUSED, SET_ALL_PLAYBACK_RATE, SET_ALL_VOLUME -> null;
+        };
+    }
+    
+    /**
+     * Gets the default option value corresponding to this property. If the property
+     * is a pseudo-property, meaning it has no value, or simply has no default, then
+     * {@code null} will be returned.
+     * <p>
+     * This method differs from {@link #stock()}, as it is designed to return some
+     * {@link PiPPropertyEnum} value connected to a property that has a set list of
+     * options for its value, like {@link #GIF_PLAYBACK_MODE} with
+     * {@link PLAYBACK_OPTION}.
+     * 
+     * @return the default {@link PiPPropertyEnum} value associated with the prop,
+     *         if one exists for it; {@code null} otherwise.
+     * @since 0.9.5
+     */
+    public PiPPropertyEnum<? extends PiPPropertyEnum<?>> stockOption() {
+        return switch (this) {
+        case THEME                    -> PropDefault.THEME;
+        case DOWNLOAD_WEB_MEDIA       -> PropDefault.DOWNLOAD;
+        case TRIM_TRANSPARENCY_OPTION -> PropDefault.TRIM;
+        case GIF_PLAYBACK_MODE        -> PropDefault.PLAYBACK;
+        case IMG_SCALING_QUALITY      -> PropDefault.SCALING;
+        case OVERWRITE_CACHE          -> PropDefault.OVERWRITE;
+        case APP_UPDATE_TYPE          -> PropDefault.TYPE;
+        case APP_UPDATE_FREQUENCY     -> PropDefault.FREQUENCY_APP;
+        case BIN_UPDATE_FREQUENCY     -> PropDefault.FREQUENCY_BIN;
+        default -> null;
         };
     }
     
