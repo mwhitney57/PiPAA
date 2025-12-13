@@ -1374,8 +1374,8 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 // If no point arguments were specified, use a default of x=0, y=0. That will zoom centrally.
                 final boolean hasPointArgs = args.length == 4; 
                 final Point point = hasPointArgs ? new Point(Integer.valueOf(args[2]), Integer.valueOf(args[3])) : new Point(0, 0);
-                if (args[0].equals("SKIP")) ((StretchIcon) imgLabel.getIcon()).incZoom(newZoom, point);
-                else                        ((StretchIcon) imgLabel.getIcon()).setZoom(newZoom, point);
+                if (args[0].equals("SKIP")) this.imgLabelIcon.incZoom(newZoom, point);
+                else                        this.imgLabelIcon.setZoom(newZoom, point);
                 SwingUtilities.invokeLater(imgLabel::repaint);
                 break;
             case PAN:
@@ -1384,9 +1384,9 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 
                 // Expected Arguments: [0]=Mouse PositionX, [1]=Mouse PositionY, [2]=Mouse PositionXRel, [3]=Mouse PositionYRel
                 if (!strArgs) {
-                    ((StretchIcon) imgLabel.getIcon()).stoppedPan();
+                    this.imgLabelIcon.stoppedPan();
                 } else {
-                    ((StretchIcon) imgLabel.getIcon()).pan(Integer.valueOf(args[0]), Integer.valueOf(args[1]));
+                    this.imgLabelIcon.pan(Integer.valueOf(args[0]), Integer.valueOf(args[1]));
                 }
                 SwingUtilities.invokeLater(imgLabel::repaint);
                 break;
@@ -1686,7 +1686,7 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
      *         <code>false</code> otherwise.
      */
     public boolean hasAttributedMedia() {
-        return (hasMedia() && this.media.hasAttributes());
+        return hasMedia() && this.media.hasAttributes();
     }
     
     /**
