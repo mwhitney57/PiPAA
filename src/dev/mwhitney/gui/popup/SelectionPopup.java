@@ -217,7 +217,7 @@ public abstract class SelectionPopup extends JDialog {
      * @return this pop-up instance.
      */
     public SelectionPopup moveRelTo(Component c) {
-        if (c != null && !this.hasClosed) this.setLocationRelativeTo(c);
+        if (!this.hasClosed) this.setLocationRelativeTo(c);
         return this;
     }
     
