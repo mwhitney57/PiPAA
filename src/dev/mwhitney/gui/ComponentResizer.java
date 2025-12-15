@@ -382,8 +382,8 @@ public class ComponentResizer extends MouseAdapter
     private void setResizing(boolean r) {
         this.resizing = r;
         
-        if (r) resizeListeners.forEach(l -> l.started());
-        else   resizeListeners.forEach(l -> l.ended());
+        if (r) resizeListeners.forEach(StartEndListener::started);
+        else   resizeListeners.forEach(StartEndListener::ended);
     }
     
     /**

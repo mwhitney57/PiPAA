@@ -451,7 +451,7 @@ public abstract class PiPWindowListeners implements PiPWindowListener, PiPComman
             if (dataFile  != null) dataFile.stream()
                 .filter(f -> f.getPath().toLowerCase().endsWith(".url"))
                 .filter(f -> f.getPath().startsWith(new File(AppRes.APP_CLIPBOARD_FOLDER).getPath()))
-                .forEach(f -> f.delete());
+                .forEach(File::delete);
             // Flush image at the end if not null, ensuring no memory leak.
             if (dataImage != null) dataImage.flush();
         });

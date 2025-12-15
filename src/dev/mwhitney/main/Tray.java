@@ -396,7 +396,7 @@ public class Tray implements PropertyListener {
         
         // Get Theme's Map and Apply its Key/Values
         final HashMap<String, Object> themeMap = uiPropsMap.get(theme.toString());
-        themeMap.forEach((k, v) -> UIManager.getLookAndFeelDefaults().put(k, v));
+        themeMap.forEach(UIManager.getLookAndFeelDefaults()::put);
     }
     
     /**
