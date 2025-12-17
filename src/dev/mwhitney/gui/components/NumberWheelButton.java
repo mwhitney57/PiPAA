@@ -73,14 +73,14 @@ public class NumberWheelButton extends BetterButton implements ThemedComponent {
             else                       g2d.setColor(colorBG);
             // Paint general background area of button.
             g2d.fillRoundRect(1, 1, width-2, height-2,
-                    (roundedArc != -1 ? roundedArc : 40),
-                    (roundedArc != -1 ? roundedArc : 40));
+                    roundedArc != -1 ? roundedArc : 40,
+                    roundedArc != -1 ? roundedArc : 40);
             
             // Paint Highlighted Area
             g2d.setColor(colorHighlight);
             g2d.fillRoundRect(1, 1 + height/3, width-2, height/3,
-                    (roundedArc != -1 ? roundedArc : 40),
-                    (roundedArc != -1 ? roundedArc : 40));
+                    roundedArc != -1 ? roundedArc : 40,
+                    roundedArc != -1 ? roundedArc : 40);
             
             // Setup Text Color and Font
             g2d.setColor(colorText);
@@ -144,8 +144,8 @@ public class NumberWheelButton extends BetterButton implements ThemedComponent {
             g2d.setPaint(gradient);
     
             // Paint the gradient overlay, rounded and within the border of the component.
-            g2d.fillRoundRect(2, 2, width - 4, height - 4, (roundedArc != -1 ? roundedArc : 40),
-                    (roundedArc != -1 ? roundedArc : 40));
+            g2d.fillRoundRect(2, 2, width - 4, height - 4, roundedArc != -1 ? roundedArc : 40,
+                    roundedArc != -1 ? roundedArc : 40);
         } finally {
             // Dispose of the Graphics2D Object
             g2d.dispose();

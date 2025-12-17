@@ -62,8 +62,8 @@ public class OptionPopup extends SelectionPopup {
     
     @Override
     protected void setupListeners() {
-        this.addWindowFocusListener((WindowFocusLostListener) (e) -> close());
-        this.addKeyListener((KeyPressListener) (e) -> {
+        this.addWindowFocusListener((WindowFocusLostListener) e -> close());
+        this.addKeyListener((KeyPressListener) e -> {
             // Determine which button the key press corresponds to.
             final int optionIndex = switch (e.getKeyCode()) {
             // Equivalent to using 1. For programmers who see the first option as element zero.

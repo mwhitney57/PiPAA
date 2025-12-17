@@ -80,8 +80,8 @@ public class BetterButton extends JButton {
             else
                 g2d.setColor(colorBG);
             g2d.fillRoundRect(1, 1, getWidth()-2, getHeight()-2,
-                    (roundedArc != -1 ? roundedArc : 40),
-                    (roundedArc != -1 ? roundedArc : 40));
+                    roundedArc != -1 ? roundedArc : 40,
+                    roundedArc != -1 ? roundedArc : 40);
         } finally {
             // Dispose of the Graphics2D Object
             g2d.dispose();
@@ -101,8 +101,8 @@ public class BetterButton extends JButton {
             g2d.setColor(colorBorder);
             g2d.setStroke(new BasicStroke(4.0f));
             g2d.drawRoundRect(2, 2, getWidth()-5, getHeight()-5,
-                    (roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25),
-                    (roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25));
+                    roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25,
+                    roundedArcBorder != -1 ? Math.max(0, roundedArcBorder) : 25);
         } finally {
             // Dispose of the Graphics2D Object
             g2d.dispose();

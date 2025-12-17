@@ -102,7 +102,7 @@ public class BetterPanel extends JPanel {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
         // Draw the Rounded Drop Shadow
-        final int shdwOff = (useDropShadow ? SHADOW : 0);
+        final int shdwOff = useDropShadow ? SHADOW : 0;
         if (useDropShadow) {
             for (int i = 0; i < SHADOW; i++) {
                 g2d.setColor(new Color(0, 0, 0, (int) ((10.0 / SHADOW) * i)));

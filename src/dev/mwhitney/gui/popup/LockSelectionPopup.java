@@ -76,12 +76,12 @@ public class LockSelectionPopup extends StatedSelectionPopup {
     
     @Override
     protected void setupListeners() {
-        this.getContentPane().addMouseListener((MouseClickListener) (e) -> {
+        this.getContentPane().addMouseListener((MouseClickListener) e -> {
             // Close pop-up on RMB click.
             if (e.getButton() == MouseEvent.BUTTON3) close();
         });
-        this.addWindowFocusListener((WindowFocusLostListener) (e) -> close());
-        this.addKeyListener((KeyPressListener) (e) -> {
+        this.addWindowFocusListener((WindowFocusLostListener) e -> close());
+        this.addKeyListener((KeyPressListener) e -> {
             // Determine which button the key press corresponds to.
             final int button = switch (e.getKeyCode()) {
             case KeyEvent.VK_1, KeyEvent.VK_S -> 0;

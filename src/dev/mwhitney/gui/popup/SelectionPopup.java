@@ -125,12 +125,12 @@ public abstract class SelectionPopup extends JDialog {
      * necessary.
      */
     protected void setupListeners() {
-        this.getContentPane().addMouseListener((MouseClickListener) (e) -> {
+        this.getContentPane().addMouseListener((MouseClickListener) e -> {
             // Close pop-up on RMB click.
             if (e.getButton() == MouseEvent.BUTTON3) close();
         });
-        this.addWindowFocusListener((WindowFocusLostListener) (e) -> close());
-        this.addKeyListener((KeyPressListener) (e) -> close());
+        this.addWindowFocusListener((WindowFocusLostListener) e -> close());
+        this.addKeyListener((KeyPressListener) e -> close());
     }
     
     /**

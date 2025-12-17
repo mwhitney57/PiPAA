@@ -14,7 +14,7 @@ import javax.swing.plaf.UIResource;
  * 
  * @author mwhitney57
  */
-public class InvertibleIcon implements Icon, UIResource, Serializable{
+public class InvertibleIcon implements Icon, UIResource, Serializable {
     /** A randomly-generated, unique serial ID for InvertibleIcons. */
     private static final long serialVersionUID = 7155455002351840041L;
     

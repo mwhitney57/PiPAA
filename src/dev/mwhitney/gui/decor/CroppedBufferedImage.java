@@ -96,7 +96,7 @@ public class CroppedBufferedImage {
      *         otherwise.
      */
     private boolean imgValid() {
-        return (this.img != null);
+        return this.img != null;
     }
     
     /**
@@ -161,7 +161,7 @@ public class CroppedBufferedImage {
      *         image is <code>null</code>.
      */
     public int croppedWidth() {
-        return (imgValid() ? this.img.getWidth()  - (this.cropL + this.cropR) : -1);
+        return imgValid() ? this.img.getWidth()  - (this.cropL + this.cropR) : -1;
     }
     
     /**
@@ -172,7 +172,7 @@ public class CroppedBufferedImage {
      *         image is <code>null</code>.
      */
     public int croppedHeight() {
-        return (imgValid() ? this.img.getHeight() - (this.cropT + this.cropB) : -1);
+        return imgValid() ? this.img.getHeight() - (this.cropT + this.cropB) : -1;
     }
     
     /**
@@ -188,7 +188,7 @@ public class CroppedBufferedImage {
      */
     public boolean canCrop() {
         System.err.println("Checking if croppable: Crop Amounts (L/T/R/B): " + this.cropL + "/" + this.cropT + "/" + this.cropR + "/" + this.cropB);
-        return (this.cropL != 0 || this.cropR != 0 || this.cropT != 0 || this.cropB != 0);
+        return this.cropL != 0 || this.cropR != 0 || this.cropT != 0 || this.cropB != 0;
     }
     
     /**

@@ -107,12 +107,12 @@ public class NumericalInputPopup extends SelectionPopup {
     
     @Override
     protected void setupListeners() {
-        this.getContentPane().addMouseListener((MouseClickListener) (e) -> {
+        this.getContentPane().addMouseListener((MouseClickListener) e -> {
             // Close pop-up on RMB click.
             if (e.getButton() == MouseEvent.BUTTON3) close();
         });
-        this.addWindowFocusListener((WindowFocusLostListener) (e) -> close());
-        this.addKeyListener((KeyPressListener) (e) -> {
+        this.addWindowFocusListener((WindowFocusLostListener) e -> close());
+        this.addKeyListener((KeyPressListener) e -> {
             int keyIntValue = -1;
             switch(e.getKeyCode()) {
             // Confirm with the current values.

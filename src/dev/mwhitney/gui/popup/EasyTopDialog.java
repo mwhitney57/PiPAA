@@ -54,9 +54,9 @@ public class EasyTopDialog {
 //        parent.setFocusable(false);
 //        parent.setFocusableWindowState(false);
         parent.setBackground(AppRes.COLOR_TRANSPARENT);
-        parent.addWindowFocusListener((WindowFocusLostListener) (e) -> close(parent));
-        parent.addKeyListener((KeyPressListener) (e) -> close(parent));
-        final MousePressListener mouseListener = (e) -> close(parent);
+        parent.addWindowFocusListener((WindowFocusLostListener) e -> close(parent));
+        parent.addKeyListener((KeyPressListener) e -> close(parent));
+        final MousePressListener mouseListener = e -> close(parent);
         parent.addMouseListener(mouseListener);
         
         final BetterPanel panel = new BetterPanel(new MigLayout("fill, insets 5 10 5 10")).useDropShadow();
@@ -155,7 +155,7 @@ public class EasyTopDialog {
             window.setLocationRelativeTo(parent);
             if (!grabsFocus) window.setFocusableWindowState(false);
             window.setVisible(true);
-            final Timer t = new Timer(lifespan, (e) -> close(window));
+            final Timer t = new Timer(lifespan, e -> close(window));
             t.setRepeats(false);
             t.start();
         });
