@@ -24,7 +24,7 @@ import dev.mwhitney.gui.binds.BindHandler;
 import dev.mwhitney.gui.binds.Shortcut;
 import dev.mwhitney.listeners.PiPWindowCountListener;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
-import dev.mwhitney.listeners.WindowFocusGainedListener;
+import dev.mwhitney.listeners.simplified.WindowFocusGainedListener;
 import dev.mwhitney.main.CFExec;
 import dev.mwhitney.media.PiPMedia;
 import dev.mwhitney.media.PiPMediaAttributes;

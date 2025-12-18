@@ -1,4 +1,4 @@
-package dev.mwhitney.listeners;
+package dev.mwhitney.listeners.simplified;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
