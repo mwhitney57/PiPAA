@@ -15,6 +15,7 @@ import javax.swing.JComponent;
 import dev.mwhitney.gui.PiPWindow;
 import dev.mwhitney.gui.PiPWindowState;
 import dev.mwhitney.gui.interfaces.AdaptiveOpacity;
+import dev.mwhitney.gui.interfaces.Vanishing;
 import dev.mwhitney.resources.AppRes;
 import dev.mwhitney.util.PiPAAUtils;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
@@ -50,7 +51,7 @@ import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
  * @author mwhitney57
  * @since 0.9.5
  */
-public class SpecialGlassPane extends JComponent implements AdaptiveOpacity {
+public class SpecialGlassPane extends JComponent implements AdaptiveOpacity, Vanishing {
     /** The randomly-generated serial ID. */
     private static final long serialVersionUID = 2303414505288020519L;
 
@@ -85,6 +86,7 @@ public class SpecialGlassPane extends JComponent implements AdaptiveOpacity {
      * {@link #setVisible(boolean)} with {@code true}. Alternative for method
      * reference usage and readability.
      */
+    @Override
     public void reveal() {
         this.setVisible(true);
     }
@@ -94,6 +96,7 @@ public class SpecialGlassPane extends JComponent implements AdaptiveOpacity {
      * {@link #setVisible(boolean)} with {@code false}. Alternative for method
      * reference usage and readability.
      */
+    @Override
     public void conceal() {
         this.setVisible(false);
     }
