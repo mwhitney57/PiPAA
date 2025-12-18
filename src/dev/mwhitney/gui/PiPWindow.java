@@ -66,7 +66,7 @@ import dev.mwhitney.gui.viewer.ZoomPanSnapshot;
 import dev.mwhitney.listeners.ManagerFetcher;
 import dev.mwhitney.listeners.PiPWindowManagerAdapter;
 import dev.mwhitney.listeners.StartEndListener;
-import dev.mwhitney.listeners.WindowClosingListener;
+import dev.mwhitney.listeners.simplified.WindowClosingListener;
 import dev.mwhitney.listeners.simplified.WindowFocusLostListener;
 import dev.mwhitney.main.Binaries;
 import dev.mwhitney.main.Binaries.Bin;
