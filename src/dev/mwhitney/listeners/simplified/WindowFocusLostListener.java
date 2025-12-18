@@ -5,7 +5,7 @@ import java.awt.event.WindowFocusListener;
 
 /**
  * A simplified, functional extension of the {@link WindowFocusListener}, meant
- * to only define and use the
+ * for only defining and using the
  * {@link WindowFocusListener#windowLostFocus(WindowEvent)} method.
  * 
  * @author mwhitney57
