@@ -11,7 +11,6 @@ import java.awt.Graphics2D;
 import java.util.Objects;
 
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 
 import dev.mwhitney.gui.PiPWindow;
 import dev.mwhitney.gui.PiPWindowState;
@@ -22,16 +21,16 @@ import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 /**
  * A simple {@link JComponent} intended to be used as a glass pane for a
- * {@link JFrame}.
+ * {@link PiPWindow}.
  * 
  * Despite the name, this component doesn't do anything special, but it is used
  * in a special way.
  * <h2>The Problem</h2>
  * <p>
  * The vlcj {@link EmbeddedMediaPlayerComponent} does not like when a
- * {@link JFrame} has a fully transparent background, at least with this app's
- * setup for each window. It will ignore mouse input and allow clicks on the
- * video surface to pass through as if nothing was there.
+ * {@link PiPWindow} has a fully transparent background, at least with this
+ * app's setup for each window. It will ignore mouse input and allow clicks on
+ * the video surface to pass through as if nothing was there.
  * <p>
  * This becomes problematic if the frame background needs to be transparent. For
  * example, the edges of the frame need to always be transparent to allow the
@@ -59,13 +58,17 @@ public class SpecialGlassPane extends JComponent implements AdaptiveOpacity {
     private final PiPWindow parent;
     
     /**
-     * Creates a glass pane linked to the passed window. The parent window 
+     * Creates a glass pane linked to the passed window. The window will be used as
+     * the parent to the glass pane. This is a critical relationship, as the parent
+     * and its state help to determine how the pane should paint. Therefore, it must
+     * be valid; passing a {@code null} value will throw an exception.
      * <p>
      * If the glass pane must be temporarily shown or hidden, opt for using
      * {@link #reveal()}, {@link #conceal()}, or {@link #setVisible(boolean)}
      * directly, as opposed to removing it from its parent window. It is simpler and
-     * should be the best solution. {@link JFrame#setGlassPane(java.awt.Component)}
-     * does not accept {@code null} values which makes removal more tedious.
+     * should be the best solution.
+     * {@link PiPWindow#setGlassPane(java.awt.Component)} does not accept
+     * {@code null} values which makes removal more tedious.
      * 
      * @param parent - the {@link PiPWindow} this glass pane will be used in.
      */
