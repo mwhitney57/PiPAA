@@ -49,6 +49,7 @@ import dorkbox.systemTray.util.SizeAndScalingWindows;
 import dorkbox.systemTray.util.swing.DefaultMenuItemUI;
 import dorkbox.systemTray.util.swing.DefaultPopupMenuUI;
 import dorkbox.systemTray.util.swing.DefaultSeparatorUI;
+import dorkbox.updates.Updates;
 
 /**
  * Controls the tray icon, context menu, and other related operations.
@@ -133,7 +134,9 @@ public class Tray implements PropertyListener {
         // Setup Swing Component Peers (?) of Tray Components
         itemComps = new ArrayList<JComponent>();
         
-        // Dorkbox SystemTray Debug Statement
+        // Disable Requests Made by SystemTray's Updates Dependency – Without this, unnecessary requests are made every 5 minutes.
+        Updates.INSTANCE.setENABLE(false);
+        // Dorkbox SystemTray Debug Flag
         SystemTray.DEBUG = false;
         // Dorkbox SystemTray Menu and Icon Scaling
         SizeAndScalingWindows.OVERRIDE_MENU_SIZE = 20;
