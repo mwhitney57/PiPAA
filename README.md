@@ -72,7 +72,7 @@ With numerous features to explore, here's an introduction to some basics of PiPA
 > Click on a title to display the associated image(s).
 
 ## 💾 Installation and Usage
-PiPAA is a portable application and requires no installation. It should work with almost any machine running Windows 10 or 11. It may also run on older versions of Windows, but this has not been tested.
+PiPAA is a semi-portable application with no dedicated installer. Just download and run! It should work with almost any machine running Windows 10 or 11. It may also run on older versions of Windows, but this has not been tested.
 
 Pick an option below:
 
@@ -291,6 +291,17 @@ Check the guide [here](#how-to-bypass-windows-defender-smartscreen-warning).
 PiPAA supports a wide variety of formats and sites. `PDF` files are not supported right now, but that will likely change in the future. Unfortunately, PiPAA will likely not work with certain paid streaming sites (i.e. Netflix).
 
 If you found a site or file that you feel should work but doesn't, let me know! Consider leaving an [Issue](https://github.com/mwhitney57/PiPAA/issues).
+</details>
+<details><summary><h3>Is this a portable app?</h3></summary>
+
+In many ways, PiPAA is a portable app. You just need to download or transfer the executable and run it; that's it.
+However, a truly portable application is self-contained, keeping everything in one directory.
+PiPAA does not strictly adhere to this as of `v0.9.4`:
+- PiPAA's application folder is stored in the user's <b>AppData</b>, specifically at `%APPDATA%\PiPAA` on Windows.
+- Additional, small cache folders could be created in the user folder `%USERPROFILE%` when caching media.
+- As with most Windows applications, temporary files are created in `%TEMP%`.
+
+Any files or directories created by PiPAA can be safely deleted at any time, only losing things like your user configuration and cached media.
 </details>
 
 > [!NOTE]
