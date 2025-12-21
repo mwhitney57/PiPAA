@@ -81,6 +81,25 @@ public class EasyTopDialog {
      * for a default of ~<code>1500</code>ms before automatically closing. The
      * dialog can be closed early by the user clicking or pressing a key on it. It
      * will also close when it loses focus.
+     * <p>
+     * Since no parent is declared through this method, the message will show in the
+     * center of the display.
+     * 
+     * @param message - the String message to be displayed in the dialog.
+     * @param theme   - the {@link THEME_OPTION} to use for the dialog.
+     * @see {@link #showMsg(JFrame, String, THEME_OPTION)} for specifying a parent.
+     * @see {@link #showMsg(JFrame, String, THEME_OPTION, int)} for specifying a
+     *      custom lifespan duration.
+     */
+    public static void showMsg(String message, THEME_OPTION theme) {
+        showMsg(null, message, theme);
+    }
+    
+    /**
+     * Shows an easy always-on-top message dialog. The easy dialog will remain open
+     * for a default of ~<code>1500</code>ms before automatically closing. The
+     * dialog can be closed early by the user clicking or pressing a key on it. It
+     * will also close when it loses focus.
      * 
      * @param parent  - the {@link JFrame} to display the dialog relative to.
      * @param message - the String message to be displayed in the dialog.
