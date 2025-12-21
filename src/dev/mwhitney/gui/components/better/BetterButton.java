@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.event.ActionListener;
 
@@ -67,6 +68,19 @@ public class BetterButton extends JButton {
     public BetterButton(String label, Font f, ActionListener al) {
         this(label, f);
         this.addActionListener(al);
+    }
+    
+    /**
+     * Sets the margin of the button to be the passed {@link Insets}. This method
+     * simply performs {@link #setMargin(Insets)} and returns the button to simplify
+     * construction.
+     * 
+     * @param insets - the margin to use.
+     * @return this {@link BetterButton} instance.
+     */
+    public BetterButton withMargin(Insets insets) {
+        this.setMargin(insets);
+        return this;
     }
     
     @Override
