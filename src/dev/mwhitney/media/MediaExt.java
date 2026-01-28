@@ -16,13 +16,13 @@ public enum MediaExt implements PiPEnum<MediaExt> {
     /* PLAYLIST/STREAMING */
     M3U8,MPD,TS,
     /* VIDEO */
-    MP4,MKV,WEBM,M4V,MOV,AVI,
+    MP4,MKV,WEBM,M2V,M4V,MOV,AVI,WMV,
     /* IMAGE */
     PNG,JPG,JPEG,TIFF,BMP,AVIF,
     /* GIF */
     GIF,WEBP,
     /* AUDIO */
-    MP3,M4A,WAV,WMA,OGG,FLAC,OPUS;
+    MP3,M4A,MKA,WAV,WMA,OGG,FLAC,OPUS;
     
     /**
      * Checks whether the passed String matches any {@link MediaExt}. This method
