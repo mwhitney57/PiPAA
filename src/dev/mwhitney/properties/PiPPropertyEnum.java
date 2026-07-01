@@ -38,8 +38,9 @@ public interface PiPPropertyEnum<E extends Enum<E>> extends PiPEnum<E> {
     }
     /**
      * Gets the property or property option's String description.
+     * The description is <code>null</code> by default unless overridden.
      * 
      * @return a String with the description.
      */
-    public default String description() { return ""; }
+    public default String description() { return null; }
 }
