@@ -2650,8 +2650,10 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 final List<AudioTrackInfo> tracks = mediaPlayer.mediaPlayer().media().info().audioTracks();
                 final AudioTrackInfo track = tracks != null && tracks.size() > 0 ? tracks.get(0) : null;
                 if (track != null) {
+                    final long duration = mediaPlayer.mediaPlayer().media().info().duration();
+                    final long position = (long) (mediaPlayer.mediaPlayer().status().position() * duration);
                     info
-                    .append("Duration: ").append(PiPAAUtils.toStringHMS(mediaPlayer.mediaPlayer().media().info().duration())).append("\n")
+                    .append("Duration: ").append(PiPAAUtils.toStringHMS(position)).append(" / ").append(PiPAAUtils.toStringHMS(duration)).append("\n")
                     .append("Quality: ").append(track.bitRate()/1000).append(" kbps").append("\n")
                     .append("Codec: ").append(track.codecDescription()).append("\n");
                 }
@@ -2671,8 +2673,11 @@ public class PiPWindow extends JFrame implements PropertyListener, Themed, Manag
                 final List<VideoTrackInfo> tracks = mediaPlayer.mediaPlayer().media().info().videoTracks();
                 final VideoTrackInfo track = tracks != null && tracks.size() > 0 ? tracks.get(0) : null;
                 if (track != null) {
+                    final long duration = mediaPlayer.mediaPlayer().media().info().duration();
+                    final long position = (long) (mediaPlayer.mediaPlayer().status().position() * duration);
                     final int qualityX = track != null ? track.width() : -1, qualityY = track != null ? track.height() : -1;
-                    info.append("Duration: ").append(PiPAAUtils.toStringHMS(mediaPlayer.mediaPlayer().media().info().duration())).append("\n")
+                    info
+                    .append("Duration: ").append(PiPAAUtils.toStringHMS(position)).append(" / ").append(PiPAAUtils.toStringHMS(duration)).append("\n")
                     .append("Quality: ").append((qualityX == -1 ? "Err" : qualityX) + "x" + (qualityY == -1 ? "Err" : qualityY))
                     .append(" @ ").append(String.format("%.2f", ((float) track.frameRate() / track.frameRateBase()))).append(" FPS\n")
                     .append("Codec: ").append(track.codecDescription()).append("\n")
