@@ -113,11 +113,11 @@ public abstract class AppRes {
     public static final String NAME_LIBVLCPLUGINS           = "plugins.zip";
     
     // Internal File Versions
-    public static final String VERS_VLC                     = "3.0.23 Vetinari";
-    public static final String VERS_YTDLP                   = "stable@2025-10-22";
-    public static final String VERS_GALLERYDL               = "1.30.10";
-    public static final String VERS_FFMPEG                  = "8.0-28";
-    public static final String VERS_IMAGEMAGICK             = "7.1.2-8";
+    public static final String VERS_VLC                     = "3.0.24 Vetinari";
+    public static final String VERS_YTDLP                   = "2026.08.19";
+    public static final String VERS_GALLERYDL               = "1.32.16";
+    public static final String VERS_FFMPEG                  = "8.1.3-17";
+    public static final String VERS_IMAGEMAGICK             = "7.1.2-33";
     
     // Internal Files
     public static final String FILE_LIBVLC                  = PATH_BIN + "/" + NAME_LIBVLC;

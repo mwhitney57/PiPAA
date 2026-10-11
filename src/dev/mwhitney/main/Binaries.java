@@ -428,6 +428,33 @@ public class Binaries {
     }
     
     /**
+     * Compares the packaged version of the passed binary to the one currently being
+     * used. The comparison logic is quick and dirty. A version check is run on the
+     * passed binary. If the packaged version is found in the first line of the
+     * received output, then it's a match and not different.
+     * 
+     * @param b - a Bin for the binary to check.
+     * @return <code>true</code> if the ; <code>false</code>
+     *         otherwise.
+     */
+    public static boolean isPackagedVersionDifferent(Bin b) {
+        // Run a version check.
+        final String versionOutput = Binaries.execAndGet(Binaries.binned(b), switch (b) {
+        case FFMPEG -> "-version";
+        case YT_DLP, GALLERY_DL, IMGMAGICK -> "--version";
+        });
+        
+        // Version check failed, return an early true.
+        if (versionOutput == null) {
+            return true;
+        }
+        
+        // Compare versions and return.
+        final String versionExecFirstLine = versionOutput.lines().findFirst().orElse("");
+        return !versionExecFirstLine.toLowerCase().contains(b.version().toLowerCase());
+    }
+    
+    /**
      * Attempts to update the passed binary.
      * If the command succeeds, then this method returns <code>true</code>.
      * 

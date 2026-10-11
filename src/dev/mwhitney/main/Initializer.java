@@ -324,10 +324,14 @@ public class Initializer {
         // Check if each binary exists within the application bin folder.
         final String useSysVLC      = propsManager.get(PiPProperty.USE_SYS_VLC);
         final String useSysBinaries = propsManager.get(PiPProperty.USE_SYS_BINARIES);
-        final boolean LOCAL_YTDLP   = Binaries.exists(Bin.YT_DLP);
-        final boolean LOCAL_GALDL   = Binaries.exists(Bin.GALLERY_DL);
-        final boolean LOCAL_FFMPEG  = Binaries.exists(Bin.FFMPEG);
-        final boolean LOCAL_IMGMAG  = Binaries.exists(Bin.IMGMAGICK);
+        
+        loadingProgress("Checking package versions...", 25);
+        
+        // Determine if extraction is needed for each binary.
+        final boolean EXTRACT_YTDLP  = !Binaries.HAS_YTDLP      && (!Binaries.exists(Bin.YT_DLP)     || Binaries.isPackagedVersionDifferent(Bin.YT_DLP));
+        final boolean EXTRACT_GALDL  = !Binaries.HAS_GALLERYDL  && (!Binaries.exists(Bin.GALLERY_DL) || Binaries.isPackagedVersionDifferent(Bin.GALLERY_DL));
+        final boolean EXTRACT_FFMPEG = !Binaries.HAS_FFMPEG     && (!Binaries.exists(Bin.GALLERY_DL) || Binaries.isPackagedVersionDifferent(Bin.FFMPEG));
+        final boolean EXTRACT_IMGMAG = !Binaries.HAS_IMGMAGICK  && (!Binaries.exists(Bin.IMGMAGICK)  || Binaries.isPackagedVersionDifferent(Bin.IMGMAGICK));
         // If the application should use system binaries, refresh their existence status.
         if (useSysBinaries == null || Boolean.valueOf(useSysBinaries)) try {
             Binaries.refreshOnSys();
@@ -335,13 +339,13 @@ public class Initializer {
             throw new ExtractionException("Unexpected exception occurred while extracting binaries.");
         }
         
-        loadingProgress("Extracting missing binaries...", 25);
+        loadingProgress("Extracting missing binaries...", 30);
         
         // Extract any missing binaries to the application bin folder.
-        CFExec.run(!Binaries.HAS_YTDLP     && !LOCAL_YTDLP  ? (BinRunnable) () -> Binaries.extract(Bin.YT_DLP)     : null,
-                   !Binaries.HAS_GALLERYDL && !LOCAL_GALDL  ? (BinRunnable) () -> Binaries.extract(Bin.GALLERY_DL) : null,
-                   !Binaries.HAS_FFMPEG    && !LOCAL_FFMPEG ? (BinRunnable) () -> Binaries.extract(Bin.FFMPEG)     : null,
-                   !Binaries.HAS_IMGMAGICK && !LOCAL_IMGMAG ? (BinRunnable) () -> Binaries.extract(Bin.IMGMAGICK)  : null)
+        CFExec.run(EXTRACT_YTDLP  ? (BinRunnable) () -> Binaries.extract(Bin.YT_DLP)     : null,
+                   EXTRACT_GALDL  ? (BinRunnable) () -> Binaries.extract(Bin.GALLERY_DL) : null,
+                   EXTRACT_FFMPEG ? (BinRunnable) () -> Binaries.extract(Bin.FFMPEG)     : null,
+                   EXTRACT_IMGMAG ? (BinRunnable) () -> Binaries.extract(Bin.IMGMAGICK)  : null)
               .throwIfAny(new ExtractionException("Unexpected exception occurred while extracting binaries."));
         
         loadingProgress("Checking for app update...", 35);  // Does not guarantee that a check occurs. Just a general progress statement.
